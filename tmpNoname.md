@@ -20,12 +20,6 @@ API vs SDK
 	- 新特性的引入，会发布新的sdk，sdk是经过验证的；
 
 
-SIGABRT - 6
-产生信号6的原因，如下：
-- 多次free
-- assert(*)
-- abort()
-
 gdb 
 带参数调试
 - gdb --args a.out 5
@@ -92,14 +86,6 @@ defined(_WIN32)
 defined(_WIN64)
 defined(_WIN32_WCE)   //define by VS c++.
 ```
-
-windows git
-ssh key位置
-> /c/Users/hulizhong/.ssh/id_rsa
-
-git的配置文件（在安装目录下）
-> xxx\Git\mingw64\etc\gitconfig
-
 
 
 ### 未解决的
