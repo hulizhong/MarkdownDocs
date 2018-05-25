@@ -165,5 +165,84 @@ static void kqop_free(struct kqop *kqop)
 >> event_base_free()只在event_loop线程调用；
 >
 
+
+## 给libevnet注册log callback
+
+写日志的callback
+```cpp
+/*
+log handler的形式：
+	typedef void (*event_log_cb)(int severity, const char *msg);
+在自己提供的这个callback里面不能调用libevent提供的任务api，否则会产生未定义行为；
+*/
+static void eventLogCb(int severity, const char *msg)
+{                               
+	const char *s;              
+	switch (severity) {         
+		case _EVENT_LOG_DEBUG: s = "debug"; break;
+		case _EVENT_LOG_MSG:   s = "msg";   break;
+		case _EVENT_LOG_WARN:  s = "warn";  break;
+		case _EVENT_LOG_ERR:   s = "error"; break;
+		default:               s = "?";     break; /* never reached */
+	}                           
+	printf("[%s] %s\n", s, msg);
+}  
+```
+
+注册callback
+```cpp
+if (mBase == NULL) 
+{                  
+	/*
+	打开日志开关，并将日志送往默认的log handler；
+	这是个全局开关，必须先于base_new, use_ptrheads函数调用；
+	参数只能是常量：
+		EVENT_DBG_ALL 开启debugging日志；
+		EVENT_DBG_NONE 关闭debugging日志； 
+	*/
+	event_enable_debug_logging(EVENT_DBG_ALL);
+	/*
+	设置日志输出回调；
+		如果参数为NULL，那么cb设为默认的log handler.
+	*/
+	event_set_log_callback(eventLogCb);
+
+	evthread_use_pthreads();
+	mBase = event_base_new();
+}
+```
+
+补充：
+用户自定义的log handler callback将会被设置到全局变量log\_fn
+默认的log handler为event\_log
+```cpp
+static void event_log(int severity, const char *msg)
+{
+	if (log_fn)
+		log_fn(severity, msg);
+	else {
+		const char *severity_str;
+		switch (severity) {
+		case EVENT_LOG_DEBUG:
+			severity_str = "debug";
+			break;
+		case EVENT_LOG_MSG:
+			severity_str = "msg";
+			break;
+		case EVENT_LOG_WARN:
+			severity_str = "warn";
+			break;
+		case EVENT_LOG_ERR:
+			severity_str = "err";
+			break;
+		default:
+			severity_str = "???";
+			break;
+		}
+		(void)fprintf(stderr, "[%s] %s\n", severity_str, msg);
+	}
+}
+```
+
 ## 待续
 
