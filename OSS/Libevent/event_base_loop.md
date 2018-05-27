@@ -119,113 +119,527 @@ done:
 }
 ```
 
-## event_base定义
+## 事件添加
+### epoll下读事件添加的堆栈
+epoll下event\_add会触发如下调用
 ```cpp
-struct event_base {
-	const struct eventop *evsel; //backend的各种回调函数
-	void *evbase;  //跑backend所需要的数据
-
-	/** List of changes to tell backend about at next dispatch.  Only used
-	 * by the O(1) backends. */
-	struct event_changelist changelist;
-
-	/** Function pointers used to describe the backend that this event_base
-	 * uses for signals */
-	const struct eventop *evsigsel;
-	/** Data to implement the common signal handelr code. */
-	struct evsig_info sig;
-
-	/** Number of virtual events */
-	int virtual_event_count;
-	/** Maximum number of virtual events active */
-	int virtual_event_count_max;
-	int event_count; //当前监控的数量（即add的）
-	int event_count_max;  //最大监控事件数量，超过会怎么样？
-	int event_count_active; //当前base里面激活的事件数量
-	int event_count_active_max; //最大激活事件数量，超过会怎么样？
-
-	int event_gotterm; //base_loopexit的flag
-	int event_break;   //base_loopbreak的flag.（立即退出）
-	/** Set if we should start a new instance of the loop immediately. */
-	int event_continue;
-
-	int event_running_priority;  //当前运行事件的优先级
-
-	int running_loop; //flag, 已经用base_loop把这个base跑起来了；防止重复调用；
-
-	/** Set to the number of deferred_cbs we've made 'active' in the
-	 * loop.  This is a hack to prevent starvation; it would be smarter
-	 * to just use event_config_set_max_dispatch_interval's max_callbacks
-	 * feature */
-	int n_deferreds_queued;
-
-	//管理激活（就绪）事件
-	struct evcallback_list *activequeues; //当前激活事件队列，数组索引是cb的优先级；
-	int nactivequeues; //上面数组的长度
-	struct evcallback_list active_later_queue; //下一次处理事件时变为active的cb list；
-
-	/* common timeout logic */
-
-	/** An array of common_timeout_list* for all of the common timeout
-	 * values we know. */
-	struct common_timeout_list **common_timeout_queues;
-	int n_common_timeouts; //common_timeout_queues中实体的个数
-	int n_common_timeouts_allocated; //common_timeout_queues的总大小
-
-	struct event_io_map io; //从fd到事件的映射
-
-	struct event_signal_map sigmap;  //从信号到事件的映射；
-
-	struct min_heap timeheap; //超时事件的优先级队列
-
-	/** Stored timeval: used to avoid calling gettimeofday/clock_gettime
-	 * too often. */
-	struct timeval tv_cache;
-
-	struct evutil_monotonic_timer monotonic_timer;
-
-	/** Difference between internal time (maybe from clock_gettime) and
-	 * gettimeofday. */
-	struct timeval tv_clock_diff;
-	/** Second in which we last updated tv_clock_diff, in monotonic time. */
-	time_t last_updated_clock_diff;
-
-#ifndef EVENT__DISABLE_THREAD_SUPPORT
-	/* threading support */
-	unsigned long th_owner_id; //运行base_loop的线程ID
-	void *th_base_lock;  //锁，锁住这个event_base
-	/** A condition that gets signalled when we're done processing an
-	 * event with waiters on it. */
-	void *current_event_cond;
-	/** Number of threads blocking on current_event_cond. */
-	int current_event_waiters;
-#endif
-	/** The event whose callback is executing right now */
-	struct event_callback *current_event;
-
-#ifdef _WIN32
-	struct event_iocp_port *iocp;  // iocp支持结构，如果iocp使能；
-#endif
-
-	/** Flags that this base was configured with */
-	enum event_base_config_flag flags;
-
-	struct timeval max_dispatch_time;
-	int max_dispatch_callbacks;
-	int limit_callbacks_after_prio;
-
-	/* Notify main thread to wake up break, etc. */
-	int is_notify_pending; //=1，如果当前base已经有未决的通知；我们不需要再向base发送通知了；
-	evutil_socket_t th_notify_fd[2];  //一对socketpair，被某些函数用于唤醒主线程；
-	struct event th_notify;  //一个event，被某些函数用于唤醒主线程；
-	int (*th_notify_fn)(struct event_base *base); //一个函数，被用于在另外一个线程唤醒主线程；
-
-	/** Saved seed for weak random number generator. Some backends use
-	 * this to produce fairness among sockets. Protected by th_base_lock. */
-	struct evutil_weakrand_state weakrand_seed;
-
-	/** List of event_onces that have not yet fired. */
-	LIST_HEAD(once_event_list, event_once) once_events;
-
-};
+#0  epoll_apply_one_change (base=0x6121a0, epollop=0x612440, ch=0x7fffffffe350) at epoll.c:353
+#1  0x00007ffff7baef30 in epoll_nochangelist_add (base=0x6121a0, fd=0, old=0, events=2, p=0x612bd0) at epoll.c:392
+#2  0x00007ffff7ba4a8e in evmap_io_add_ (base=0x6121a0, fd=0, ev=0x612b30) at evmap.c:330
+#3  0x00007ffff7ba0080 in event_add_nolock_ (ev=0x612b30, tv=0x0, tv_is_absolute=0) at event.c:2600
+#4  0x00007ffff7b9f80a in event_add (ev=0x612b30, tv=0x0) at event.c:2445
+#5  0x00000000004072da in main (argc=1, argv=0x7fffffffe668) at eventTst.cpp:149
 ```
+
+
+## 事件激活
+### epoll下读事件激活的堆栈
+首先来看一个EV\_READ事件激活的堆栈吧
+```cpp
+#0  event_queue_insert_active (base=0x6121a0, evcb=0x612b30) at event.c:3328
+#1  0x00007ffff7ba12c4 in event_callback_activate_nolock_ (base=0x6121a0, evcb=0x612b30) at event.c:2973
+#2  0x00007ffff7ba1009 in event_active_nolock_ (ev=0x612b30, res=2, ncalls=1) at event.c:2912
+#3  0x00007ffff7ba4e87 in evmap_io_active_ (base=0x6121a0, fd=0, events=34) at evmap.c:428
+#4  0x00007ffff7baf2f5 in epoll_dispatch (base=0x6121a0, tv=0x0) at epoll.c:500
+#5  0x00007ffff7b9dace in event_base_loop (base=0x6121a0, flags=0) at event.c:1947
+#6  0x00007ffff7b9d466 in event_base_dispatch (event_base=0x6121a0) at event.c:1772
+#7  0x0000000000406fbe in run (arg=0x6121a0) at eventTst.cpp:43
+```
+
+### event\_active\_nolock\_
+各种backend监听到fd有事件之后，调用此将event转成callback并加到激活队列；
+```cpp
+void
+event_active_nolock_(struct event *ev, int res, short ncalls)
+{
+	struct event_base *base;
+
+	event_debug(("event_active: %p (fd "EV_SOCK_FMT"), res %d, callback %p",
+		ev, EV_SOCK_ARG(ev->ev_fd), (int)res, ev->ev_callback));
+
+	base = ev->ev_base;
+	EVENT_BASE_ASSERT_LOCKED(base);
+
+	if (ev->ev_flags & EVLIST_FINALIZING) {
+		/* XXXX debug */
+		return;
+	}
+
+	/* 获取到以后将要传入到event callback的‘激活事件类型’参数 */
+	switch ((ev->ev_flags & (EVLIST_ACTIVE|EVLIST_ACTIVE_LATER))) {
+	default:
+	case EVLIST_ACTIVE|EVLIST_ACTIVE_LATER:
+		EVUTIL_ASSERT(0);
+		break;
+	case EVLIST_ACTIVE:
+		/* We get different kinds of events, add them together */
+		ev->ev_res |= res;
+		return;
+	case EVLIST_ACTIVE_LATER:
+		ev->ev_res |= res;
+		break;
+	case 0:
+		ev->ev_res = res;
+		break;
+	}
+
+	/* 如果管理event的base此时正在处理fd比当前fd高的事件，那么置打断标志 */
+	if (ev->ev_pri < base->event_running_priority)
+		base->event_continue = 1;
+
+	/* 信号事件，设置调用callback的次数 */
+	if (ev->ev_events & EV_SIGNAL) {
+#ifndef EVENT__DISABLE_THREAD_SUPPORT
+		if (base->current_event == event_to_event_callback(ev) &&
+		    !EVBASE_IN_THREAD(base)) {
+			++base->current_event_waiters;
+			EVTHREAD_COND_WAIT(base->current_event_cond, base->th_base_lock);
+		}
+#endif
+		ev->ev_ncalls = ncalls;
+		ev->ev_pncalls = NULL;
+	}
+
+	/* 将ev转成cb，添加到base的激活队列中去；*/
+	event_callback_activate_nolock_(base, event_to_event_callback(ev));
+}
+```
+
+### event\_callback\_activate\_nolock\_
+添加一个callback到base的活动队列中；
+```cpp
+int
+event_callback_activate_nolock_(struct event_base *base,
+    struct event_callback *evcb)
+{
+	int r = 1;
+
+	if (evcb->evcb_flags & EVLIST_FINALIZING)
+		return 0;
+
+	/* cb当前是否已经添加过，如果是active_later那么从later队列删除 */
+	switch (evcb->evcb_flags & (EVLIST_ACTIVE|EVLIST_ACTIVE_LATER)) {
+	default:
+		EVUTIL_ASSERT(0);
+	case EVLIST_ACTIVE_LATER:
+		event_queue_remove_active_later(base, evcb);
+		r = 0;
+		break;
+	case EVLIST_ACTIVE:
+		return 0;
+	case 0:
+		break;
+	}
+
+	event_queue_insert_active(base, evcb);
+
+	if (EVBASE_NEED_NOTIFY(base))
+		evthread_notify_base(base);
+
+	return r;
+}
+```
+
+### event\_queue\_insert\_active
+将evcb置成evlist_active状态，并添加到base->activequeues队列中；
+```cpp
+static void
+event_queue_insert_active(struct event_base *base, struct event_callback *evcb)
+{
+	EVENT_BASE_ASSERT_LOCKED(base);
+
+	if (evcb->evcb_flags & EVLIST_ACTIVE) {
+		/* Double insertion is possible for active events */
+		return;
+	}
+
+	INCR_EVENT_COUNT(base, evcb->evcb_flags);
+
+	evcb->evcb_flags |= EVLIST_ACTIVE;
+
+	base->event_count_active++;
+	MAX_EVENT_COUNT(base->event_count_active_max, base->event_count_active);
+	EVUTIL_ASSERT(evcb->evcb_pri < base->nactivequeues);
+	TAILQ_INSERT_TAIL(&base->activequeues[evcb->evcb_pri],
+	    evcb, evcb_active_next);
+}
+```
+
+
+## 处理激活事件
+### base\_loop处理激活事件的堆栈
+如下是base loop处理就绪事件的调用堆栈；
+调用时机：是在base\_loop中的process\_active中进行的；
+```cpp
+#0  cb (fd=0, events=2, arg=0x612b10) at eventTst.cpp:78 用户的callback,从标准输入读取数据
+#1  0x00007ffff7b9ce58 in event_process_active_single_queue (base=0x6121a0, activeq=0x6125f0, max_to_process=2147483647, endtime=0x0) at event.c:1646
+#2  0x00007ffff7b9d3de in event_process_active (base=0x6121a0) at event.c:1738
+#3  0x00007ffff7b9db3a in event_base_loop (base=0x6121a0, flags=0) at event.c:1961
+#4  0x00007ffff7b9d466 in event_base_dispatch (event_base=0x6121a0) at event.c:1772
+#5  0x0000000000406fbe in run (arg=0x6121a0) at eventTst.cpp:43 //thread function
+```
+
+
+### event\_process\_active
+激活base中的优先级队列；
+低优先级的有可能会饿死高优先级；
+```cpp
+static int
+event_process_active(struct event_base *base)
+{
+	/* Caller must hold th_base_lock */
+	struct evcallback_list *activeq = NULL;
+	int i, c = 0;
+	const struct timeval *endtime;
+	struct timeval tv;
+	const int maxcb = base->max_dispatch_callbacks;
+	const int limit_after_prio = base->limit_callbacks_after_prio;
+	if (base->max_dispatch_time.tv_sec >= 0) {
+		update_time_cache(base);
+		gettime(base, &tv);
+		evutil_timeradd(&base->max_dispatch_time, &tv, &tv);
+		endtime = &tv;
+	} else {
+		endtime = NULL;
+	}
+
+	//轮询激活事件；
+	for (i = 0; i < base->nactivequeues; ++i) {
+		//i实质上是fd/signalNo的值，轮询注册到这个fd上的所有回调；
+		if (TAILQ_FIRST(&base->activequeues[i]) != NULL) {
+			base->event_running_priority = i;
+			activeq = &base->activequeues[i];
+			if (i < limit_after_prio) //低优先级的至多运行int_max个；
+				c = event_process_active_single_queue(base, activeq,
+				    INT_MAX, NULL);
+			else
+				c = event_process_active_single_queue(base, activeq,
+				    maxcb, endtime); //高优先级的至多运行maxcb个，或者时间到了；
+			if (c < 0) {
+				goto done;
+			} else if (c > 0)
+				break; /* Processed a real event; do not
+					* consider lower-priority events */
+			/* If we get here, all of the events we processed
+			 * were internal.  Continue. */
+		}
+	}
+
+done:
+	base->event_running_priority = -1;
+
+	return c;
+}
+```
+
+### event\_process\_active\_single\_queue
+帮助event_process_active调用单个queue上的所有事件的回调，这些事件都是绑到同一fd的；
+调用此函数时，调用者必须持有锁，函数离开时会解锁；
+返回成功调用cb的个数；-1如果被signal, event_break打断；
+```cpp
+static int
+event_process_active_single_queue(struct event_base *base,
+    struct evcallback_list *activeq,
+    int max_to_process, const struct timeval *endtime)
+{
+	struct event_callback *evcb;
+	int count = 0;
+
+	EVUTIL_ASSERT(activeq != NULL);
+
+	/* foreach每个callback */
+	for (evcb = TAILQ_FIRST(activeq); evcb; evcb = TAILQ_FIRST(activeq)) {
+		struct event *ev=NULL;
+		/* 从active队列删除此evcb */
+		if (evcb->evcb_flags & EVLIST_INIT) { //event用event_assign初始化过了
+			ev = event_callback_to_event(evcb);
+
+			if (ev->ev_events & EV_PERSIST || ev->ev_flags & EVLIST_FINALIZING)
+				event_queue_remove_active(base, evcb);
+			else
+				event_del_nolock_(ev, EVENT_DEL_NOBLOCK); //非ev_persist要删除事件，保证下次不能激活了；
+			event_debug((
+			    "event_process_active: event: %p, %s%s%scall %p",
+			    ev,
+			    ev->ev_res & EV_READ ? "EV_READ " : " ",
+			    ev->ev_res & EV_WRITE ? "EV_WRITE " : " ",
+			    ev->ev_res & EV_CLOSED ? "EV_CLOSED " : " ",
+			    ev->ev_callback));
+		} else {
+			event_queue_remove_active(base, evcb);
+			event_debug(("event_process_active: event_callback %p, "
+				"closure %d, call %p",
+				evcb, evcb->evcb_closure, evcb->evcb_cb_union.evcb_callback));
+		}
+
+		if (!(evcb->evcb_flags & EVLIST_INTERNAL))
+			++count;
+
+
+		base->current_event = evcb;
+#ifndef EVENT__DISABLE_THREAD_SUPPORT
+		base->current_event_waiters = 0;
+#endif
+
+		/* 按照callback的closure标志，调用不同的cb */
+		switch (evcb->evcb_closure) {
+		case EV_CLOSURE_EVENT_SIGNAL:
+			EVUTIL_ASSERT(ev != NULL);
+			event_signal_closure(base, ev);
+			break;
+		case EV_CLOSURE_EVENT_PERSIST:
+			EVUTIL_ASSERT(ev != NULL);
+			event_persist_closure(base, ev);
+			break;
+		case EV_CLOSURE_EVENT: { //这是咱们平时用的最多的普通事件
+			void (*evcb_callback)(evutil_socket_t, short, void *);
+			EVUTIL_ASSERT(ev != NULL);
+			evcb_callback = *ev->ev_callback;
+			EVBASE_RELEASE_LOCK(base, th_base_lock);  //调用user callback之前释放base锁；
+			evcb_callback(ev->ev_fd, ev->ev_res, ev->ev_arg);  //调用用户设置的cb；
+		}
+		break;
+		case EV_CLOSURE_CB_SELF: {
+			void (*evcb_selfcb)(struct event_callback *, void *) = evcb->evcb_cb_union.evcb_selfcb;
+			EVBASE_RELEASE_LOCK(base, th_base_lock);
+			evcb_selfcb(evcb, evcb->evcb_arg);
+		}
+		break;
+		case EV_CLOSURE_EVENT_FINALIZE:
+		case EV_CLOSURE_EVENT_FINALIZE_FREE: {
+			void (*evcb_evfinalize)(struct event *, void *);
+			int evcb_closure = evcb->evcb_closure;
+			EVUTIL_ASSERT(ev != NULL);
+			base->current_event = NULL;
+			evcb_evfinalize = ev->ev_evcallback.evcb_cb_union.evcb_evfinalize;
+			EVUTIL_ASSERT((evcb->evcb_flags & EVLIST_FINALIZING));
+			EVBASE_RELEASE_LOCK(base, th_base_lock);
+			evcb_evfinalize(ev, ev->ev_arg);
+			event_debug_note_teardown_(ev);
+			if (evcb_closure == EV_CLOSURE_EVENT_FINALIZE_FREE)
+				mm_free(ev);
+		}
+		break;
+		case EV_CLOSURE_CB_FINALIZE: {
+			void (*evcb_cbfinalize)(struct event_callback *, void *) = evcb->evcb_cb_union.evcb_cbfinalize;
+			base->current_event = NULL;
+			EVUTIL_ASSERT((evcb->evcb_flags & EVLIST_FINALIZING));
+			EVBASE_RELEASE_LOCK(base, th_base_lock);
+			evcb_cbfinalize(evcb, evcb->evcb_arg);
+		}
+		break;
+		default:
+			EVUTIL_ASSERT(0);
+		}
+
+		EVBASE_ACQUIRE_LOCK(base, th_base_lock);
+		base->current_event = NULL;
+#ifndef EVENT__DISABLE_THREAD_SUPPORT
+		if (base->current_event_waiters) {
+			base->current_event_waiters = 0;
+			EVTHREAD_COND_BROADCAST(base->current_event_cond);
+		}
+#endif
+
+		/* 各种退出foreach的条件 */
+		if (base->event_break) //如果调用了_loopbreak()
+			return -1;
+		if (count >= max_to_process) //如果执行cb个数达到了上限；
+			return count;
+		if (count && endtime) { //如果执行时间超过了endtime
+			struct timeval now;
+			update_time_cache(base);
+			gettime(base, &now);
+			if (evutil_timercmp(&now, endtime, >=))
+				return count;
+		}
+		if (base->event_continue) //如果调用了_loopcontinue()，或者backend激活了一个更低优先级的事件；
+			break;
+	}
+	return count;
+}
+```
+
+
+
+## 事件删除
+### epoll下读事件删除的堆栈
+注意：删除事件的时机，是在event_process_active_signle_queue
+```cpp
+(gdb) bt
+#0  epoll_apply_one_change (base=0x6121a0, epollop=0x612440, ch=0x7ffff5de6b30) at epoll.c:272
+#1  0x00007ffff7baefb9 in epoll_nochangelist_del (base=0x6121a0, fd=0, old=2, events=2, p=0x612bd0)
+    at epoll.c:410
+#2  0x00007ffff7ba4d77 in evmap_io_del_ (base=0x6121a0, fd=0, ev=0x612b30) at evmap.c:396
+#3  0x00007ffff7ba0a79 in event_del_nolock_ (ev=0x612b30, blocking=0) at event.c:2827
+#4  0x00007ffff7b9cbb9 in event_process_active_single_queue (base=0x6121a0, activeq=0x6125f0, 
+    max_to_process=2147483647, endtime=0x0) at event.c:1608
+#5  0x00007ffff7b9d3de in event_process_active (base=0x6121a0) at event.c:1738
+#6  0x00007ffff7b9db3a in event_base_loop (base=0x6121a0, flags=0) at event.c:1961
+#7  0x00007ffff7b9d466 in event_base_dispatch (event_base=0x6121a0) at event.c:1772
+#8  0x00000000004070de in run (arg=0x6121a0) at eventTst.cpp:43
+```
+
+### event\_del\_nolock\_
+帮助event_del实现删除事件的功能；
+调用者应该持有base.th_base_lock的锁；
+第二个参数必须是：EVENT_DEL_{BLOCK, NOBLOCK, AUTOBLOCK,EVEN_IF_FINALIZING}之一；
+```cpp
+int
+event_del_nolock_(struct event *ev, int blocking)
+{
+	struct event_base *base;
+	int res = 0, notify = 0;
+
+	event_debug(("event_del: %p (fd "EV_SOCK_FMT"), callback %p",
+		ev, EV_SOCK_ARG(ev->ev_fd), ev->ev_callback));
+
+	/* An event without a base has not been added */
+	if (ev->ev_base == NULL)
+		return (-1);
+
+	EVENT_BASE_ASSERT_LOCKED(ev->ev_base);
+
+	if (blocking != EVENT_DEL_EVEN_IF_FINALIZING) {
+		if (ev->ev_flags & EVLIST_FINALIZING) {
+			/* XXXX Debug */
+			return 0;
+		}
+	}
+
+	/* If the main thread is currently executing this event's callback,
+	 * and we are not the main thread, then we want to wait until the
+	 * callback is done before we start removing the event.  That way,
+	 * when this function returns, it will be safe to free the
+	 * user-supplied argument. */
+	base = ev->ev_base;
+#ifndef EVENT__DISABLE_THREAD_SUPPORT
+	if (blocking != EVENT_DEL_NOBLOCK &&
+	    base->current_event == event_to_event_callback(ev) &&
+	    !EVBASE_IN_THREAD(base) &&
+	    (blocking == EVENT_DEL_BLOCK || !(ev->ev_events & EV_FINALIZE))) {
+		++base->current_event_waiters;
+		EVTHREAD_COND_WAIT(base->current_event_cond, base->th_base_lock);
+	}
+#endif
+
+	EVUTIL_ASSERT(!(ev->ev_flags & ~EVLIST_ALL));
+
+	/* See if we are just active executing this event in a loop */
+	if (ev->ev_events & EV_SIGNAL) {
+		if (ev->ev_ncalls && ev->ev_pncalls) {
+			/* Abort loop */
+			*ev->ev_pncalls = 0;
+		}
+	}
+
+	if (ev->ev_flags & EVLIST_TIMEOUT) {
+		/* NOTE: We never need to notify the main thread because of a
+		 * deleted timeout event: all that could happen if we don't is
+		 * that the dispatch loop might wake up too early.  But the
+		 * point of notifying the main thread _is_ to wake up the
+		 * dispatch loop early anyway, so we wouldn't gain anything by
+		 * doing it.
+		 */
+		event_queue_remove_timeout(base, ev);
+	}
+
+	if (ev->ev_flags & EVLIST_ACTIVE)
+		event_queue_remove_active(base, event_to_event_callback(ev));
+	else if (ev->ev_flags & EVLIST_ACTIVE_LATER)
+		event_queue_remove_active_later(base, event_to_event_callback(ev));
+
+	if (ev->ev_flags & EVLIST_INSERTED) {
+		event_queue_remove_inserted(base, ev);
+		if (ev->ev_events & (EV_READ|EV_WRITE|EV_CLOSED))
+			res = evmap_io_del_(base, ev->ev_fd, ev);
+		else
+			res = evmap_signal_del_(base, (int)ev->ev_fd, ev);
+		if (res == 1) {
+			/* evmap says we need to notify the main thread. */
+			notify = 1;
+			res = 0;
+		}
+	}
+
+	/* if we are not in the right thread, we need to wake up the loop */
+	if (res != -1 && notify && EVBASE_NEED_NOTIFY(base))
+		evthread_notify_base(base);
+
+	event_debug_note_del_(ev);
+
+	return (res);
+}
+```
+
+
+## base notify
+### base内部添加read notify event
+base new的时候就创建一个base的通知事件；
+用来干什么呢？ --rwhy
+```cpp
+#0  epoll_apply_one_change (base=0x6121a0, epollop=0x612440, ch=0x7fffffffe220) at epoll.c:292
+#1  0x00007ffff7baef30 in epoll_nochangelist_add (base=0x6121a0, fd=11, old=0, events=2, p=0x6127a0)
+    at epoll.c:392
+#2  0x00007ffff7ba4a8e in evmap_io_add_ (base=0x6121a0, fd=11, ev=0x6123a0) at evmap.c:330
+#3  0x00007ffff7ba0080 in event_add_nolock_ (ev=0x6123a0, tv=0x0, tv_is_absolute=0) at event.c:2600
+#4  0x00007ffff7ba2f96 in evthread_make_base_notifiable_nolock_ (base=0x6121a0) at event.c:3625
+#5  0x00007ffff7ba2e22 in evthread_make_base_notifiable (base=0x6121a0) at event.c:3574
+#6  0x00007ffff7b9ac8c in event_base_new_with_config (cfg=0x612160) at event.c:684
+#7  0x00007ffff7b9a55c in event_base_new () at event.c:485
+#8  0x0000000000407327 in main (argc=1, argv=0x7fffffffe5d8) at eventTst.cpp:101
+```
+
+### evthread\_make\_base\_notifiable\_nolock_
+添加一个持久的内部读事件，用于唤醒主线程（应该是epoll\_wait之类backend wait吧）； --rwhy
+```cpp
+static int
+evthread_make_base_notifiable_nolock_(struct event_base *base)
+{
+	void (*cb)(evutil_socket_t, short, void *);
+	int (*notify)(struct event_base *);
+
+	if (base->th_notify_fn != NULL) {
+		/* The base is already notifiable: we're doing fine. */
+		return 0;
+	}
+
+#if defined(EVENT__HAVE_WORKING_KQUEUE)
+	if (base->evsel == &kqops && event_kq_add_notify_event_(base) == 0) {
+		base->th_notify_fn = event_kq_notify_base_;
+		/* No need to add an event here; the backend can wake
+		 * itself up just fine. */
+		return 0;
+	}
+#endif
+
+#ifdef EVENT__HAVE_EVENTFD
+	base->th_notify_fd[0] = evutil_eventfd_(0,
+	    EVUTIL_EFD_CLOEXEC|EVUTIL_EFD_NONBLOCK);
+	if (base->th_notify_fd[0] >= 0) {
+		base->th_notify_fd[1] = -1;
+		notify = evthread_notify_base_eventfd;
+		cb = evthread_notify_drain_eventfd;
+	} else
+#endif
+	if (evutil_make_internal_pipe_(base->th_notify_fd) == 0) {
+		notify = evthread_notify_base_default;
+		cb = evthread_notify_drain_default;
+	} else {
+		return -1;
+	}
+
+	base->th_notify_fn = notify;
+
+	/* prepare an event that we can use for wakeup */
+	event_assign(&base->th_notify, base, base->th_notify_fd[0],
+				 EV_READ|EV_PERSIST, cb, base);
+
+	/* we need to mark this as internal event */
+	base->th_notify.ev_flags |= EVLIST_INTERNAL;
+	event_priority_set(&base->th_notify, 0);
+
+	return event_add_nolock_(&base->th_notify, NULL, 0);
+}
+```
+

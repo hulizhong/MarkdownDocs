@@ -5,7 +5,7 @@ linux platform用的是epoll
 MacOS platform用的是kqueue
 
 ## eventop定义
-eventop的定义如下
+eventop是backend的一堆回调集合体，即backend要为上层提供的功能（接口）；
 ```cpp
 // Structure to define the backend of a given event_base.
 struct eventop {
@@ -50,8 +50,10 @@ struct eventop {
 };
 ```
 
-## epollops定义
-epollops的定义如下
+## 对外结构epollops
+epoll对eventop的实现epollops，分为changelist, nochangelist两种模式。
+changelist效率更高，因为它减少了无效系统调用； --rwhy
+默认使用nochangelist模式；
 ```cpp
 static const struct eventop epollops_changelist = {
 	"epoll (with changelist)",
@@ -78,8 +80,9 @@ const struct eventop epollops = {
 };
 ```
 
-## epoll\_init
-### 这是epoll_init返回的类型；
+## 对内结构epollop
+这才是epoll模块内部定义的结构；用于记录当前的事件、事件数、epoll句柄等。
+epoll运行是靠这个结构体的，而非对外的epollops；同时这也是epoll\_init返回的类型。
 ```cpp
 struct epollop {
 	struct epoll_event *events; //epoll的事件
@@ -91,6 +94,14 @@ struct epollop {
 };
 ```
 
+## changelist vs nochangelist
+只有epoll有changelist, nochangelist之分；
+如kqueue只有changelist；
+chagelist相对nochangelist效率更高，因为它减少了一次或多次的无效系统调用；
+
+
+
+## epoll\_init
 ### epoll_init的调用
 ```cpp
 struct event_base* event_base_new(void)
@@ -240,8 +251,132 @@ static void* epoll_init(struct event_base *base)
 ```
 
 ## event\_changelist\_add_
+因为changelist是公用的（MacOS也用到了changlist），没放在epoll的文件中；
+参见 [evmap.c.md](./evmap.c.md#event_changelist_add_)
+
 ## event\_changelist\_del_
-## epoll\_nochangelist\_add,
+
+## epoll\_nochangelist\_add
+将事件转成一个event_change对象，然后调用epoll_apply_one_change进行添加至epoll中；
+```cpp
+static int
+epoll_nochangelist_add(struct event_base *base, evutil_socket_t fd,
+    short old, short events, void *p)
+{
+	/* 构造event_change */
+	struct event_change ch;
+	ch.fd = fd;
+	ch.old_events = old;
+	ch.read_change = ch.write_change = ch.close_change = 0;
+	if (events & EV_WRITE)
+		ch.write_change = EV_CHANGE_ADD |
+		    (events & EV_ET);
+	if (events & EV_READ)
+		ch.read_change = EV_CHANGE_ADD |
+		    (events & EV_ET);
+	if (events & EV_CLOSED)
+		ch.close_change = EV_CHANGE_ADD |
+		    (events & EV_ET);
+
+	/* 添加至epoll */
+	return epoll_apply_one_change(base, base->evbase, &ch);
+}
+```
+
+将ch转成epoll\_event添加到epoll句柄epollop.epfd中；
+有可能不需要添加这个事件；
+```cpp
+static int epoll_apply_one_change(struct event_base *base,
+    struct epollop *epollop,
+    const struct event_change *ch)
+{
+	struct epoll_event epev;
+	int op, events = 0;
+	int idx;
+
+	/* 如何转换的？？ */
+	idx = EPOLL_OP_TABLE_INDEX(ch); //这个索引怎么算出来的？rwhy
+	op = epoll_op_table[idx].op;
+	events = epoll_op_table[idx].events;
+
+	if (!events) {
+		EVUTIL_ASSERT(op == 0);
+		return 0;
+	}
+
+	if ((ch->read_change|ch->write_change) & EV_CHANGE_ET)
+		events |= EPOLLET;
+
+	/* */
+	memset(&epev, 0, sizeof(epev));
+	epev.data.fd = ch->fd;
+	epev.events = events;
+	if (epoll_ctl(epollop->epfd, op, ch->fd, &epev) == 0) {
+		event_debug((PRINT_CHANGES(op, epev.events, ch, "okay")));
+		return 0;
+	}
+
+	switch (op) {
+	case EPOLL_CTL_MOD:
+		if (errno == ENOENT) {
+			/* If a MOD operation fails with ENOENT, the
+			 * fd was probably closed and re-opened.  We
+			 * should retry the operation as an ADD.
+			 */
+			if (epoll_ctl(epollop->epfd, EPOLL_CTL_ADD, ch->fd, &epev) == -1) {
+				event_warn("Epoll MOD(%d) on %d retried as ADD; that failed too",
+				    (int)epev.events, ch->fd);
+				return -1;
+			} else {
+				event_debug(("Epoll MOD(%d) on %d retried as ADD; succeeded.",
+					(int)epev.events,
+					ch->fd));
+				return 0;
+			}
+		}
+		break;
+	case EPOLL_CTL_ADD:
+		if (errno == EEXIST) {
+			/* If an ADD operation fails with EEXIST,
+			 * either the operation was redundant (as with a
+			 * precautionary add), or we ran into a fun
+			 * kernel bug where using dup*() to duplicate the
+			 * same file into the same fd gives you the same epitem
+			 * rather than a fresh one.  For the second case,
+			 * we must retry with MOD. */
+			if (epoll_ctl(epollop->epfd, EPOLL_CTL_MOD, ch->fd, &epev) == -1) {
+				event_warn("Epoll ADD(%d) on %d retried as MOD; that failed too",
+				    (int)epev.events, ch->fd);
+				return -1;
+			} else {
+				event_debug(("Epoll ADD(%d) on %d retried as MOD; succeeded.",
+					(int)epev.events,
+					ch->fd));
+				return 0;
+			}
+		}
+		break;
+	case EPOLL_CTL_DEL:
+		if (errno == ENOENT || errno == EBADF || errno == EPERM) {
+			/* If a delete fails with one of these errors,
+			 * that's fine too: we closed the fd before we
+			 * got around to calling epoll_dispatch. */
+			event_debug(("Epoll DEL(%d) on fd %d gave %s: DEL was unnecessary.",
+				(int)epev.events,
+				ch->fd,
+				strerror(errno)));
+			return 0;
+		}
+		break;
+	default:
+		break;
+	}
+
+	event_warn(PRINT_CHANGES(op, epev.events, ch, "failed"));
+	return -1;
+}
+```
+
 ## epoll\_nochangelist\_del,
 
 ## epoll\_dispatch
