@@ -3,7 +3,7 @@
 ## ReadMe
 说明base\_loop的运行逻辑，可通过此来了解libevent的机制；
 
-## base\_loop的逻辑
+## base\_loop logic
 ```cpp
 int event_base_dispatch(){
 	return (event_base_loop(event_base, 0)); //flag=0那么没有pending事件就会退出、或者出错退出；
@@ -119,7 +119,7 @@ done:
 }
 ```
 
-## 事件添加
+## event add 
 ### epoll下读事件添加的堆栈
 epoll下event\_add会触发如下调用
 ```cpp
@@ -132,7 +132,7 @@ epoll下event\_add会触发如下调用
 ```
 
 
-## 事件激活
+## event active
 ### epoll下读事件激活的堆栈
 首先来看一个EV\_READ事件激活的堆栈吧
 ```cpp
@@ -266,7 +266,7 @@ event_queue_insert_active(struct event_base *base, struct event_callback *evcb)
 ```
 
 
-## 处理激活事件
+## process active event
 ### base\_loop处理激活事件的堆栈
 如下是base loop处理就绪事件的调用堆栈；
 调用时机：是在base\_loop中的process\_active中进行的；
@@ -462,7 +462,7 @@ event_process_active_single_queue(struct event_base *base,
 
 
 
-## 事件删除
+## event del
 ### epoll下读事件删除的堆栈
 注意：删除事件的时机，是在event_process_active_signle_queue
 ```cpp

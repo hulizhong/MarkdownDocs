@@ -43,8 +43,8 @@ struct eventop {
 	// Bit-array 这个backend能提供的对事件的特性；
 	enum event_method_feature features;
 
-	//为每个fd记录激活的事件；
-		//每个fd的evmap入口；
+	//额外信息的长度，记录每个fd激活的事件；
+		//被记录于evmap entry为每个fd；
 		//被当作上述add/del的最后一个函数参数；
 	size_t fdinfo_len;
 };

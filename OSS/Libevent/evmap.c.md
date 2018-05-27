@@ -60,19 +60,21 @@ int evmap_io_add_(struct event_base *base, evutil_socket_t fd, struct event *ev)
 #endif
 	/* 获取fd的事件列表，--rwhy没有会分配？？ */
 	GET_IO_SLOT_AND_CTOR(ctx, io, fd, evmap_io, evmap_io_init,
-						 evsel->fdinfo_len);
+						 evsel->fdinfo_len); //(evmap_io)ctx = io[fd]
 
 	nread = ctx->nread;
 	nwrite = ctx->nwrite;
 	nclose = ctx->nclose;
 
-	if (nread)
+	/* 获得fd上老的注册事件 */
+	if (nread) //如果此fd之前的nread!=0，那么之前就注册过读事件
 		old |= EV_READ;
 	if (nwrite)
 		old |= EV_WRITE;
 	if (nclose)
 		old |= EV_CLOSED;
 
+	/* 获得fd上此次注册事件，并更改注册对应类型的事件数 */
 	if (ev->ev_events & EV_READ) {
 		if (++nread == 1)
 			res |= EV_READ;
@@ -98,9 +100,9 @@ int evmap_io_add_(struct event_base *base, evutil_socket_t fd, struct event *ev)
 		return -1;
 	}
 
-	/* 把事件ev添加到backend中去 */
+	/* 如果ev是read/write/close事件类型，那么把ev添加到backend中去 */
 	if (res) {
-		void *extra = ((char*)ctx) + sizeof(struct evmap_io);
+		void *extra = ((char*)ctx) + sizeof(struct evmap_io); //注意这是之前结构体外申请的多余空间；
 		/* XXX(niels): we cannot mix edge-triggered and
 		 * level-triggered, we should probably assert on
 		 * this. */
@@ -118,6 +120,48 @@ int evmap_io_add_(struct event_base *base, evutil_socket_t fd, struct event *ev)
 
 	return (retval);
 }
+```
+
+## changelist knowledge
+只会在backend支持changelist才会使用这个特性；
+changelist的好处是：
+> 1. 避免上层应用程序在dispatch之前对同一个事件进行多次的add, del。  --rwhy这个可以吗？？？   
+> 2. 一个fd上多个改变通过一次系统调用就可以完成，比如epoll可以同时add和delete。  
+
+rwhy有效防护的是？
+同一个fd的读事件多次add,del？？ 
+还是对同一个event的read/write更改？？？
+
+
+从上次eventop.dispatch()到现在的change列表；
+```cpp
+struct event_changelist {
+	struct event_change *changes; //更改事件列表
+	int n_changes;
+	int changes_size;
+};
+```
+
+代表一个更改事件
+```cpp
+/** Represents a */
+struct event_change {
+	evutil_socket_t fd; //更改事件的fd/signalNo
+	/* The events that were enabled on the fd before any of these changes
+	   were made.  May include EV_READ or EV_WRITE. */
+	short old_events;  
+
+	ev_uint8_t read_change; //fd上读事件更改标志，信号可置ev_change_signal.
+	ev_uint8_t write_change;
+	ev_uint8_t close_change;
+};
+
+//上述read_change, write_change可置的标志；
+#define EV_CHANGE_ADD     0x01  //增加事件
+#define EV_CHANGE_DEL     0x02  //删除事件，与ev_change_add相反
+#define EV_CHANGE_SIGNAL  EV_SIGNAL  //这是一个signal事件，而非fd事件
+#define EV_CHANGE_PERSIST EV_PERSIST //持久事件，但现在没用到；
+#define EV_CHANGE_ET      EV_ET      //ET模式
 ```
 
 ## event\_changelist\_add_
