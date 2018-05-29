@@ -4,7 +4,7 @@
 io\_map, signal\_map这些结构体的定义
 如何向这些结构增、删event
 
-## io\_map的定义
+## io\_map hashtable
 ```cpp
 #ifdef EVMAP_USE_HT
 	#define HT_NO_CACHE_HASH_VALUES
@@ -79,7 +79,7 @@ struct event_io_map {
 
 ```
 
-### hash table的额外知识
+## hash table
 很多查找方法都是基于待查关键字与表中元素进行比较而实现的；
 > 如此查找的效率依赖于查找过程中所比较的次数；
 > 理想的情况是不通过任何比较，而一次便能得到所查的记录；
@@ -128,133 +128,6 @@ Hash表的查找效率探索
 >>> 链地址法 ASL=1+a/2
 >>> 开地址法 ASL=(1/2)(1+(1/(1-a)))
 
-
-## signal\_map的定义
-```cpp
-//用于信号到一系列event的映射；
-struct event_signal_map {
-	// 一个evmap_io*或者evmap_signal*的数组；没有元素则为NULL
-	void **entries;
-	int nentries; //entries数组的大小；
-};
-
-struct evmap_signal {
-	struct event_dlist {
-		struct event *lh_first; //first element
-	}events;
-};
-```
-
-event\_dlist的扩展过程
-```cpp
-LIST_HEAD (event_dlist, event); 
-
-struct event_dlist {
-	struct event *lh_first; //first element
-}
-
-#define LIST_HEAD(name, type)						\
-struct name {								\
-	struct type *lh_first;  /* first element */			\
-	}
-```
-
-### 被始化、清空
-evmap\_signal\_initmap\_
-evmap\_signal\_clear\_
-```cpp
-void evmap_signal_initmap_(struct event_signal_map *ctx)
-{
-	ctx->nentries = 0;
-	ctx->entries = NULL;
-}
-
-void evmap_signal_clear_(struct event_signal_map *ctx)
-{
-	if (ctx->entries != NULL) {
-		int i;
-		for (i = 0; i < ctx->nentries; ++i) {
-			if (ctx->entries[i] != NULL)
-				mm_free(ctx->entries[i]);
-		}
-		mm_free(ctx->entries);
-		ctx->entries = NULL;
-	}
-	ctx->nentries = 0;
-}
-```
-
-### 增加、删除
-evmap\_signal\_add\_
-evmap\_signal\_del\_
-```cpp
-int evmap_signal_add_(struct event_base *base, int sig, struct event *ev)
-{
-	const struct eventop *evsel = base->evsigsel;
-	struct event_signal_map *map = &base->sigmap;
-	struct evmap_signal *ctx = NULL;
-
-	if (sig >= map->nentries) {
-		if (evmap_make_space(
-			map, sig, sizeof(struct evmap_signal *)) == -1)
-			return (-1);
-	}
-	GET_SIGNAL_SLOT_AND_CTOR(ctx, map, sig, evmap_signal, evmap_signal_init,
-	    base->evsigsel->fdinfo_len);
-
-	if (LIST_EMPTY(&ctx->events)) {
-		if (evsel->add(base, ev->ev_fd, 0, EV_SIGNAL, NULL)
-		    == -1)
-			return (-1);
-	}
-
-	LIST_INSERT_HEAD(&ctx->events, ev, ev_signal_next);
-
-	return (1);
-}
-
-int evmap_signal_del_(struct event_base *base, int sig, struct event *ev)
-{
-	const struct eventop *evsel = base->evsigsel;
-	struct event_signal_map *map = &base->sigmap;
-	struct evmap_signal *ctx;
-
-	if (sig >= map->nentries)
-		return (-1);
-
-	GET_SIGNAL_SLOT(ctx, map, sig, evmap_signal);
-
-	LIST_REMOVE(ev, ev_signal_next);
-
-	if (LIST_FIRST(&ctx->events) == NULL) {
-		if (evsel->del(base, ev->ev_fd, 0, EV_SIGNAL, NULL) == -1)
-			return (-1);
-	}
-
-	return (1);
-}
-
-```
-
-### 激活
-evmap\_signal\_active\_
-```cpp
-void evmap_signal_active_(struct event_base *base, evutil_socket_t sig, int ncalls)
-{
-	struct event_signal_map *map = &base->sigmap;
-	struct evmap_signal *ctx;
-	struct event *ev;
-
-	if (sig < 0 || sig >= map->nentries)
-		return;
-	GET_SIGNAL_SLOT(ctx, map, sig, evmap_signal);
-
-	if (!ctx)
-		return;
-	LIST_FOREACH(ev, &ctx->events, ev_signal_next)
-		event_active_nolock_(ev, EV_SIGNAL, ncalls);
-}
-```
 
 ## LIST\_EMPTY
 

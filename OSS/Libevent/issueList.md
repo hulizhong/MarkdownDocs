@@ -244,5 +244,13 @@ static void event_log(int severity, const char *msg)
 }
 ```
 
+## epoll使用changelist
+在linux平台下epoll默认使用nochangelist；如何让其使用changelist呢？
+```cpp
+struct event_config *evcfg = event_config_new();
+event_config_set_flag(evcfg, EVENT_BASE_FLAG_EPOLL_USE_CHANGELIST);
+mBase = event_base_new_with_config(evcfg);
+```
+
 ## 待续
 

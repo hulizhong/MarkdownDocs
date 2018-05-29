@@ -55,11 +55,12 @@ struct event_base {
 
 	int event_gotterm; //base_loopexit的flag
 	int event_break;   //base_loopbreak的flag.（立即退出）
-	//set by event_base_loopcontinue调用
-	//set by event_active_nolock_添加比当前base->event_running_priority更小的event
-	int event_continue; //立即启动一个新的事件循环
+	//立即启动一个新的事件循环（让调用callback list退出，进入下一次base loop）
+		//set by event_base_loopcontinue调用
+		//set by event_active_nolock_添加比当前base->event_running_priority更小的event
+	int event_continue;
 
-	//当前运行事件的优先级；运行哪个fd的回调就会它的值设为fd，没有运行则为-1；
+	//当前运行事件的优先级；运行哪个优先级的回调就把对应的值赋上，没有运行则为-1；
 	int event_running_priority;  
 
 	int running_loop; //flag, 已经用base_loop把这个base跑起来了；防止重复调用；
@@ -71,7 +72,7 @@ struct event_base {
 	int n_deferreds_queued;
 
 	//管理激活（就绪）事件
-	struct evcallback_list *activequeues; //当前激活事件队列，数组索引是cb的优先级；
+	struct evcallback_list *activequeues; //当前激活事件队列，数组索引是cb的优先级（而非fd）；
 	int nactivequeues; //上面数组的长度
 	struct evcallback_list active_later_queue; //下一次处理事件时变为active的cb list；
 
@@ -103,7 +104,7 @@ struct event_base {
 
 #ifndef EVENT__DISABLE_THREAD_SUPPORT
 	/* threading support */
-	unsigned long th_owner_id; //运行base_loop的线程ID
+	unsigned long th_owner_id; //loop该base的线程ID
 	void *th_base_lock;  //锁，锁住这个event_base
 	/** A condition that gets signalled when we're done processing an
 	 * event with waiters on it. */
@@ -120,16 +121,16 @@ struct event_base {
 	/** Flags that this base was configured with */
 	enum event_base_config_flag flags;
 
-	struct timeval max_dispatch_time; //轮询fd上回调时至多运行多长时间
-	int max_dispatch_callbacks; //轮询fd上回调时至多运行个数
-	//fd大于该值的要进行上面的time,numer的检查；fd越小越优先执行；
-	int limit_callbacks_after_prio; 
+	struct timeval max_dispatch_time; //call同一优先级cb list至多运行时间
+	int max_dispatch_callbacks; //call同一优先级cb list至多运行个数
+	//如果当前执行的activequeues[i]优先级低于此，那么需要有上述个数、时间双方面的限制；
+	int limit_callbacks_after_prio; //是个base的全局配置；保证高优先级的event最先执行完；
 
 	/* Notify main thread to wake up break, etc. */
 	int is_notify_pending; //=1，如果当前base已经有未决的通知；我们不需要再向base发送通知了；
-	evutil_socket_t th_notify_fd[2];  //一对socketpair，被某些函数用于唤醒主线程；
-	struct event th_notify;  //一个event，被某些函数用于唤醒主线程；
-	int (*th_notify_fn)(struct event_base *base); //一个函数，被用于在另外一个线程唤醒主线程；
+	evutil_socket_t th_notify_fd[2];  //一对socketpair，th_notify_fn用它来唤醒主线程；
+	struct event th_notify;  //一个持久读event，监听在th_notify_fd[0]上，用于唤醒主线程；
+	int (*th_notify_fn)(struct event_base *base); //一个函数，在另外一个线程唤醒主线程；
 
 	/** Saved seed for weak random number generator. Some backends use
 	 * this to produce fairness among sockets. Protected by th_base_lock. */
@@ -141,8 +142,41 @@ struct event_base {
 };
 ```
 
-## API
+## evthread
+```cpp
+int
+evthread_use_pthreads(void)
+{
+	struct evthread_lock_callbacks cbs = {
+		EVTHREAD_LOCK_API_VERSION,
+		EVTHREAD_LOCKTYPE_RECURSIVE,
+		evthread_posix_lock_alloc,
+		evthread_posix_lock_free,
+		evthread_posix_lock,
+		evthread_posix_unlock
+	};
+	struct evthread_condition_callbacks cond_cbs = {
+		EVTHREAD_CONDITION_API_VERSION,
+		evthread_posix_cond_alloc,
+		evthread_posix_cond_free,
+		evthread_posix_cond_signal,
+		evthread_posix_cond_wait
+	};
+	/* Set ourselves up to get recursive locks. */
+	if (pthread_mutexattr_init(&attr_recursive))
+		return -1;
+	if (pthread_mutexattr_settype(&attr_recursive, PTHREAD_MUTEX_RECURSIVE))
+		return -1;
 
+	evthread_set_lock_callbacks(&cbs);
+	evthread_set_condition_callbacks(&cond_cbs);
+	evthread_set_id_callback(evthread_posix_get_id); //获取当前线程的id
+	return 0;
+}
+```
+
+
+## API
 event_base_dispatch()
 ```cpp
 /**

@@ -60,13 +60,13 @@ all-stop模式
 > 一般来说，gdb不能单步所有的线程。因为线程调度是gdb无法控制的。  
 > 无论什么时候当gdb停止你的程序，它都会自动切换到触发断点的那个线程。  
 
-no-stop模式 （7.0以后支持）
+non-stop模式 （7.0以后支持）
 > 当程序在gdb中停止，只有当前的线程会被停止，而其他线程将会继续运行。  
 > 这时候step，next这些命令就只对当前线程起作用。  
 > 网络编程常用。
 
 ```bash
-默认no-stop模式
+默认non-stop模式
 (gdb) show non-stop 
 Controlling the inferior in non-stop mode is off. 默认
 

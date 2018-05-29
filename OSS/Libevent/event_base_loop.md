@@ -119,7 +119,7 @@ done:
 }
 ```
 
-## event add 
+## io event add 
 ### epoll下读事件添加的堆栈
 epoll下event\_add会触发如下调用
 ```cpp
@@ -132,7 +132,7 @@ epoll下event\_add会触发如下调用
 ```
 
 
-## event active
+## io event active
 ### epoll下读事件激活的堆栈
 首先来看一个EV\_READ事件激活的堆栈吧
 ```cpp
@@ -305,16 +305,16 @@ event_process_active(struct event_base *base)
 
 	//轮询激活事件；
 	for (i = 0; i < base->nactivequeues; ++i) {
-		//i实质上是fd/signalNo的值，轮询注册到这个fd上的所有回调；
+		//i=event优先级，从高到低轮询同一优先级的所有回调；
 		if (TAILQ_FIRST(&base->activequeues[i]) != NULL) {
 			base->event_running_priority = i;
 			activeq = &base->activequeues[i];
-			if (i < limit_after_prio) //低优先级的至多运行int_max个；
+			if (i < limit_after_prio) //高优先级的至多运行int_max个；
 				c = event_process_active_single_queue(base, activeq,
 				    INT_MAX, NULL);
 			else
 				c = event_process_active_single_queue(base, activeq,
-				    maxcb, endtime); //高优先级的至多运行maxcb个，或者时间到了；
+				    maxcb, endtime); //低优先级的至多运行maxcb个，或者时间到了；
 			if (c < 0) {
 				goto done;
 			} else if (c > 0)
@@ -333,7 +333,7 @@ done:
 ```
 
 ### event\_process\_active\_single\_queue
-帮助event_process_active调用单个queue上的所有事件的回调，这些事件都是绑到同一fd的；
+帮助event_process_active调用单个queue上的所有事件的回调，这些事件都是同一优先级的；
 调用此函数时，调用者必须持有锁，函数离开时会解锁；
 返回成功调用cb的个数；-1如果被signal, event_break打断；
 ```cpp
@@ -462,7 +462,7 @@ event_process_active_single_queue(struct event_base *base,
 
 
 
-## event del
+## io event del
 ### epoll下读事件删除的堆栈
 注意：删除事件的时机，是在event_process_active_signle_queue
 ```cpp
@@ -576,7 +576,13 @@ event_del_nolock_(struct event *ev, int blocking)
 ## base notify
 ### base内部添加read notify event
 base new的时候就创建一个base的通知事件；
-用来干什么呢？ --rwhy
+用来干什么呢？
+> 用来解决多线程下线程的（添加、删除、激活），loop的（停止）被阻塞在backend io.dispatch()上；
+>> 比如，在a线程添加fd的read事件，但b线程还卡在io.dispatch()，那么这次add就不能及时反应在backend io上；
+>> 比如，在a线程对b线程的base loop发起了停止，但B线程还卡在io.dispatch()，那么不能立即退出；
+>> 但是激活呢？--不应该吧，因为已经跳过了io.dispatch() rwhy
+> 
+
 ```cpp
 #0  epoll_apply_one_change (base=0x6121a0, epollop=0x612440, ch=0x7fffffffe220) at epoll.c:292
 #1  0x00007ffff7baef30 in epoll_nochangelist_add (base=0x6121a0, fd=11, old=0, events=2, p=0x6127a0)
@@ -590,8 +596,10 @@ base new的时候就创建一个base的通知事件；
 #8  0x0000000000407327 in main (argc=1, argv=0x7fffffffe5d8) at eventTst.cpp:101
 ```
 
-### evthread\_make\_base\_notifiable\_nolock_
-添加一个持久的内部读事件，用于唤醒主线程（应该是epoll\_wait之类backend wait吧）； --rwhy
+### init notify
+evthread\_make\_base\_notifiable\_nolock_
+添加一个持久的内部读事件，用于唤醒主线程（即是epoll\_wait之类backend wait吧）；
+注意这个读事件的优先级为0，是最高的；
 ```cpp
 static int
 evthread_make_base_notifiable_nolock_(struct event_base *base)
@@ -614,12 +622,13 @@ evthread_make_base_notifiable_nolock_(struct event_base *base)
 #endif
 
 #ifdef EVENT__HAVE_EVENTFD
+	/* linux会走这个分支，即支持eventfd； */
 	base->th_notify_fd[0] = evutil_eventfd_(0,
-	    EVUTIL_EFD_CLOEXEC|EVUTIL_EFD_NONBLOCK);
+	    EVUTIL_EFD_CLOEXEC|EVUTIL_EFD_NONBLOCK); //创建eventfd，并设为cloExec, nonblock特性；
 	if (base->th_notify_fd[0] >= 0) {
-		base->th_notify_fd[1] = -1;
-		notify = evthread_notify_base_eventfd;
-		cb = evthread_notify_drain_eventfd;
+		base->th_notify_fd[1] = -1; //eventfd只需要一个fd，同步双方都对该efd进行读写；
+		notify = evthread_notify_base_eventfd; //base的通知函数，往efd写数据。
+		cb = evthread_notify_drain_eventfd;    //base通知的回调函数，从efd读数据；
 	} else
 #endif
 	if (evutil_make_internal_pipe_(base->th_notify_fd) == 0) {
@@ -629,17 +638,192 @@ evthread_make_base_notifiable_nolock_(struct event_base *base)
 		return -1;
 	}
 
-	base->th_notify_fn = notify;
+	base->th_notify_fn = notify;  //base的通知函数；
 
 	/* prepare an event that we can use for wakeup */
+	/* 初始化持久读wakeup event；fd,cb */
 	event_assign(&base->th_notify, base, base->th_notify_fd[0],
 				 EV_READ|EV_PERSIST, cb, base);
 
 	/* we need to mark this as internal event */
 	base->th_notify.ev_flags |= EVLIST_INTERNAL;
-	event_priority_set(&base->th_notify, 0);
+	event_priority_set(&base->th_notify, 0); //这样的event优先级最高，越低越高；
 
 	return event_add_nolock_(&base->th_notify, NULL, 0);
+}
+```
+
+### notify with eventfd
+evthread_notify_base_eventfd
+往efd写数据，通知事件；
+```cpp
+static int evthread_notify_base_eventfd(struct event_base *base)
+{
+	ev_uint64_t msg = 1;
+	int r;
+	do {
+		r = write(base->th_notify_fd[0], (void*) &msg, sizeof(msg));
+	} while (r < 0 && errno == EAGAIN);
+
+	return (r < 0) ? -1 : 0;
+}
+```
+
+evthread_notify_drain_eventfd
+从efd读数据，通知到达的回调；
+通知回调不需要做什么！
+因为通知函数，使notify fd可读，打断了backend io.dispatch，达到了效果；
+这里只需要把notify fd上的数据读干净，保证下次通知能正常到达；
+```cpp
+static void evthread_notify_drain_eventfd(evutil_socket_t fd, short what, void *arg)
+{
+	ev_uint64_t msg;
+	ev_ssize_t r;
+	struct event_base *base = arg;
+
+	r = read(fd, (void*) &msg, sizeof(msg));
+	if (r<0 && errno != EAGAIN) {
+		event_sock_warn(fd, "Error reading from eventfd");
+	}
+	EVBASE_ACQUIRE_LOCK(base, th_base_lock);
+	base->is_notify_pending = 0; //接收完，把base的notify_pending重置；
+	EVBASE_RELEASE_LOCK(base, th_base_lock);
+}
+```
+
+### notify with pipe
+evthread_notify_base_default
+
+evthread_notify_drain_default
+
+
+### notify use
+evthread_notify_base
+告诉正在运行event_loop的线程：让其停止backend的io dispatch函数，并处理激活的callback.
+```cpp
+/** Tell the thread currently running the event_loop for base (if any) that it
+ * needs to stop waiting in its dispatch function (if it is) and process all
+ * active callbacks. */
+static int
+evthread_notify_base(struct event_base *base)
+{
+	EVENT_BASE_ASSERT_LOCKED(base);
+	if (!base->th_notify_fn)
+		return -1;
+	if (base->is_notify_pending)
+		return 0;
+	base->is_notify_pending = 1;
+	return base->th_notify_fn(base);
+}
+```
+
+什么时候发通知？？
+> 1、有用到了多线程  
+> 2、base已经loop起来了  
+> 3、跑base loop的线程id!=当前调用线程id  
+
+外加以下调用时机
+> event\_base\_loopbreak
+> event\_base\_loopcontinue
+> event\_add\_nolock\_
+> event\_del\_nolock\_
+> event\_callback\_active\_nolock\_
+> event\_callback\_active\_later\_nolock\_
+> event\_base\_del\_virtual_ 
+> 
+
+所有的调用都需要用以下宏来进行判断；
+```cpp
+(gdb) macro expand EVBASE_NEED_NOTIFY(event_base)
+expands to: (evthread_id_fn_ != ((void *)0) && (event_base)->running_loop && (event_base)->th_owner_id
+!= evthread_id_fn_())
+(gdb) p evthread_id_fn_
+$1 = (long unsigned int (*)(void)) 0x7ffff7976f27 <evthread_posix_get_id>
+
+//extern unsigned long (*evthread_id_fn_)(void);
+```
+
+## priority 
+### base priority 
+event_base_priority_init
+
+### event priority 
+event_priority_set
+如下面设置base的notify event的优先级为0
+```cpp
+event_priority_set(&base->th_notify, 0); //这样便设置成这个事件的callback优先级
+```
+
+如果没有调用上述函数进行设置那么event_new的时候默认为
+```cpp
+int event_assign(...) {
+	...
+	if (base != NULL) {
+		/* by default, we put new events into the middle priority */
+		ev->ev_pri = base->nactivequeues / 2;
+	}
+}
+```
+
+### priority原理
+在base众多字段中和事件优先级有关系的是如下：
+> base.activequeues
+> base.nactivequeues
+> base.event\_continue
+> base.limit\_callbacks\_after\_prio
+
+其中最重要的是：event\_continue
+它可以在激活事件、手动调用loopcontinue进行触发；
+在循环调用callback list时进行判断是否开启，并退出，进入下一次base loop；（开启新一次的事件分发）
+
+其次重要的是base.limit\_callbacks\_after\_prio
+它可以保证，高优先级的先运行完；
+
+
+看看base.event\_continue有谁在设置
+怎么我觉得下面的2处设置没用，---rwhy
+因为跑到调用callback的时候，2已经执行完了，再也不能去打断callback队列执行了（它俩是一个线程内的同步序列）；rwhy
+```cpp
+//1、每次循环都会重置如下开关
+base_loop() {
+	while (!done) {
+		base->event_continue = 0;
+		...
+	}
+}
+
+//2、激活事件时，只要当前激活的事件优先级高于base正在运行的优先级，那么置开关；
+//base没有跑callback时置-1
+void event_active_nolock_(struct event *ev, int res, short ncalls) {
+	if (ev->ev_pri < base->event_running_priority)
+		base->event_continue = 1;
+}
+
+//3、
+int event_base_loopcontinue(struct event_base *event_base) {   
+	event_base->event_continue = 1;  
+}
+```
+
+看看base.event\_continue有谁在用，让执行callback的循环退出，进入下次base\_loop。
+```cpp
+event_process_active(struct event_base *base) {
+	//从高到低优先级执行cb list.
+	for (i = 0; i < base->nactivequeues; ++i) {
+		if (TAILQ_FIRST(&base->activequeues[i]) != NULL) {
+			base->event_running_priority = i;
+			activeq = &base->activequeues[i];
+				//调用i优先级对应callback list
+				c = event_process_active_single_queue(base, activeq, maxcb, endtime) {
+					//每执行完一个cb，就要检测
+					if (base->event_continue)
+						break;
+				}
+		}
+	}
+
+done:
+	base->event_running_priority = -1;
 }
 ```
 

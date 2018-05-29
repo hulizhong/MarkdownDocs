@@ -85,7 +85,7 @@ const struct eventop epollops = {
 epoll运行是靠这个结构体的，而非对外的epollops；同时这也是epoll\_init返回的类型。
 ```cpp
 struct epollop {
-	struct epoll_event *events; //epoll的事件
+	struct epoll_event *events; //epoll的事件数组，作为epoll\_wait()的参数装填的激活事件；
 	int nevents; //events的数量；
 	int epfd;  //epoll的句柄
 #ifdef USING_TIMERFD
@@ -284,7 +284,7 @@ epoll_nochangelist_add(struct event_base *base, evutil_socket_t fd,
 ```
 
 将ch转成epoll\_event添加到epoll句柄epollop.epfd中；
-有可能不需要添加这个事件；
+changlist, nochangelist都是调用这个接口对epoll进行监听事件的增删；
 ```cpp
 static int epoll_apply_one_change(struct event_base *base,
     struct epollop *epollop,
@@ -299,7 +299,7 @@ static int epoll_apply_one_change(struct event_base *base,
 	op = epoll_op_table[idx].op;
 	events = epoll_op_table[idx].events;
 
-	if (!events) {
+	if (!events) { //有可能不需要添加这个事件；
 		EVUTIL_ASSERT(op == 0);
 		return 0;
 	}
@@ -377,7 +377,27 @@ static int epoll_apply_one_change(struct event_base *base,
 }
 ```
 
-## epoll\_nochangelist\_del,
+## epoll\_nochangelist\_del
+根据fd, old, events构造event\_change，并调用epoll进行删除；
+```cpp
+static int
+epoll_nochangelist_del(struct event_base *base, evutil_socket_t fd,
+    short old, short events, void *p)
+{
+	struct event_change ch;
+	ch.fd = fd;
+	ch.old_events = old;
+	ch.read_change = ch.write_change = ch.close_change = 0;
+	if (events & EV_WRITE)
+		ch.write_change = EV_CHANGE_DEL;
+	if (events & EV_READ)
+		ch.read_change = EV_CHANGE_DEL;
+	if (events & EV_CLOSED)
+		ch.close_change = EV_CHANGE_DEL;
+
+	return epoll_apply_one_change(base, base->evbase, &ch);
+}
+```
 
 ## epoll\_dispatch
 ```cpp
@@ -418,7 +438,9 @@ static int epoll_dispatch(struct event_base *base, struct timeval *tv)
 		}
 	}
 
+	/* 将change list上对fd的更改，全部加载到epoll中去； */
 	epoll_apply_changes(base);
+	/* 将change list上的更改事件全部重置； */
 	event_changelist_remove_all_(&base->changelist, base);
 
 	EVBASE_RELEASE_LOCK(base, th_base_lock); //释放base，要不调event_add时加不上event了；
