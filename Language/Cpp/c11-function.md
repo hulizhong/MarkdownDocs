@@ -1,23 +1,30 @@
 [toc]
 
 ## ReadMe
-std::function
-- 类模板：一种通用、多态的函数封装
+std::function 可调用对象的包装器。
+
+- 实质是类模板：一种通用、多态的函数封装
 - 可对c++中现有的可调用实体的安全包裹；（如函数指针这种是类型不安全的）
-	- 普通函数
-	- lambda表达式
 	- 函数指针
-	- 其它函数对象
+		- 普通函数
+		- 类非静态成员函数
+		- 类静态成员函数，需要借助std::bind来构造对象；
+	- lambda表达式
+	- 仿函数
+- 功能
+	- 延迟调用；
+	- 实现函数回调；
+- 注意点
+	- fcuntion对象不能对比相等与否；（只能用于判空NULL/nullptr）
+	- 头文件 functional
+	- 编译 -std=c++11
 
 
-## 普通函数
-
+## 函数指针-普通函数
+请看如下代码
 ```cpp
 #include <functional>  
-//声明一个模板  
-typedef std::function<int(int)> Functional;
-
-//normal function  
+//封装普通函数  
 int TestFunc(int a)
 { 
 	return a;
@@ -25,20 +32,90 @@ int TestFunc(int a)
 
 int main(int argc, char* argv[])  
 {  
-	//封装普通函数  
+	typedef std::function<int(int)> Functional;
+
 	Functional obj = TestFunc;  
 	int res = obj(0);  
 	cout << "normal function : " << res << endl;  
 }
 ```
 
+## 函数指针-类成员函数
+非静态成员函数，需要绑定调用对象。注意以下内容
+> 借助std::bind将对象与参数绑在一块；
+> 成员函数必须加取地址符；
+
+静态成员函数，不需要绑定调用对象；
+```cpp
+class CTest
+{   
+public:
+	int Func(int a)
+    {
+        return a;
+    }
+    static int SFunc(int a)  
+    {  
+        return a;  
+    }  
+};
+
+CTest t;
+Functional obj = std::bind(&CTest::Func, &t, std::placeholders::_1);  
+int res = obj(3);  
+cout << "member function : " << res << endl;  
+
+obj = CTest::SFunc;  
+res = obj(4);                                                                                                                           
+cout << "static member function : " << res << endl;  
+```
+
 ## lambda表达式
+请看如下代码
+```cpp
+auto lambda = [](int a)->int{return a;};
+
+typedef std::function<int(int)> Functional;
+Functional obj = lambda;
+int res = obj(2);  
+```
 
 
 
-## 函数指针
+## 仿函数
+请看如下代码
+```cpp
+class Functor  
+{  
+public:  
+    int operator() (int a)  
+    {  
+        return a;  
+    }  
+};  
 
-## 其它函数对象
+typedef std::function<int(int)> Functional;
+Functor functorObj;
+Functional obj = functorObj;
+int res = obj(2);  
+```
+
+
+## std::bind
+它是一个函数模板，如同一个函数适配器；
+把一个原本接收N个参数的函数fn，通过绑定一些参数，返回一个接收M个参数的函数ret；
+> 绑定的参数将以值传递的方式传递给具体的函数。
+> 占位符号将会以引用的方式传递。
+
+函数ret可以直接赋值给std::function；
+
+
+- 它可以绑定
+	- 普通函数
+	- lambda表达式
+	- 类成员函数，成员变量
+	- 模板函数
+
 
 ## std::function::target 
 返回指向存储的可调用函数目标的指针。
