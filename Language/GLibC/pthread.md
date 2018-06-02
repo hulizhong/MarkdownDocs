@@ -110,12 +110,22 @@ int pthread_attr_getstacksize(pthread_attr_t *attr, size_t *stacksize);
 int pthread_attr_setschedpolicy(pthread_attr_t *attr, int policy);
 int pthread_attr_getschedpolicy(pthread_attr_t *attr, int *policy);
 
-//调度参数（每个系统可设值不一样，故先取出最大值、最小值，再去设置大小，Linux为1-99）
+//调度参数，包含优先级（每个系统可设值不一样，故先取出最大值、最小值，再去设置大小，Linux为1-99）
 int pthread_attr_setschedparam(pthread_attr_t *attr, const struct sched_param *param);
 int pthread_attr_getschedparam(pthread_attr_t *attr, struct sched_param *param);
+```
 
-int sched_get_priority_max(int policy); 
+获取policy类型对应的最高、低优先级；
+```cpp
+int sched_get_priority_max(int policy=SCHED_OTHER|SCHED_FIFO|SCHED_RR); 
 int sched_get_priority_min(int policy);
+
+#ifdef HAVE_SCHED_GET_PRIORITY_MIN
+    int min_priority = sched_get_priority_min(pthread_policy);
+#endif
+#ifdef HAVE_SCHED_GET_PRIORITY_MAX
+    int max_priority = sched_get_priority_max(pthread_policy);
+#endif
 ```
 
 ### 亲和性
