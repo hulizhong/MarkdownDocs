@@ -38,6 +38,7 @@ catch捕获：在deliver到进程后执行了信号处理signal handler
 ## 信号的调用时机
 
 以下是信号的调用时机
+
 ![](img\signal-callTime.png)
 
 
@@ -75,6 +76,7 @@ struct sigaction {
 ```
 
 进程的任务结构体（图示意）
+
 ![](img\processStruct.task_struct.png)
 
 

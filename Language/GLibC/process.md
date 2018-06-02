@@ -40,16 +40,6 @@ pid_t fork(void);
 
 ### exec*
 exec这个系列函数，替换当前的进程映象。
-
-- 参数
-	- path可执行文件的文件名（完整路径）。
-	- file可执行文件的文件名（可在PATH中搜索到）。
-	- arg可变参数；
-	- argv参数数组；传被传递给path/file的main函数。
-	- Envp设置新程序的环境变量。（默认为全局变量environ指定）
-- 返回
-	- 正常情况是不返回的。除非是出错了-1，并设置errno。
-
 ```cpp
 extern char **environ;
 int execl(const char *path, const char *arg, ...);
@@ -59,6 +49,15 @@ int execv(const char *path, char *const argv[]);
 int execvp(const char *file, char *const argv[]);
 int execvpe(const char *file, char *const argv[], char *const envp[]);
 ```
+- 参数
+	- path可执行文件的文件名（完整路径）。
+	- file可执行文件的文件名（可在PATH中搜索到）。
+	- arg可变参数；
+	- argv参数数组；传被传递给path/file的main函数。
+	- Envp设置新程序的环境变量。（默认为全局变量environ指定）
+- 返回
+	- 正常情况是不返回的。除非是出错了-1，并设置errno。
+
 
 
 #### Be Careful

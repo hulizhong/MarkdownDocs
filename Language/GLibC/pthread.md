@@ -337,7 +337,10 @@ int pthread_rwlock_unlock()
 
 
 ### 条件变量
-其api如下
+需要一个mutex进行配合；为什么？
+> 当cond不成立的时候需要把call thread放在等待cond成立的等待列表中；（保证原子）
+
+api如下：
 ```cpp
 int pthread_cond_init()
 PTHREAD_COND_INITIALIZER
@@ -350,9 +353,6 @@ int pthread_cond_broadcast()
 
 #### pthread\_cond\_wait
 等待cond的成立，如果不成立会陷入睡眠，阻塞等待cond的成立；
-
-为什么需要mutex参数？
-> 当cond不成立的时候需要把call thread放在等待cond成立的等待列表中；（保证原子）
 
 pthread\_cond\_wait阻塞时、唤醒时各自有什么操作？
 > 当cond不成立时，即阻塞时：
