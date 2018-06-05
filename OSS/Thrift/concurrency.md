@@ -403,4 +403,627 @@ void PthreadThread::join() {
 }
 ```
 
+## ThreadManager
+线程管理类是个接口类，不能实例化，主要功能如下：
+> 启动一堆（指定个数）线程来跑一堆任务；
+> 线程函数为类中封装类Worker; 
+> 任务为类中封装类Task；
 
+包含如下模块：
+[线程管理器中任务类：ThreadManager::Task](#ThreadManager::Task)
+[线程管理器中各线程的线程函数：ThreadManager::Worker](#ThreadManager::Worker)
+[ThreadManager::Impl](#ThreadManager::Impl)
+
+```cpp
+class ThreadManager {
+protected:
+  ThreadManager() {}
+
+public:
+  typedef apache::thrift::stdcxx::function<void(boost::shared_ptr<Runnable>)> ExpireCallback;
+
+  virtual ~ThreadManager() {}
+
+  /**
+   * Starts the thread manager. Verifies all attributes have been properly
+   * initialized, then allocates necessary resources to begin operation
+   */
+  virtual void start() = 0;
+
+  /**
+   * Stops the thread manager. Aborts all remaining unprocessed task, shuts
+   * down all created worker threads, and realeases all allocated resources.
+   * This method blocks for all worker threads to complete, thus it can
+   * potentially block forever if a worker thread is running a task that
+   * won't terminate.
+   */
+  virtual void stop() = 0;
+
+  /**
+   * Joins the thread manager. This is the same as stop, except that it will
+   * block until all the workers have finished their work. At that point
+   * the ThreadManager will transition into the STOPPED state.
+   */
+  virtual void join() = 0;
+
+  enum STATE { UNINITIALIZED, STARTING, STARTED, JOINING, STOPPING, STOPPED };
+
+  virtual STATE state() const = 0;
+
+  virtual boost::shared_ptr<ThreadFactory> threadFactory() const = 0;
+
+  virtual void threadFactory(boost::shared_ptr<ThreadFactory> value) = 0;
+
+  virtual void addWorker(size_t value = 1) = 0;
+
+  virtual void removeWorker(size_t value = 1) = 0;
+
+  /**
+   * Gets the current number of idle worker threads
+   */
+  virtual size_t idleWorkerCount() const = 0;
+
+  /**
+   * Gets the current number of total worker threads
+   */
+  virtual size_t workerCount() const = 0;
+
+  /**
+   * Gets the current number of pending tasks
+   */
+  virtual size_t pendingTaskCount() const = 0;
+
+  /**
+   * Gets the current number of pending and executing tasks
+   */
+  virtual size_t totalTaskCount() const = 0;
+
+  /**
+   * Gets the maximum pending task count.  0 indicates no maximum
+   */
+  virtual size_t pendingTaskCountMax() const = 0;
+
+  /**
+   * Gets the number of tasks which have been expired without being run.
+   */
+  virtual size_t expiredTaskCount() = 0;
+
+  /**
+   * Adds a task to be executed at some time in the future by a worker thread.
+   *
+   * This method will block if pendingTaskCountMax() in not zero and pendingTaskCount()
+   * is greater than or equalt to pendingTaskCountMax().  If this method is called in the
+   * context of a ThreadManager worker thread it will throw a
+   * TooManyPendingTasksException
+   *
+   * @param task  The task to queue for execution
+   *
+   * @param timeout Time to wait in milliseconds to add a task when a pending-task-count
+   * is specified. Specific cases:
+   * timeout = 0  : Wait forever to queue task.
+   * timeout = -1 : Return immediately if pending task count exceeds specified max
+   * @param expiration when nonzero, the number of milliseconds the task is valid
+   * to be run; if exceeded, the task will be dropped off the queue and not run.
+   *
+   * @throws TooManyPendingTasksException Pending task count exceeds max pending task count
+   */
+  virtual void add(boost::shared_ptr<Runnable> task,
+                   int64_t timeout = 0LL,
+                   int64_t expiration = 0LL) = 0;
+
+  /**
+   * Removes a pending task
+   */
+  virtual void remove(boost::shared_ptr<Runnable> task) = 0;
+
+  /**
+   * Remove the next pending task which would be run.
+   *
+   * @return the task removed.
+   */
+  virtual boost::shared_ptr<Runnable> removeNextPending() = 0;
+
+  /**
+   * Remove tasks from front of task queue that have expired.
+   */
+  virtual void removeExpiredTasks() = 0;
+
+  /**
+   * Set a callback to be called when a task is expired and not run.
+   *
+   * @param expireCallback a function called with the shared_ptr<Runnable> for
+   * the expired task.
+   */
+  virtual void setExpireCallback(ExpireCallback expireCallback) = 0;
+
+  static boost::shared_ptr<ThreadManager> newThreadManager();
+
+  /**
+   * Creates a simple thread manager the uses count number of worker threads and has
+   * a pendingTaskCountMax maximum pending tasks. The default, 0, specified no limit
+   * on pending tasks
+   */
+  static boost::shared_ptr<ThreadManager> newSimpleThreadManager(size_t count = 4,
+                                                                 size_t pendingTaskCountMax = 0);
+
+  class Task;
+
+  class Worker;
+
+  class Impl;
+};
+```
+
+### ThreadManager::Task
+```cpp
+class ThreadManager::Task : public Runnable {
+public:
+  enum STATE { WAITING, EXECUTING, CANCELLED, COMPLETE };
+
+  Task(shared_ptr<Runnable> runnable, int64_t expiration = 0LL)
+    : runnable_(runnable),
+      state_(WAITING),
+      expireTime_(expiration != 0LL ? Util::currentTime() + expiration : 0LL) {}
+
+  ~Task() {}
+
+  void run() {
+    if (state_ == EXECUTING) {
+      runnable_->run();
+      state_ = COMPLETE;
+    }
+  }
+
+  shared_ptr<Runnable> getRunnable() { return runnable_; }
+
+  int64_t getExpireTime() const { return expireTime_; }
+
+private:
+  shared_ptr<Runnable> runnable_;
+  friend class ThreadManager::Worker;
+  STATE state_;
+  int64_t expireTime_;
+};
+```
+
+### ThreadManager::Worker
+```cpp
+class ThreadManager::Worker : public Runnable {
+  enum STATE { UNINITIALIZED, STARTING, STARTED, STOPPING, STOPPED };
+
+public:
+  Worker(ThreadManager::Impl* manager) : manager_(manager), state_(UNINITIALIZED), idle_(false) {}
+
+  ~Worker() {}
+
+private:
+  bool isActive() const {
+    return (manager_->workerCount_ <= manager_->workerMaxCount_)
+           || (manager_->state_ == JOINING && !manager_->tasks_.empty());
+  }
+
+public:
+  /**
+   * Worker entry point
+   *
+   * As long as worker thread is running, pull tasks off the task queue and
+   * execute.
+   */
+  void run() {
+    bool active = false;
+    bool notifyManager = false;
+
+    /**
+     * Increment worker semaphore and notify manager if worker count reached
+     * desired max
+     *
+     * Note: We have to release the monitor and acquire the workerMonitor
+     * since that is what the manager blocks on for worker add/remove
+     */
+    {
+      Synchronized s(manager_->monitor_);
+      active = manager_->workerCount_ < manager_->workerMaxCount_;
+      if (active) {
+        manager_->workerCount_++;
+        notifyManager = manager_->workerCount_ == manager_->workerMaxCount_;
+      }
+    }
+
+    if (notifyManager) {
+      Synchronized s(manager_->workerMonitor_);
+      manager_->workerMonitor_.notify();
+      notifyManager = false;
+    }
+
+    while (active) {
+      shared_ptr<ThreadManager::Task> task;
+
+      /**
+       * While holding manager monitor block for non-empty task queue (Also
+       * check that the thread hasn't been requested to stop). Once the queue
+       * is non-empty, dequeue a task, release monitor, and execute. If the
+       * worker max count has been decremented such that we exceed it, mark
+       * ourself inactive, decrement the worker count and notify the manager
+       * (technically we're notifying the next blocked thread but eventually
+       * the manager will see it.
+       */
+      {
+        Guard g(manager_->mutex_);
+        active = isActive();
+
+		//未关闭状态下、任务队列为空，那么就睡眠等待任务到来；
+        while (active && manager_->tasks_.empty()) {
+          manager_->idleCount_++;
+          idle_ = true;
+          manager_->monitor_.wait();
+          active = isActive();
+          idle_ = false;
+          manager_->idleCount_--;
+        }
+
+        if (active) {
+          manager_->removeExpiredTasks(); //删除到期任务，会调用超时回调；
+
+          if (!manager_->tasks_.empty()) {
+            task = manager_->tasks_.front(); //取出最头部的一个任务；
+            manager_->tasks_.pop();
+            if (task->state_ == ThreadManager::Task::WAITING) {
+              task->state_ = ThreadManager::Task::EXECUTING; //更改任务状态；
+            }
+          }
+
+			//如果此时插入任务被阻塞，那么唤醒之；
+          if (manager_->pendingTaskCountMax_ != 0
+                  && manager_->tasks_.size() <= manager_->pendingTaskCountMax_ - 1) {
+              manager_->maxMonitor_.notify();
+          }
+        } else {
+          idle_ = true;
+          manager_->workerCount_--;
+          notifyManager = (manager_->workerCount_ == manager_->workerMaxCount_);
+        }
+      }
+
+      if (task) {
+        if (task->state_ == ThreadManager::Task::EXECUTING) {
+          try {
+            task->run(); //执行任务的run()
+          } catch (const std::exception& e) {
+            GlobalOutput.printf("[ERROR] task->run() raised an exception: %s", e.what());
+          } catch (...) {
+            GlobalOutput.printf("[ERROR] task->run() raised an unknown exception");
+          }
+        }
+      }
+    }
+
+    {
+      Synchronized s(manager_->workerMonitor_);
+      manager_->deadWorkers_.insert(this->thread());
+      if (notifyManager) {
+        manager_->workerMonitor_.notify();
+      }
+    }
+
+    return;
+  }
+
+private:
+  ThreadManager::Impl* manager_;
+  friend class ThreadManager::Impl;
+  STATE state_;
+  bool idle_;  //当前线程是否是空闲状态；
+};
+```
+
+### ThreadManager::Impl
+```cpp
+class ThreadManager::Impl : public ThreadManager {
+
+public:
+  Impl()
+    : workerCount_(0),
+      workerMaxCount_(0),
+      idleCount_(0),
+      pendingTaskCountMax_(0),
+      expiredCount_(0),
+      state_(ThreadManager::UNINITIALIZED),
+      monitor_(&mutex_),
+      maxMonitor_(&mutex_) {}
+
+  ~Impl() { stop(); }
+
+  void start();
+
+  void stop() { stopImpl(false); }
+
+  void join() { stopImpl(true); }
+
+  ThreadManager::STATE state() const { return state_; }
+
+  shared_ptr<ThreadFactory> threadFactory() const {
+    Synchronized s(monitor_);
+    return threadFactory_;
+  }
+
+  void threadFactory(shared_ptr<ThreadFactory> value) {
+    Synchronized s(monitor_);
+    threadFactory_ = value;
+  }
+
+  void addWorker(size_t value);
+
+  void removeWorker(size_t value);
+
+  size_t idleWorkerCount() const { return idleCount_; }
+
+  size_t workerCount() const {
+    Synchronized s(monitor_);
+    return workerCount_;
+  }
+
+  size_t pendingTaskCount() const {
+    Synchronized s(monitor_);
+    return tasks_.size();
+  }
+
+  size_t totalTaskCount() const {
+    Synchronized s(monitor_);
+    return tasks_.size() + workerCount_ - idleCount_;
+  }
+
+  size_t pendingTaskCountMax() const {
+    Synchronized s(monitor_);
+    return pendingTaskCountMax_;
+  }
+
+  size_t expiredTaskCount() {
+    Synchronized s(monitor_);
+    size_t result = expiredCount_;
+    expiredCount_ = 0;
+    return result;
+  }
+
+  void pendingTaskCountMax(const size_t value) {
+    Synchronized s(monitor_);
+    pendingTaskCountMax_ = value;
+  }
+
+  bool canSleep();
+
+  void add(shared_ptr<Runnable> value, int64_t timeout, int64_t expiration);
+
+  void remove(shared_ptr<Runnable> task);
+
+  shared_ptr<Runnable> removeNextPending();
+
+  void removeExpiredTasks();
+
+  void setExpireCallback(ExpireCallback expireCallback);
+
+private:
+  void stopImpl(bool join);
+
+  size_t workerCount_;      //当前正在工作的线程数；
+  size_t workerMaxCount_;   //最大工作线程数
+  size_t idleCount_;       //空闲的线程数；
+  size_t pendingTaskCountMax_;  //pending的任务最大数；
+  size_t expiredCount_;
+  ExpireCallback expireCallback_;  //超时的task需要执行的cb
+
+  ThreadManager::STATE state_;
+  shared_ptr<ThreadFactory> threadFactory_;
+
+  friend class ThreadManager::Task;
+  std::queue<shared_ptr<Task> > tasks_;  //任务列表
+  Mutex mutex_;
+  Monitor monitor_;
+  Monitor maxMonitor_;
+  Monitor workerMonitor_;
+
+  friend class ThreadManager::Worker;
+  std::set<shared_ptr<Thread> > workers_;      //工作线程集
+  std::set<shared_ptr<Thread> > deadWorkers_;  //？
+  std::map<const Thread::id_t, shared_ptr<Thread> > idMap_;
+};
+```
+
+## SimpleThreadManager 
+```cpp
+class SimpleThreadManager : public ThreadManager::Impl {
+
+public:
+  SimpleThreadManager(size_t workerCount = 4, size_t pendingTaskCountMax = 0)
+    : workerCount_(workerCount), pendingTaskCountMax_(pendingTaskCountMax) {}
+
+  void start() {
+    ThreadManager::Impl::pendingTaskCountMax(pendingTaskCountMax_);
+    ThreadManager::Impl::start();
+    addWorker(workerCount_);
+  }
+
+private:
+  const size_t workerCount_;
+  const size_t pendingTaskCountMax_;
+  Monitor monitor_;
+};
+```
+
+## TimerManager
+定时器管理类，主要功能如下：
+> 启动一个线程来跑一堆的超时任务；
+> 线程函数为Dispatcher; 
+> 超时任务为类中封装类Task；
+
+包含如下模块：
+[定时器线程函数：TimerManager::Dispatcher](#TimerManager::Dispatcher)
+
+```cpp
+class TimerManager {
+public:
+  TimerManager();
+
+  virtual ~TimerManager();
+
+  virtual boost::shared_ptr<const ThreadFactory> threadFactory() const;
+
+  virtual void threadFactory(boost::shared_ptr<const ThreadFactory> value);
+
+  /**
+   * Starts the timer manager service
+   *
+   * @throws IllegalArgumentException Missing thread factory attribute
+   */
+  virtual void start();
+
+  /**
+   * Stops the timer manager service
+   */
+  virtual void stop();
+
+  virtual size_t taskCount() const;
+
+  /**
+   * Adds a task to be executed at some time in the future by a worker thread.
+   *
+   * @param task The task to execute
+   * @param timeout Time in milliseconds to delay before executing task
+   */
+  virtual void add(boost::shared_ptr<Runnable> task, int64_t timeout);
+
+  /**
+   * Adds a task to be executed at some time in the future by a worker thread.
+   *
+   * @param task The task to execute
+   * @param timeout Absolute time in the future to execute task.
+   */
+  virtual void add(boost::shared_ptr<Runnable> task, const struct THRIFT_TIMESPEC& timeout);
+
+  /**
+   * Adds a task to be executed at some time in the future by a worker thread.
+   *
+   * @param task The task to execute
+   * @param timeout Absolute time in the future to execute task.
+   */
+  virtual void add(boost::shared_ptr<Runnable> task, const struct timeval& timeout);
+
+  /**
+   * Removes a pending task
+   *
+   * @throws NoSuchTaskException Specified task doesn't exist. It was either
+   *                             processed already or this call was made for a
+   *                             task that was never added to this timer
+   *
+   * @throws UncancellableTaskException Specified task is already being
+   *                                    executed or has completed execution.
+   */
+  virtual void remove(boost::shared_ptr<Runnable> task);
+
+  enum STATE { UNINITIALIZED, STARTING, STARTED, STOPPING, STOPPED };
+
+  virtual STATE state() const;
+
+private:
+  boost::shared_ptr<const ThreadFactory> threadFactory_;
+  class Task; //定时任务类
+  friend class Task;
+  std::multimap<int64_t, boost::shared_ptr<Task> > taskMap_;  //定时任务集；key为到时时间，从小到大排序；
+  size_t taskCount_;  //定时任务个数
+  Monitor monitor_;
+  STATE state_;
+  class Dispatcher;  //定时任务线程函数，即定时器分发器；
+  friend class Dispatcher;
+  boost::shared_ptr<Dispatcher> dispatcher_;   //定时任务线程函数；
+  boost::shared_ptr<Thread> dispatcherThread_; //定时任务线程；
+  typedef std::multimap<int64_t, boost::shared_ptr<TimerManager::Task> >::iterator task_iterator;
+  typedef std::pair<task_iterator, task_iterator> task_range;
+};
+```
+
+### TimerManager::Dispatcher
+定时器分发器；
+```cpp
+class TimerManager::Dispatcher : public Runnable {
+
+public:
+  Dispatcher(TimerManager* manager) : manager_(manager) {}
+
+  ~Dispatcher() {}
+
+  /**
+   * Dispatcher entry point
+   *
+   * As long as dispatcher thread is running, pull tasks off the task taskMap_
+   * and execute.
+   */
+  void run() {
+    {
+      Synchronized s(manager_->monitor_);
+      if (manager_->state_ == TimerManager::STARTING) {
+        manager_->state_ = TimerManager::STARTED;
+        manager_->monitor_.notifyAll();
+      }
+    }
+
+    do {
+      std::set<shared_ptr<TimerManager::Task> > expiredTasks;
+      {
+        Synchronized s(manager_->monitor_);
+        task_iterator expiredTaskEnd;
+        int64_t now = Util::currentTime();
+
+		//轮询等待超时任务的时机到来；
+		//taskMap_={5点, 7点, 9点}, now=4点，那么第1个元素5大于Now，就说明现在没有一个任务是超时的；
+        while (manager_->state_ == TimerManager::STARTED && 
+              (expiredTaskEnd = manager_->taskMap_.upper_bound(now)) == manager_->taskMap_.begin()) {
+          int64_t timeout = 0LL;
+          if (!manager_->taskMap_.empty()) {
+            timeout = manager_->taskMap_.begin()->first - now;
+          }
+          assert((timeout != 0 && manager_->taskCount_ > 0)
+                 || (timeout == 0 && manager_->taskCount_ == 0));
+          try {
+            manager_->monitor_.wait(timeout);
+          } catch (TimedOutException&) {
+          }
+          now = Util::currentTime();
+        }
+
+		//找出超时的任务、删除，并置TimeManager状态；
+        if (manager_->state_ == TimerManager::STARTED) {
+          for (task_iterator ix = manager_->taskMap_.begin(); ix != expiredTaskEnd; ix++) {
+            shared_ptr<TimerManager::Task> task = ix->second;
+            expiredTasks.insert(task);
+            if (task->state_ == TimerManager::Task::WAITING) {
+              task->state_ = TimerManager::Task::EXECUTING;
+            }
+            manager_->taskCount_--;
+          }
+          manager_->taskMap_.erase(manager_->taskMap_.begin(), expiredTaskEnd);
+        }
+      }
+
+		//执行超时任务；
+      for (std::set<shared_ptr<Task> >::iterator ix = expiredTasks.begin();
+           ix != expiredTasks.end();
+           ++ix) {
+        (*ix)->run();
+      }
+
+    } while (manager_->state_ == TimerManager::STARTED);
+
+    {
+      Synchronized s(manager_->monitor_);
+      if (manager_->state_ == TimerManager::STOPPING) {
+        manager_->state_ = TimerManager::STOPPED;
+        manager_->monitor_.notify();
+      }
+    }
+    return;
+  }
+
+private:
+  TimerManager* manager_;
+  friend class TimerManager;
+};
+```
