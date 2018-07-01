@@ -1,11 +1,10 @@
 [toc]
 
-## 类内部关系
-### 友元
+## 友元
 允许一个类将对其非公有成员的访问权（protect, private）授予指定的函数或者类。
 友元声明可以出现在类中的任何地方，而不受（public, protect, private）限制。
 
-#### 各种友元
+### 各种友元
 - 友元函数
 
 	```cpp
@@ -76,13 +75,85 @@
 	}
 	```
 
-#### 友元的优劣
+### 友元的优劣
 - 优点
 	- 可以灵活地实现需要访问若干类的私有或受保护的成员才能完成的任务；
 
 - 缺点
 	- 一个类将对其非公有成员的访问权限授予其他函数或者类，会破坏该类的封装性，降低该类的可靠性和可维护性。
 
+## 各种特殊的类
+### 内部类
+内部类与外部类没有任何关系；
+内部类受外部类public/protected/private约束；
 
+有内部类的概念是因为：
+> 内部类主要是为了避免命名冲突；（内部类定义为public）
+> 为了隐藏名称（内部类定义为private/protected）
+
+### 单例类
+请看一种实现
+```cpp
+class Demo
+{
+public:
+	static Demo* getInstance();
+
+protected:
+	Demo();  //构造要置非public，析构则是public
+	static Demo* instance;
+};
+
+
+Demo* Demo::instance;
+Demo* Demo::getInstance()
+{
+	if (instance == NULL) {
+		instance = new Demo();
+	}
+	return instance;
+}
+```
+
+这种实现呢？
+```cpp
+class Demo
+{
+public:
+	static Demo* getInstance();
+	static bool init();
+	bool initResource();
+
+protected:
+	Demo();  //构造要置非public（还有赋值、拷贝构造），析构则是public
+	static Demo* instance;
+private:
+	bool mBool;
+};
+
+Demo* Demo::instance;
+Demo* Demo::getInstance()
+{
+	return instance;
+}
+bool Demo::init()
+{
+	if (instance == NULL) {
+		instance = new Demo();
+	}
+	//init other resource.
+	instance->initResource();  //rskill要用对象去调用非静态函数；（类静态函数只能调用静态函数、静态属性）
+}
+bool Demo::initResource()
+{
+	mBool = true;
+}
+Demo::init();
+Demo *obj = Demo::getInstance();
+```
+
+## 类内部关系
 ## 类与类的关系
+### 继承
+### 组合
 
