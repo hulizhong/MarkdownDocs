@@ -153,13 +153,21 @@ lock()
 ## 智能指针的转换
 如同我们用dynamic\_cast对“裸”指针进行类层次上的上下行转换时一样；
 当我们对智能指针进行类层次上的上下行转换时，则需要如下:
+dynamic cast
+```cpp
+boost::dynamic_pointer_cast
+boost::shared_ptr<DeriveClass> ptrDerive = boost::dynamic_pointer_cast<DeriveClass>(ptrBase); 
+	只是dynamic_cast在进行下行转换的时候（即基类到派生类）具有类型检查功能
+```
+
+static cast
+const cast
 ```cpp
 boost::static_pointer_cast
-boost::dynamic_pointer_cast
 boost::const_pointer_cast
 ```
 
-reinterpret\_cast重解释转换
+reinterpret cast重解释转换
 这个转换是最“不安全”的，两个没有任何关系的类指针之间转换都可以用这个转换实现，如下：
 ```cpp
 // reinterpret_cast<new_type>(expression)
@@ -170,15 +178,4 @@ static void* threadMain(void* arg) {
 	delete reinterpret_cast<shared_ptr<PthreadThread>*>(arg);
 }
 ```
-
-具体如下
-参见[static\_pointer\_cast](#static_pointer_cast)
-参见[dynamic\_pointer\_cast](#dynamic_pointer_cast)
-参见[const\_pointer\_cast](#const_pointer_cast)
-[](#)
-
-### static\_pointer\_cast
-### dynamic\_pointer\_cast
-### const\_pointer\_cast
-
 

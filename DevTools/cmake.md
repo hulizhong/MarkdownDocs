@@ -162,3 +162,14 @@ add_executable(multimap ${MULTIMAP_SRC})
     std::cout << "Code With USE_MACRO" << std::endl;
 #endif
 ```
+
+## 宏
+探测OS类型的宏
+```bash
+if (NOT WIN32)
+	不是win32
+if (WIN32 OR APPLE)
+	win32 或者 mac
+else()
+endif()
+```

@@ -23,10 +23,23 @@
 
 
 ## 查看elf工具
-
 用nm查看链接的库里有没有start\_thread\_noexcept这个符号表
 ```cpp
 eventTst.cpp:(.text._ZN5boost6thread12start_threadEv[_ZN5boost6thread12start_threadEv]+0x15): undefined reference to `boost::thread::start_thread_noexcept()'
 collect2: error: ld returned 1 exit status
 make: *** [ev] Error 1
+```
+
+## 宏
+探测OS类型
+```bash
+#if defined(__linux__)
+	linux
+
+#if defined(__APPLE__) && defined(__MACH__)
+	mac
+
+#ifdef WIN32
+#if defined(WIN32)
+	win32
 ```
