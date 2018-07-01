@@ -20,6 +20,10 @@
 > https://blog.csdn.net/bytxl/article/details/50637277
 > https://blog.csdn.net/dbzhang800/article/details/6329314
 
+包含如下章节：
+[使用（整体框架）](#使用（整体框架）)
+[find\_package()](#find_package指令)
+[finder.cmake的编写](#finder.cmake的编写)
 
 ### 使用（整体框架）
 一般使用模块配置的方法，其使用框架如下：
@@ -41,7 +45,7 @@
 		- 看find_package设置的动作而定（告警输出、退出、。。）
 
 
-### find\_package()
+### find\_package指令
 在编译过程中使用了外部库，但并不知道头文件、库的位置，可以用此命令来解决；
 
 查找finder.cmake文件并执行它
@@ -133,3 +137,28 @@ mark_as_advanced(LIBXML2_INCLUDE_DIR LIBXML2_LIBRARY )
 ### 打成rpm包
 可以打成redhat系列的.rpm包；
 
+
+## 指令集
+
+### add_definitions
+提供宏定义的一些用法。
+```bash
+OPTION(USE_A "just for test" OFF)  可在cmake .. -DUSE_A=ON/OFF进行定义；
+OPTION(USE_A "just for test" ON)
+message("the use_a value = ${USE_A}")  要么打OFF，要么打ON
+
+#if (${USE_A} STREQUAL "ON")  use_a变量的值是否为on；
+if (USE_A)  #是否定义过use_a变量，不关心值的内容；
+	但这里USE_A为OFF时怎么进不了这个分支呢？不是已经定义过了吗？rwhy  --难道是on/off是特殊意义？？
+    add_definitions("-DUSE_MACRO")  #在gcc/g++时使用-Duse_macro宏定义；
+endif()
+ 
+add_executable(multimap ${MULTIMAP_SRC})
+```
+在以上例子中，实际应用中为use\_a, use\_macro是一样的名称；
+
+```cpp
+#ifdef USE_MACRO
+    std::cout << "Code With USE_MACRO" << std::endl;
+#endif
+```

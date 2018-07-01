@@ -202,7 +202,6 @@
 	```
 
 
-
 ## 经验
 - 不要在循环中删除迭代器
 	- 在循环中erase(it)会引发迭代器失效；
@@ -212,3 +211,58 @@
 - 它们的效率对比是怎么样的？
 
 
+## 扩展：std::string
+
+```cpp
+std::string str("abc");
+str.data();  返回第1个存储空间的指针
+str.c_str(); 返回null结尾的字符串；（相当于一次拷贝了）
+```
+
+str.c\_str();  //const char*
+> 生成一个const char*指针，指向以空字符终止的数组。
+> 是一个临时的，依赖str的生命周期、str的值；
+
+str.data();   //char*
+> 类似于c_str，只是返回的数组不以空字符终止；
+
+```cpp
+class Str
+{
+public:
+    Str(std::string str) : mStr(str) {}
+    std::string getStr() {
+        return mStr;
+    }
+    void getStr(const char** str, size_t *len) {
+        //*str = mStr.data();
+        *str = mStr.c_str();
+        *len = mStr.size();
+    }
+private:
+    std::string mStr;
+};
+Str gS("Rabin");
+
+void tst(const char** strPtr) //想要更改指针的指向（非内容），那么需要传二级指针；
+{
+#if 0
+    std::string str;
+    str = gS.getStr();
+    *strPtr = str.c_str();
+#else
+    size_t len;
+    gS.getStr(strPtr, &len);
+#endif
+    std::cout << "data in tst:" << *strPtr << std::endl;
+}
+
+int main(int argc, char* argv[])
+{
+    //const char *strPtr = NULL;
+    const char *strPtr = NULL;
+    tst(&strPtr);
+    std::cout << "data in main:" << strPtr << std::endl;
+    return 0;
+}
+```
