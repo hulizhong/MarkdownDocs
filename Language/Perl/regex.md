@@ -7,6 +7,7 @@
 包含如下
 [修饰符](#修饰符)
 [匹配结果](#匹配结果)
+[中文匹配](#中文匹配)
 
 ### 修饰符
 模式匹配有一些常用的修饰符，如下表所示：
@@ -30,6 +31,17 @@
 |$& |匹配段
 |$' |后段
 
+### 中文匹配
+```perl
+#!/usr/bin/perl -w
+use Encode;
+my $txt = "hulg02fdsajk04\@staff.sina.com.cn;xx\@staff.sina.com.cn";
+Encode::_utf8_on($txt); #这是关键，用uft8方式解释字符串；
+my $rgx = qr/[-\w\x{4e00}-\x{9fa5}]{1,64}\@staff\.sina\.com\.cn/; 
+while ($txt =~ /$rgx/ug) {
+	print "<$&>\n";
+}
+```
 
 ## 匹配效率
 具有更加确定性的正则会相对快点

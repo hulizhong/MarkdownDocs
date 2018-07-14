@@ -3,7 +3,11 @@
 
 Single stepping模式是什么；为什么thread no就会显示这样的信息？？
 
- 
+```bash
+set print pretty 
+whatis 显示变量或函数类型
+ptype 显示一个数据结构（如一个结构或C++类）的定义；
+```
 
 ## 宏扩展
 macro expand MACRO(0)

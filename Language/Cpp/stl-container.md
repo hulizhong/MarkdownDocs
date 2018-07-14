@@ -64,7 +64,7 @@ for (auto val : valList) {
 }
 ```
 
-### 编译告警
+### 问题点
 vector使用超出了其空间
 ```bash
 std::vector<int> va(-1);  初始化为-1个空间？
@@ -182,6 +182,13 @@ for (auto &it : map) {
 }
 ```
 
+### 问题点
+```cpp
+const map<std::string, std::string> mp;
+std::string value = mp["key"];  //const map不能用数组法[]去获取value.
+std::string value = mp.at("key");
+```
+
 ## set集合
 它是一个有序的容器，里面的元素都是排序好的支持插入、删除、查找等操作，就像一个集合一样，所有的操作都是严格在$\log_2 N$时间内完成，效率非常高。
 
@@ -205,28 +212,32 @@ for (auto &it : map) {
 ## 经验
 - 不要在循环中删除迭代器
 	- 在循环中erase(it)会引发迭代器失效；
-
 - 什么样的场景该用哪种容器？？
-
 - 它们的效率对比是怎么样的？
 
 
 ## 扩展：std::string
-### 增、删、改、查
-
-
-### data(), c\_str()
-定义、使用如下
+增、删、改、查
+https://www.cnblogs.com/yencain/articles/3110503.html
 ```cpp
-std::string str("abc");
-const char* = str.c_str();
-	生成一个const char*指针，指向以空字符终止的数组。
-	是一个临时的，依赖str的生命周期、str的值；
-char* = str.data();
-	类似于c_str，只是返回的数组不以空字符终止；
+//构造函数
+string(const char *s); 
+
+const char *data()const;  //返回一个非null终止的c字符数组
+const char *c_str()const; //返回一个以null终止的c字符串
+
+//string的赋值：
+string &operator=(const string &s); //把字符串s赋给当前字符串
+string &assign(const char *s); //用c类型字符串s赋值
+string &assign(const char *s,i nt n); //用c字符串s开始的n个字符赋值
+string &assign(const string &s);//把字符串s赋给当前字符串
+string &assign(int n,char c);//用n个字符c赋值给当前字符串
+string &assign(const string &s,int start,int n);//把字符串s中从start开始的n个字符赋给当前字符串
+string &assign(const_iterator first,const_itertor last);//把first和last迭代器之间的部分赋给字符串
 ```
 
-Demo查看
+### data(), c\_str()
+这两函数易出问题是，请看如下：
 ```cpp
 class Str
 {
