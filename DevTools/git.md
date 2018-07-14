@@ -102,6 +102,7 @@ git reset --hard commitID 强制回滚
 ### 合并
 分支的合并有两种方法：
 rebase法，是将当前修改续在上游分支的尾部
+一般用法为把master rebase到个人分支；
 ```bash
 git rebase 上游分支 [下游分支（如果当前分支作为下游分支，则可省略）]
 
@@ -122,6 +123,7 @@ git push -f origin A:A  如果远程A在这次rebase之前没有合到B上，那
 ```
 
 merge法，貌似是按照时间节点合并进去；
+一般用法为把个人分支merge到master上来；（切不可把个人分支rebase到master上）
 ```bash
 git checkout A  切换到A上
 git merge B  把B合到A上来

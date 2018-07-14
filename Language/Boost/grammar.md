@@ -65,6 +65,15 @@ boost::filesystem::is_directory(path);
 boost::filesystem::create_directories(path);
 ```
 
+path类提供的成员函数
+```cpp
+path pt("/a/b");
+pt /= "c.txt" 追加，现在成/a/b/c.txt
+
+pt.has_parent_path() 返回是否具有父目录；
+pt.parent_path()  返回/a/b
+```
+
 ### 文件操作
 写文件
 ```cpp

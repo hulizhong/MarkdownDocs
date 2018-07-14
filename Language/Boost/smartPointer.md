@@ -34,8 +34,12 @@ boost 1.58的智能指针源码目录结构如下：
 自带引用计数器，用以表示类型T的对象引用次数；
 如果count==0那么该对象已无人使用，需要释放对象空间了；
 
-### 成员函数
-构造函数
+包含如下内容
+[基础用法](#共享指针基础用法)
+[易出问题的点](#共享指针难点)
+
+### 共享指针基础用法
+构造
 ```cpp
 class Person {
 public:
@@ -44,39 +48,56 @@ public:
 	}
 };
 
+1、make_shared方法
+#include <boost/make_shared.hpp>
+boost::shared_ptr<Person> p1 = boost::make_shared<Person>(1);  
+	//参数为构造类型的构造函数参数；
+
+2、用裸指针构造
 boost::shared_ptr<Person> p2(new Person(2));  
 boost::shared_ptr<Person> p2 = boost::shared_ptr<Person>(new Person(2)); //这样行吗？用=号了。。。 rwhy
 	//这句话不可以分成两部的，看如下解释：
 		// Person *ptr = New Person(2); p2 = ptr; 因为一个是类，一个是指针所以是没法赋值的！
-
-#include <boost/make_shared.hpp>
-boost::shared_ptr<Person> p1 = boost::make_shared<Person>(1);  
-	//make_shared方法
-
-boost::shared_ptr<Person> p3 = boost::shared_ptr<Person>(new Person(3), boost::bind(&Person::del, this, _1));
-	//指定删除器；
-	//同于std::shared_ptr的默认删除器不支持数组对象；
-
-p2.reset();
-	//语义等价于：referCount--; if(referCount == 0) delete(p1.get());
 p2.reset(new Person(5));
-	//新对一个对象；执行reset语义; 给p2赋上一个新的对象；
+	//新new一个对象；执行reset语义; 给p2赋上一个新的对象；
 	//这个有风险，如果reset count!=0呢，原有对象有没有释放呢？？？ rwhy
+
+补充：指定删除器；
+boost::shared_ptr<Person> p3 = boost::shared_ptr<Person>(new Person(3), boost::bind(&Person::del, this, _1));
+	//同于std::shared_ptr的默认删除器不支持数组对象；
 ```
 
-get()获得裸指针
+成员函数：可以用.来进行访问的函数；
 ```cpp
 boost::shared_ptr<int> intPtr(new int(99));
 
-//如何转void*，.get()之后就是裸指针了，到时随便转；
-int* newPtr = intPtr.get()
-(void*)newPtr;
+intPtr.reset();
+	//语义等价于：referCount--; if(referCount == 0) delete(p1.get());
 
-//判空：可用==NULL,也可以用重载bool类型的
+int* newPtr = intPtr.get() //获得裸指针
+(void*)newPtr;
+	//如何转void*，.get()之后就是裸指针了，到时随便转；
+```
+
+判空：可用==NULL,也可以用重载bool类型的
+```cpp
 if (intPtr)
 	cout << " ..has value " << endl;
 ```
 
+### 共享指针难点
+错误点：一个裸指针创建多个智能指针
+```cpp
+int *ptr = new int(5);
+boost::shared_ptr<int> sptr(ptr);
+boost::shared_ptr<int> sptr2(ptr);
+```
+```bash
+$ ./a.out 
+a.out(72137,0x7fffe33033c0) malloc: *** error for object 0x7fa1ce4002d0: pointer being freed was not allocated
+*** set a breakpoint in malloc_error_break to debug
+Abort trap: 6
+```
 
 ## weak\_ptr
 弱指针，shared\_ptr的助手，配合shared\_ptr避免循环引用；

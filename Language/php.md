@@ -1,9 +1,31 @@
 [TOC]
 
+## ReadMe
 > http://www.runoob.com/php/php-tutorial.html
 > http://php.net/manual/zh/language.oop5.properties.php
 
-## 基础入门
+## 一个demo引进门
+四种php的标记风格
+```php
+<?php
+	echo "这是xml风格的标记";
+?>
+
+<script languange="php">
+	echo "这是脚本风格的标记";
+</script>
+
+<?这是简短风格的标记;?>
+#需要在php.ini中配置short_open_tag=on或者php编译时加入--enable-short-tags选项；
+
+<%
+	echo "这是asp风格的标记";
+%>
+#需要在php.ini中进行配置asp_tags = on;
+```
+
+
+demo如下
 ```php
 <?php
 // PHP 代码
@@ -57,8 +79,6 @@ $instance->displayVar();
 	    	$colors[$key] = strtoupper($color);
 		}
 		```
-
-
 
 
 ## 库
