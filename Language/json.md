@@ -1,5 +1,8 @@
 [TOC]
 
+## ReadMe
+介绍json语法、以及解析json的库；
+
 ## json语法
 - json语法是 JavaScript 语法的子集。
 	- 数据在名称/值对中：用key/value的形式，"key":"value"
@@ -40,5 +43,55 @@ pythoobj = json.loads(jsonstr, encoding=None, cls=None, object_hook=None, parse_
 
 
 ## c++中使用json库
+### libjsoncpp
+从文件加载
+```cpp
+ifstream ifs;
+ifs.open("checkjson.json");
+assert(ifs.is_open());
 
+Json::Value root;
+Json::Reader reader;
+//读文件
+if (!reader.parse(ifs, root, false)) {
+	cerr << "parse failed \n";
+	return;
+}
+
+//读内存
+if (!reader.parse(json_data, json_data + sizeof(json_data), root)) {
+	cerr << "json parse failed\n";
+	return;
+}
+```
+
+写入文件
+```cpp
+Json::Value root;
+Json::FastWriter writer;
+string json_file = writer.write(root);
+```
+
+成员函数
+```cpp
+Json::Value value;
+value["key"].size();
+value["key"].asInt();
+value["key"].asBool();
+value["key"].asInt();
+value["key"].asString();
+value.isMember(char const*) const;  //没有则抛异常；
+
+value["key"].toStyledString(); //将key这个节点的所有内容读作string.
+
+arrayObj.append(item);
+
+```
+
+```cpp
+Json::Value::isMember(char const*) const
+terminating with uncaught exception of type Json::LogicError: in Json::Value::find(key, end, found): requires objectValue or nullValue
+Json::Value::find(char const*, char const*) const
+Json::Value::isMember(char const*) const  抛异常，如果没有这个成员；
+```
 

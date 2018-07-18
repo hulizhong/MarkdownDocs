@@ -143,3 +143,19 @@ gdb a.out core.dump.file
 thread apply all bt
 ```
 
+参数
+```bash
+gdb -args xx ..
+set args
+show args
+info args
+```
+
+源代码路径
+```bash
+dir <>
+directory <>
+directory 不带参数：清除所有自定义的路径；
+show directories
+```
+

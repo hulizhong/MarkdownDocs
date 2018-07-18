@@ -200,3 +200,10 @@ static void* threadMain(void* arg) {
 }
 ```
 
+lexical cast为数值之间的转换提供了一揽子方案
+```cpp
+#include <boost/lexical_cast.hpp>
+string s = "123";  
+int a = boost::lexical_cast<int>(s);  //如果转换发生了意外，lexical_cast会抛出一个bad_lexical_cast异常；
+	//可以顶替std::的诸多函数；
+```

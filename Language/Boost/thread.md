@@ -148,12 +148,24 @@ int main(int argc, char* argv[])
 ```
 
 ## thread使用
+线程的使用；
 
 ### API
+睡眠
+```cpp
+#include <boost/date_time/posix_time/posix_time.hpp> 
+boost::this_thread::sleep(boost::posix_time::seconds(5));
+boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+
+boost::thread::sleep(boost::get_system_time() + boost::posix_time::seconds(1));
+
+#include <boost/chrono.hpp>
+boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
+```
 
 ```cpp
-boost::this_thread::sleep(boost::posix_time::seconds(5));
 boost::this_thread::get_id();
+
 boost::thread::hardware_concurrency(); //返回cpu的线程数；
 
 {
@@ -162,8 +174,6 @@ boost::thread::hardware_concurrency(); //返回cpu的线程数；
 	t.join(); //阻塞调用：它可以暂停当前线程，直到t运行结束。
 	t.timed_join();
 }
-
-
 ```
  
 ## boost::thread\_group

@@ -157,3 +157,14 @@ it push origin :refs/tags/tagName
 	删除远程tagName
 ```
 
+### 其它
+git pull --rebase
+```bash
+git pull
+	git fetch
+	git merge fetch_head
+
+git pull --rebase
+	git fetch
+	git rebase fetch_head
+```

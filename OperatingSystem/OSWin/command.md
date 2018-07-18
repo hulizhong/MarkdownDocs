@@ -11,4 +11,7 @@ tasklist /fi "imagename eq niginx.exe"
 taskkill /f /t /im nginx.exe
 
 
+## API
+win Sleep(ms);
+linx sleep(s);
 
