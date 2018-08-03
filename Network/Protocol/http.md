@@ -1,9 +1,10 @@
-[toc]
+[TOC]
 
 ## ReadMe
 http（超文本传输协议）
 是一个基于请求与响应模式的、无状态的、应用层的协议，常基于TCP的连接方式。   
 无状态：第1次请求响应与第2次请求响应无关（1.1加入了cookie） 
+
 
 ## 各版本的不同特性
 http各版本
@@ -19,10 +20,15 @@ http各版本
 	- 报头压缩
 	- server push 
 
+url格式定义
+```bash
+scheme:[//[user[:password]@]host[:port]][/path][?query][#fragment]
+query 以?号为起点，以&符为分隔，每对key,value用=连接；并且通常以UTF8的URL编码，避开字符冲突的问题。
+```
 
 100-continue  
 > 这个是http1.1协议为了提高效率设置的。当客户端要POST较大数据给webserver时，可以在发送http头时带上Expect: 100-continue，服务器如果接受这个请求，应答一个HTTP/1.1 100 Continue，那么客户端就继续传输正文，否则应答417，客户端就放弃传送剩余的数据了。这样就避免客户端吭哧吭哧传了一大堆数据上去，结果服务端发现不需要的情况。
-	
+
 
 ## http请求方法
 |方法名|解释|

@@ -1,4 +1,4 @@
-[toc]
+[TOC]
 
 ## ReadMe
 描述c++语法信息；
@@ -6,19 +6,30 @@
 
 ## 类型转换
 强制转换是将内存中一段代码以另一种不同类型的方式进行解读, 因此转换的空间必须与源空间一一对应。
+
 > 结构体、类之间不能直接进行强制转换, 必须先转换成指针才可以进行结构体间的类型转换。
 
-c++中除了c中的强转（旧式强转）之外
+
+
+旧式强转
 ```cpp
 (type-id)expression  //转换格式1
 type-id(expression)  //转换格式2
 ```
-还有如下几种（新式强转）
+c++中除了c中的强转（旧式强转）之外，还有如下几种（新式强转）
 ```cpp
 static_cast<new_type>      (expression)
 dynamic_cast<new_type>     (expression) 
 const_cast<new_type>       (expression) 
 reinterpret_cast<new_type> (expression)
+
+//这些转换调用不需要std::打头、亦非c11的功能、亦不需要其它什么额外的头文件；
+{
+	B *b = new B(xx);
+	A *a = std::dynamic_cast<A*>(b); //错误
+		//会报error: expected unqualified-id .. std::dynamic_cast ..
+	A *a = dynamic_cast<A*>(b);  //正确
+}
 ```
 
 旧式强转：**只用于基础的数据类型；**
@@ -37,6 +48,7 @@ static cast
 
 不能转换掉表达式中的const, volatile, __unaligned属性
 ```
+
 
 dynamic cast
 e为type的公有派生类；e为type的基类；e与type的类型一致；
@@ -68,3 +80,4 @@ reinterpret cast
 reinterpret_cast<type>(e);
 	type必须是一个指针、引用、算术类型、函数指针或者成员指针；
 ```
+

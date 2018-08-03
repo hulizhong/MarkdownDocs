@@ -72,7 +72,7 @@ Json::FastWriter writer;
 string json_file = writer.write(root);
 ```
 
-成员函数
+从Json::Value中读出数据
 ```cpp
 Json::Value value;
 value["key"].size();
@@ -80,18 +80,43 @@ value["key"].asInt();
 value["key"].asBool();
 value["key"].asInt();
 value["key"].asString();
+
+Json::Value arr = value["array"]; //["ab", "bc"]
+for (int = 0; i < arr.size(); i++) {
+	std::cout << arr[i].asString() << std::endl;
+}
+Json::Value arr = value["array"]; //[{"key":"ab"}, {"key":"bc"}]
+for (int = 0; i < arr.size(); i++) {
+	std::cout << arr[i]["key"].asString() << std::endl;
+}
+
 value.isMember(char const*) const;  //没有则抛异常；
 
 value["key"].toStyledString(); //将key这个节点的所有内容读作string.
+```
 
-arrayObj.append(item);
+往Json::Value中写入数据
+```cpp
+Json::Value value;
+Json::Value arr;
 
+//-----------------array下标赋值方式；
+arr[0] = "ab";
+arr[1] = "bc";
+vlaue["array"] = arr; //["ab", "bc"]
+
+//---------------array追加方式；
+for () {
+	Json::Value item. //construct 
+	arr.append(item); //注意arr里面的每个元素格式可以不一致；
+}
+vlaue["array"] = arr;
 ```
 
 ```cpp
 Json::Value::isMember(char const*) const
 terminating with uncaught exception of type Json::LogicError: in Json::Value::find(key, end, found): requires objectValue or nullValue
 Json::Value::find(char const*, char const*) const
-Json::Value::isMember(char const*) const  抛异常，如果没有这个成员；
+Json::Value::isMember(char const*) const  //抛异常，如果没有这个成员；
 ```
 

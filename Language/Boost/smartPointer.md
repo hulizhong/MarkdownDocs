@@ -1,4 +1,4 @@
-[toc]
+[TOC]
 
 ## ReadMe
 问题：智能指针为什么会出现呢？解决什么样的问题？
@@ -207,3 +207,4 @@ string s = "123";
 int a = boost::lexical_cast<int>(s);  //如果转换发生了意外，lexical_cast会抛出一个bad_lexical_cast异常；
 	//可以顶替std::的诸多函数；
 ```
+

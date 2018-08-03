@@ -165,6 +165,52 @@ static void kqop_free(struct kqop *kqop)
 >> event_base_free()只在event_loop线程调用；
 >
 
+## cant stop base\_dispatch
+base\_loopbreak cant stop base\_dispatch
+线程函数A
+```cpp
+void threadCB(event_base *base)
+{
+	event_base_dispatch(base); 
+}
+```
+
+主线程B
+```cpp
+struct event_base *base = event_base_new();
+boost::thread(threadCB, base);
+sleep(4); //do some work.
+
+int res = event_base_loopbreak(base);
+while (res != 0) {
+	res = event_base_loopbreak(base); //一直循环在此处
+}
+```
+
+解决：在主线程B处添加多线程声明（创建base之前）
+```cpp
+#ifdef WIN32             
+	evthread_use_windows_threads();  
+#else                    
+	evthread_use_pthreads();
+#endif
+```
+
+### loopbreak VS loopexit
+loopbreak，立即退出；
+如果当前正在运行active events的cb，那么运行完当前的cb就会停止；（不是一系列哈）
+如果当前没有运行active events的cb，那么直接退出；
+```cpp
+int event_base_loopbreak(struct event_base *);
+```
+
+loopexit，给定时间退出；（如果无时间值则立即退出）
+如果当前正在运行active events的cb，那么运行完所有的cb才会停止；
+立即退出：（如果当前没有跑active events的cb，那么下一轮cb调完才会停止）
+```cpp
+int event_base_loopexit(struct event_base *, const struct timeval *);
+```
+
 
 ## 给libevnet注册log callback
 

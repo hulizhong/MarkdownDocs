@@ -1,19 +1,24 @@
-[toc]
+[TOC]
+
+## ReadMe
+cmake输入文件：<-------   CMakeLists.txt （注意是Lists）
+mkdir build; cd build; cmake ..;   生成Makefile；
+make -j 4;
 
 ## 常用
 日志、调试
 
 - message("Will pring val = ${val}")
 
-
 -----
-添加头文件搜索路径CMAKE\_INCLUDE\_PATH
-添加头文件搜索路径CMAKE\_LIBRARY\_PATH
+添加头文件、库的搜索路径
+```cmake
+set(CMAKE_INCLUDE_PATH "include_path")
+list(APPEND CMAKE_INCLUDE_PATH "include_path")
 
-- set(CMAKE\_INCLUDE\_PATH "include\_path")
-	- list(APPEND CMAKE\_INCLUDE\_PATH "include\_path")
-- set(CMAKE\_LIBRARY\_PATH "lib\_path")
-	- list(APPEND CMAKE\_LIBRARY\_PATH "lib\_path") 
+set(CMAKE_LIBRARY_PATH "lib_path")
+list(APPEND CMAKE_LIBRARY_PATH "lib_path") 
+```
 
 
 ## finder
@@ -100,11 +105,11 @@ finder.cmake文件编写流程如下：
 - find\_library()
 	- 命令 FIND\_LIBRARY 同 FIND\_PATH 类似,只是用于查找库并将结果保存在变量中。
 - find\_package\_handle\_standard\_args()
-	- 设置<name>_FOUND变量，并打印一条成功或者失败的消息。
+	- 设置<name>\_FOUND变量，并打印一条成功或者失败的消息。
 
 ---
 且看如下这个FindLibxtml.cmake是如何写的；
-```bash
+```cmake
 find_package(PkgConfig)
 pkg_check_modules(PC_LIBXML QUIET libxml-2.0)
 set(LIBXML2_DEFINITIONS ${PC_LIBXML_CFLAGS_OTHER})
@@ -140,16 +145,18 @@ mark_as_advanced(LIBXML2_INCLUDE_DIR LIBXML2_LIBRARY )
 
 ## 指令集
 
-### add_definitions
-提供宏定义的一些用法。
-```bash
-OPTION(USE_A "just for test" OFF)  可在cmake .. -DUSE_A=ON/OFF进行定义；
+### add\_definitions
+option选项，让用户可以根据选项值进行条件编译。（可在cmake .. -DUSE\_A=ON/OFF进行功能开启、关闭）
+这个option命令和你本地是否存在编译缓存的关系很大。所以，如果你有关于 option 的改变，那么请你务必清理 CMakeCache.txt 和 CMakeFiles 文件夹。
+```cmake
 OPTION(USE_A "just for test" ON)
-message("the use_a value = ${USE_A}")  要么打OFF，要么打ON
+OPTION(USE_A "just for test")  #如果没有提供初始化值，使用OFF。（同于下一句）
+OPTION(USE_A "just for test" OFF)
+message("the use_a value = ${USE_A}")  #要么打OFF，要么打ON
 
-#if (${USE_A} STREQUAL "ON")  use_a变量的值是否为on；
+#if (${USE_A} STREQUAL "ON")  #use_a变量的值是否为on；
 if (USE_A)  #是否定义过use_a变量，不关心值的内容；
-	但这里USE_A为OFF时怎么进不了这个分支呢？不是已经定义过了吗？rwhy  --难道是on/off是特殊意义？？
+	#但这里USE_A为OFF时怎么进不了这个分支呢？不是已经定义过了吗？  --就是这样的呀，没有开启功能
     add_definitions("-DUSE_MACRO")  #在gcc/g++时使用-Duse_macro宏定义；
 endif()
  
@@ -157,7 +164,7 @@ add_executable(multimap ${MULTIMAP_SRC})
 ```
 在以上例子中，实际应用中为use\_a, use\_macro是一样的名称；
 
-```cpp
+```cmake
 #ifdef USE_MACRO
     std::cout << "Code With USE_MACRO" << std::endl;
 #endif
@@ -165,7 +172,7 @@ add_executable(multimap ${MULTIMAP_SRC})
 
 ## 宏
 探测OS类型的宏
-```bash
+```cmake
 if (NOT WIN32)
 	不是win32
 if (WIN32 OR APPLE)
