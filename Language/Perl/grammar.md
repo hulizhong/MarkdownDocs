@@ -1,57 +1,283 @@
 ## ReadMe
 perl的语法讲解
 
-## 语法
-语句
+.pm  模块文件；可以用 use xx来加载。（use语句会自动搜索后缀为.pm的文件）
+.pl  库文件；可是现在大家都用来当脚本文件；用require xx.pl来加载。
+.pxl  脚本文件。
+
+
+demo
 ```perl
-语句结尾;
+#!/usr/bin/perl -w
+	#-w表示使用严格的语法控制。
+use warnings;  #同于-w，但不是全局性的，可在{}中进行引用；
+use strict;
+	#是Perl中编译指令，告诉编译器，如果perl代码中有不好的编码风格，那么提示编译失败。
+	#代码的编写必须遵循一些规范，否则编译器会报错。
 ```
 
-注释
+
+## 语法
+简义的语法；
+
+### 简明语法
+概要
 ```perl
+语句结尾;
+
+#-------------
 #单行注释
 
 =name
 多行注释
 =cut
-```
 
-一句话也得打括号
-```perl
+#-------------------------------------一句话也得打括号
 if (xx) {  #前置if必须要大括号
-	print "";  
+	print "";
 }
-
 print "Hello" if (xx);  #后置if不用大括号；
-```
 
-输入、输出
-输出重定向
-```perl
+#---------------------------------输入、输出
 print "$var\n";
-	默认向标准输出进行输出
-
+	#默认向标准输出进行输出
 print STDERR "$var\n";
-	重定向到错误输出
+	#重定向到错误输出
+print $var, “\n”;
 
 open FP1 ">>log.txt" or die "cant open the log file";
 print FP1 "$var\n";
 close FP1;
-	重定义输出到文件
+	#重定义输出到文件
 ```
 
+### 各种循环
+```perl
+--------------------------------------------for
+for (init; condition; increment) {
+}
+
+--------------------------------------------foreach
+foreach var (list) {
+}
+
+foreach var (list) {
+} continue {
+}
+
+--------------------------------------------while
+while (condition) {
+}
+
+while (condition) {
+} continue {
+	#在condition之前进行
+}
+
+do {
+} while (condition)
+
+until (condition) {
+	#与while相反，条件为false方可执行；
+}
+```
+
+循环控制
+```perl
+while (condition) {
+}
+
+while (condition) {
+	last; #退出循环
+	next label;  #跳过以下各句，直接执行continue部分、并进入下一次循环
+	redo;  #语句直接转到循环体的第一行开始重复执行本次循环，（continue部分也不执行了）
+	...
+} continue {
+	...
+}
+
+goto label;
+goto &label; #替换正在运行的子进程；
+```
+
+### 函数
+声明、调用
+```perl
+sub xx { #不需要形参数列表，但可接收参数；
+	@_; #就是参数栈，其实就是数组。
+	$_[0], $_[1]; #获取参数，下标索引法。
+	shift, pop;   #获取栈开头、结尾。
+}
+
+sub yy() { #不能接收参数；
+}
+
+&xx(params list);  #version 5.0以下调用方式；
+xx(params list);
+```
+
+传参
+```perl
+sub xx {
+}
+
+my $v1 = 1;
+my @ar1;
+xx($v1, @ar1);  #传列表，@ar1必须要放在最后；（因为函数用于接收参数为一数组@_）
+
+my %map;
+xx($v1, %map);  #传入函数内，会被扩展成key,value的列表。
+```
+
+### 引用
+引用
+```perl
+$refScalar = \$v;   #标量
+
+$refArray = \@v;    #列表
+$refArray = [...]   #匿名列表，[]
+
+$refHash = \%v;     #hash
+$refHash = {key=>v1, key=>v2}  #匿名hash，{}
+
+$refFunction = \&v; #子过程
+$refFunction = sub {..}  #匿名子过程
+
+$refHandle = \*v;   #句柄
+```
+
+解引用
+```perl
+if (ref $var) {
+	#如果var是引用，则会返回真；
+	#perl中只有引用类型，才可进行类型探测；因为普通类型可以看变量名的前缀，如@, %。
+}
+if ($var1 == $var2);
+if ($var1 eq $var2) {
+	#判断两个引用是否指向同一目标；
+}
+
+---------------法一：$var代替var
+$$refScalar;
+@$refArray;
+%$refHash;
+
+--------------法二：用{$var}代替var
+
+--------------法三：
+$refArray->[];
+$refHash->{};
+$refFunction->();
+```
+
+### 运算符号
+```perl
+q{abc}   'abc'
+qq{abc}  "abc"
+qx{abc}  `abc`
+qr/pattern/;
+qw{aa bb} #单词列表引号；'aa', 'bb'
+~~  #智能匹配
+	#匹配某个元素是否在数组中；
+	#匹配两个数组中是否有相同元素；
+	#正则匹配，替代=~而且比之还强大；
+
+if ($a <=> $b);
+	#相等、返回0
+	#a<b、返回-1
+	#a>b、返回1
+
+$a += 1;
+$a -= 1;
+$a *= 1;
+
+if ($a and $b);
+if ($a or $b);
+not if ($a);
+if ($a && $b);  #c风格
+if ($a || $b);  #c风格
+```
+
+### 包、模块
+定义包
+```perl
+package packageName;   #包开始
+...
+1;   #包结尾
+```
+
+引用包
+```perl
+require packageName;
+packageName::fun();
+
+use packageName;
+fun();
+```
 
 ## 变量
-### 字符串
+预置的各种变量类型；
+
+perl中没有bool，所以如下：（"!" 或 "not" 否定一个真值）
+```perl
+--------------------------如下为false
+undef  #未定义值
+0      #数字0, 即便你写的是000或0.0
+''     #空字符串.
+	#' '为true
+'0'    #包含单个0数字的字符串.
+```
+
+变量生命周期
+```perl
+{
+	my $var = 1;  #私有变量，不是全局可见；
+}
+
+$x = 5;
+{
+	local $x = 20;  #全局变量局部的副本；跟全局的x没有关系；
+}
+
+use feature 'state';
+{
+	state $v = 0;   #static属性、具有记忆功能；
+}
+```
+
+### 标量
+#### 整数
+#### 浮点数
+#### 字符串
 字符串的常见处理
 ```perl
 my $val = 'Rabin';
-my $sz = length($val);
-	计算长度
-my $newVal = substr($string,offset,length);
-	offset开始截取的位置；如果是负数，那么从右边开始截取；
-	length省略，那么截取到最后一个字符；
-	截取子串
+my $sz = length($val);  #计算长度
+my $newVal = substr($string,offset,length);  #截取子串
+	#offset开始截取的位置；如果是负数，那么从右边开始截取；
+	#length省略，那么截取到最后一个字符；
+.find(str, beg=0, end=len(string))
+	#查找子串，返回子串的索引值，否则返回-1
+.index(str, beg=0, end=len(string))
+	#跟find()方法一样，只不过如果str不在 string中会报一个异常.
+.rindex( str, beg=0,end=len(string))
+	#类似于 index()，不过是从右边开始.
+```
+
+### 数组（列表）
+使用
+```perl
+my @arr = qw/a b c/;
+my @arr = ($arg1, $arg2);
+push @arr, list  #将列表的值放到数组的末尾。
+pop @arr  #弹出数组最后一个值，并返回它。
+shift @arr
+```
+
+### 哈希（map）
+使用
+```perl
+my %arg4 = ("arg1"=>$arg1, "arg2"=>arg2);
 ```
 
 ## 特殊符号
@@ -61,6 +287,9 @@ my $newVal = substr($string,offset,length);
 ```
 
 ## 文件操作
+Perl 使用一种叫做文件句柄类型的变量来操作文件。文件句柄(file handle)是一个I/O连接的名称。
+默认提供的三种文件句柄: STDIN, STDOUT, STDERR。
+
 看段demo
 ```perl
 open(FFILE, ">> /tmp/data");  追加模式打开文件
@@ -132,6 +361,10 @@ $string = decode(ENCODING, $octets [, CHECK])
 ```
 
 ## swig
+
+Simplified wrapper and interface generator
+对开发人员的一个常见需求是向脚本语言接口公开 C/C++ 代码，这正是 SWIG 的用武之地。
+
 [python调用c++库](#python调用c++库)
 [perl调用c++库](#perl调用c++库)
 
