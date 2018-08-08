@@ -247,22 +247,26 @@ So obviously we need a better mechanism to achieve this, It would have save many
 ### Condition Variables
 Condition Variable is a kind of Event used for signaling between two or more threads.
 One or more thread can wait on it to get signaled, while an another thread can signal this.
+```cpp
+void wait( std::unique_lock<std::mutex>& lock );
+	//释放关联的锁、阻塞当前线程、把线程放到当前信号的等待队列中（这个过程是原子操作）；等待被唤醒、虚假唤醒；
+	//唤醒的过程也是个原子操作（加锁、条件变量）；
+	//superiors wakeup虚假唤醒：线程被唤醒、但是等待的条件未满足；
+		//由notify_one, notify_all之外的接口唤醒。
+		//notify_all唤醒所有线程引起的竞争。----这种不叫虚假唤醒。
 
-void wait( std::unique\_lock<std::mutex>& lock );
+cond.notify_one()   //唤醒此信号量的一个等待线程；
+cond.notify_all()   //唤醒此信号量的所有等待线程；
+```
+
+wait的变种
+```cpp
 template< class Predicate >
 void wait( std::unique\_lock<std::mutex>& lock, Predicate pred );
-> （释放关联的锁；阻塞当前线程、把线程放到当前信号的等待队列中）这个过程是原子操作；等待被唤醒、虚假唤醒；
->> 唤醒的过程也是个原子操作（加锁、条件变量）；虚假唤醒（条件变量被置了，但申请不到锁）； 
-> 
-> 第二种形式在应对虚假唤醒时，不需要再用while来判断了；
+	#第二种形式在应对虚假唤醒时，不需要再用while来判断了；
+```
 
-.notify\_one()
-> 唤醒此信号量的一个等待线程；
-
-.notify\_all()
-> 唤醒此信号量的所有等待线程；
-
-
+demo
 ```cpp
 #include <mutex>
 #include <condition_variable>
@@ -295,7 +299,7 @@ std::condition_variable cv;
 	std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 ```
-superiors wakeup虚假唤醒：线程被唤醒、但是等待的条件未满足；
+
 
 
 ## Async Threads

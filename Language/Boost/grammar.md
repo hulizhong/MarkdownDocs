@@ -1,4 +1,4 @@
-
+[toc]
 
 ## ReadMe
 boost
@@ -13,9 +13,12 @@ boost
 
 
 ## RAII
+构造函数时资源申请、析构函数时资源释放；
 
 ### boost\_scope\_exit
+退出时调用{}中的内容；
 
+demo
 ```cpp
 #include <boost/scope_exit.hpp>
 int fun()
@@ -30,65 +33,6 @@ int fun()
 	}BOOST_SCOPE_EXIT_END
 }
 ```
-
-
-## 文件系统 
-目录架构   
-```bash
-▾ filesystem/       
-  ▸ detail/         
-    config.hpp      
-    convenience.hpp 
-    exception.hpp   
-    fstream.hpp     
-    operations.hpp  
-    path.hpp        
-    path_traits.hpp 
-```
-
-收录如下信息：
-[path wpath](#path_wpath)
-[文件操作](#文件操作)
-[](#)
-
-```cpp
-//一般用简写的fs代替；
-namespace fs = boost::filesystem;
-```
-
-### path wpath
-```cpp
-boost::filesystem::basic_path<std::string>  
-boost::filesystem::basic_path<std::wstring>
-
-boost::filesystem::is_directory(path);
-boost::filesystem::create_directories(path);
-```
-
-path类提供的成员函数
-```cpp
-path pt("/a/b");
-pt /= "c.txt" 追加，现在成/a/b/c.txt
-
-pt.has_parent_path() 返回是否具有父目录；
-pt.parent_path()  返回/a/b
-```
-
-### 文件操作
-写文件
-```cpp
-boost::filesystem::ofstream file(path);
-if (file.is_open()) {
-	file << data;
-	file.close();
-}
-```
-
-读文件
-```cpp
-boost::filesystem::ifstream file(path);
-```
-
 
 
 ## uuid
@@ -106,6 +50,18 @@ boost::filesystem::ifstream file(path);
     uuid_generators.hpp 
     uuid_io.hpp         
     uuid_serialize.hpp  
+```
+
+生成uuid
+```cpp
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+ 
+boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
+	// 这里是两个() ，因为这里是调用的 () 的运算符重载.
+const string str_uuid = boost::uuids::to_string(a_uuid);
+	//uuid转string.
 ```
 
 ## 特殊功能类
@@ -126,5 +82,4 @@ class noncopyable
     const noncopyable& operator=( const noncopyable& );
 };
 ```
-
 

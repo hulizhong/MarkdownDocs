@@ -23,28 +23,44 @@
 ## python中使用json库
 ### json库
 
-- python class obj & jsonstr
-	- python obj to json: json.dumps(obj.__dict__)
-	- jsonobj to python obj: pythonobj.__dict__ = json.loads(jsonStr)
-
-#### 序列化  pythonobj={dict}/[list]
+序列化，pythonobj（包含{dict}, [list]）到jsonstr.
+```python
+import json
 jsonstr = json.dumps(pytonobj, skipkeys=False, ensure_ascii=True, check_circular=True, allow_nan=True, cls=None, indent=None, separators=None, encoding='utf-8', default=None, **kw)
+```
 
-
-#### 反序列化
+反序列化，jsonstr到python obj.
+```python
 pythoobj = json.loads(jsonstr, encoding=None, cls=None, object_hook=None, parse_float=None, parse_int=None, parse_constant=None, object_pairs_hook=None, **kw)
+```
 
-		
-- jsonStr = json.dumps(pythonObj) is not json serializable
+------------
+问题集：
+问题：不可序列化
+```python
+jsonStr = json.dumps(pythonObj) is not json serializable
+	#pythonObj不符合json格式（如jsonObj中没有=只有:）
+```
 
-	pythonObj不符合json格式（如jsonObj中没有=只有:）
-	
+问题：不可反序列化
+```python
+import json
+import conllections
+info = json.load(file, object_pairs_hook=collections.OrderdDict)
+#ValueError: No JSON object could be decode.
+	#file中的json串应该格式不对，如[{},]中的逗号是不能要的；
+```
 
+问题：python class object的序列化与反序列化
+```python
+json.dumps(obj.__dict__)   #python obj to json
+pythonobj.__dict__ = json.loads(jsonStr)   #jsonobj to python obj
+```
 
 
 ## c++中使用json库
 ### libjsoncpp
-从文件加载
+从文件加载，refer: json/reader.h
 ```cpp
 ifstream ifs;
 ifs.open("checkjson.json");
@@ -52,13 +68,16 @@ assert(ifs.is_open());
 
 Json::Value root;
 Json::Reader reader;
-//读文件
+//从文件读
+//bool parse(std::istream& is, Value& root, bool collectComments = true);
 if (!reader.parse(ifs, root, false)) {
 	cerr << "parse failed \n";
 	return;
 }
 
-//读内存
+//从内存读
+//bool parse(const char* beginDoc, const char* endDoc, Value& root, bool collectComments = true);
+//bool parse(const std::string& document, Value& root, bool collectComments = true);
 if (!reader.parse(json_data, json_data + sizeof(json_data), root)) {
 	cerr << "json parse failed\n";
 	return;
@@ -72,7 +91,7 @@ Json::FastWriter writer;
 string json_file = writer.write(root);
 ```
 
-从Json::Value中读出数据
+从Json::Value中读出数据，refer: json/value.h
 ```cpp
 Json::Value value;
 value["key"].size();
