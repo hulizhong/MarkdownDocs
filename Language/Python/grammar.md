@@ -16,6 +16,17 @@ Python是一种解释型、面向对象、动态数据类型的高级程序设�
 语句没有;号作分隔。
 语句靠对齐进行作用域分隔。
 
+变量声明没有修饰字符，使用也没修饰字符；（perl就有各种修饰符号）
+
+### 包、模块
+```python
+import xx
+res = xx.yy()
+
+from xx import yy
+res = yy()
+```
+
 ## 变量
 python中的变量与对象  
 类型是属于对象的，而不是变量。变量和对象是分离的：对象是内存中储存数据的实体，变量则是指向对象的指针。  
@@ -35,6 +46,23 @@ tuple
 list
 set
 dict
+```
+
+--------------
+生命周期
+在函数体外定义的变量成为全局变量（一般大写），在函数内部定义的变量称为局部变量（一般小写）。
+全局变量所有作用域都可读，局部变量只能在本函数可读。
+函数在读取变量时，优先读取函数本身自有的局部变量，再去读全局变量。
+```python
+name = 'Tim' #全局变量
+def f1():
+	age = 18      #局部变量
+	global name   #全局变量默认可读，但要在函数内改变它，则需要在global声明下；
+	#全局列表，字典，可修改，但不能重新赋值，如果要重新赋值，则需要在函数内部使用global定义全局变量。
+	name = 'Eric'
+	print(age, name)   #18 Eric
+f1()
+print(name)   #Eric
 ```
 
 -----------
@@ -88,8 +116,10 @@ lstTest()
 集成的方法如下：  
 ```python
 #--------------特殊字符
-"\\\\" #转义 
-r"\\"  #保持原样
+''     #原样字符串，特殊字符无需转义；
+""     #特殊字符需转义；
+r|R""    #正则字符串
+u|U""    #unicode字符串
 
 #----------------大小写
 str.upper()
@@ -97,6 +127,7 @@ str.lower()
 
 #----------------查找
 str.find(str1)  #return str1's pos, otherwise -1.
+str.rfind(str, beg=0 end=len(string))
 str.index(str1)   #return str1's pos, otherwise raise exception.
 
 #----------------截取
@@ -181,6 +212,10 @@ dict2 = dict.copy()   #克隆，即另一个拷贝。但这也只是个浅拷贝
 
 方法
 ```python
+d = {}
+import collections  #有序字典
+d = collections.OrderedDict()  #有序字典
+
 cmp()
 len()
 str()
@@ -269,8 +304,14 @@ type(None)    #<class 'NoneType'>
 None == 0     #False
 None == ' '   #False
 None == False #False
-
 None == None   #True
+
+class Foo(object):
+	def __eq__(self, other):
+		return True
+f = Foo()
+if (f is None):  #False，is取决是否是同一对象实例；
+if (f == None):  #True，==取决于对象中的__eq__函数；
 ```
 
 if
@@ -280,6 +321,8 @@ if x:
 	#None,  False, 空字符串"", 0, 空列表[], 空字典{}, 空元组()都相当于False
 
 if x is not None:
+	#这是单独判断x不是None
+if x != None:
 	#这是单独判断x不是None
 ```
 

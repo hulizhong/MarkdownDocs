@@ -43,7 +43,14 @@ print "$var\n";
 	#默认向标准输出进行输出
 print STDERR "$var\n";
 	#重定向到错误输出
-print $var, “\n”;
+print "<", $var, ">\n";
+	#print用法同于python，但还是有区别的；
+	#python print
+		#会自动添加换行符号；
+		#不同输出项之间的连接符为空格；< var >
+	#perl print
+		#不会自动添加换行符号；
+		#不同输出项之间没有连接符；<var>
 
 open FP1 ">>log.txt" or die "cant open the log file";
 print FP1 "$var\n";
@@ -107,13 +114,17 @@ sub xx { #不需要形参数列表，但可接收参数；
 	@_; #就是参数栈，其实就是数组。
 	$_[0], $_[1]; #获取参数，下标索引法。
 	shift, pop;   #获取栈开头、结尾。
+
+	return xx;    #可以返回一个标量值或者一个列表
+	return (xx, yy);    #可以返回一个标量值或者一个列表
+	return (\@xx, \@yy);    #数组列表需要引用，否则会被平铺成一个数组；
 }
 
 sub yy() { #不能接收参数；
 }
 
-&xx(params list);  #version 5.0以下调用方式；
-xx(params list);
+my $a = &xx(params list);  #version 5.0以下调用方式；
+my ($a, $b) = xx(params list);
 ```
 
 传参
@@ -203,7 +214,7 @@ if ($a || $b);  #c风格
 ```perl
 package packageName;   #包开始
 ...
-1;   #包结尾
+1;   #包结尾，这个结尾是不是可以不用哈？？rwhy
 ```
 
 引用包

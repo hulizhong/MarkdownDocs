@@ -1,4 +1,4 @@
-[toc]
+[TOC]
 
 ## readme
 
@@ -60,7 +60,17 @@ size()  //返回元素个数；
 ```cpp
 //c11
 for (auto val : valList) {
-	cout << val << endl; //这样迭代出来的是vector中的元素类型，而非迭代器
+	cout << val << endl; //这样迭代出来的var是vector中的元素，而非迭代器
+}
+
+auto iter = a.begin();
+while (iter != a.end()) {
+	if (*iter > 30) {
+		iter = a.erase(iter);
+	}
+	else {
+		++iter;
+	}
 }
 ```
 
@@ -127,7 +137,7 @@ lst1.reverse();          //反转
 lst1.sort();             //排序
 lst1.unique();                         //删除相邻重复元素
 ```
- 
+
 遍历
 ```cpp
 for(list<int>::const_iterator iter = lst1.begin();iter != lst1.end();iter++) {
@@ -147,7 +157,8 @@ map<int,string> map1;  //空map
 ```cpp
 //添加元素
 map1[3] = "Saniya";
-map1.insert(make_pair<int,string>(4,"V5")); //其中的type1, type2是可以不写的，让其自动推演出来；
+map1.insert(std::make_pair<int,string>(4,"V5")); //其中的type1, type2是可以不写的，让其自动推演出来；
+	//一般不需要指定<int, string>，让其自己推导；
 map1.insert(pair<int,string>(1,"Siqinsini"));
 map1.insert(map<int,string>::value_type(2,"Diyabi"));
 
