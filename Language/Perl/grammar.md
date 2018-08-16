@@ -65,11 +65,18 @@ for (init; condition; increment) {
 }
 
 --------------------------------------------foreach
-foreach var (list) {
+foreach $var (@list) {
+	#use strict模式下不能用此，只能用第三种方法；
 }
 
-foreach var (list) {
+foreach $var (@list) {
+	#第二种方法；
 } continue {
+}
+
+foreach (@arr) {
+	#第三种方法；
+	print $_, "\n";
 }
 
 --------------------------------------------while
@@ -262,33 +269,91 @@ use feature 'state';
 #### 字符串
 字符串的常见处理
 ```perl
-my $val = 'Rabin';
+my $str = 'Rabin';
 my $sz = length($val);  #计算长度
-my $newVal = substr($string,offset,length);  #截取子串
+
+my $newVal = substr($string, offset, length);  #截取子串
 	#offset开始截取的位置；如果是负数，那么从右边开始截取；
 	#length省略，那么截取到最后一个字符；
-.find(str, beg=0, end=len(string))
-	#查找子串，返回子串的索引值，否则返回-1
-.index(str, beg=0, end=len(string))
-	#跟find()方法一样，只不过如果str不在 string中会报一个异常.
-.rindex( str, beg=0,end=len(string))
-	#类似于 index()，不过是从右边开始.
+substr($src, index($src, $srcb), length($srcb), $srcc);
+	#查找并替换；
+
+$str2 = lc($str);
+$str2 = lc $str;
+	#转小写
+$str2 = lcfirst $str;
+	#第1个字母转小写
+$str2 = uc $str;
+	#转大写
+$str2 = ucfirst $str;
+	#第1个字母转大写
+
+index(str, beg=0, end=len(string))
+	#顺序查找，找不到返回-1。
+	#find(str, beg=0, end=len(string))  ----没有这种用法吧；
+rindex( str, beg=0,end=len(string))
+	#逆序查找。
+
+$str eq "strvalue";
+	#字符串的对比，不能用==, <之类的（专用于数字类型对比）；
+	#lt, eq==, gt, le=<, ge>=, ne!=, cmp返回1、0、-1;
+
+$value = 1234.56789;
+print sprintf "%.4f\n", $value;
+	#sprintf打印格式；
+
+join($str, @array)
+	#字符串合并；其中arr要用qw方式定义；
+$line = $line . "456";
+$line .= "456";
+print "ok"x3; #okokok
+	#重复连接符号x；
+print $a, $b;
+	#print的连接符号','只能用于print；
+@arr = split(/pattern/, $str);
+	#字符串分隔；
+@arr = split(//, $str);  #强制按每个字符进行分隔；
+
+$count = grep(/on/, @array)
+	#匹配数组内字符串；其中//是固定修饰字符；
+@result = grep(/on/, @array);
+	#匹配数组内字符串；
 ```
 
 ### 数组（列表）
 使用
 ```perl
-my @arr = qw/a b c/;
 my @arr = ($arg1, $arg2);
-push @arr, list  #将列表的值放到数组的末尾。
-pop @arr  #弹出数组最后一个值，并返回它。
-shift @arr
+my @arr = qw/a b c/;
+@array = (1..10);
+$size = scalar @array;  #数组长度；
+
+$arr[0];     #下标法，注意最开始的修饰符不是@；
+@arr[1..3];  #下标法；
+@arr[1,2,4];
+
+pop @arr      #弹出数组最后一个值，并返回它。
+shift @arr    #从数组的开头取出元素
+
+push @arr, list    #从数组末尾加入元素
+unshift @arr, item #从数组的开头加入元素
 ```
 
 ### 哈希（map）
 使用
 ```perl
-my %arg4 = ("arg1"=>$arg1, "arg2"=>arg2);
+my %data = ('google', 'google.com', 'runoob', 'runoob.com', 'taobao', 'taobao.com');
+my %data = ('google'=>'google.com', 'runoob'=>'runoob.com', 'taobao'=>'taobao.com');
+print $data{"google"};
+@names = keys %data;
+@urls = values %data;
+
+if( exists($data{'facebook'} ) ) {
+	#是否存在该key
+}
+
+delete $data{'taobao'};  #删除元素
+$data{'facebooks'} = 'facebooks.com';  #增加元素
 ```
 
 ## 特殊符号
