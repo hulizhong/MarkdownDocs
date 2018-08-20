@@ -1,5 +1,9 @@
-
 ## ReadMe
+
+介绍posix的线程库api，其中有些标识了_NP的是不属于posix标准的，移植性不是那么的好；
+有些api找不到手册，那么需要安装manpages-posix-dev；
+
+
 
 ## API
 
@@ -272,7 +276,7 @@ APUE书中第三种：[条件变量](#条件变量)
 互斥量亦称为互斥锁
 其api如下
 ```cpp
-PTHREAD_MUTEX_INITIALIZER //静态初始化 
+PTHREAD_MUTEX_INITIALIZER //适合于互斥量是静态分配的时候，而且只能初始化为普通锁；  
 int pthread_mutex_init()
 int pthread_mutex_destroy()
 
@@ -282,42 +286,37 @@ int pthread_mutex_unlock()
 
 pthread_mutexattr_init() //锁的初始化
 pthread_mutexattr_setpshared() //锁的范围：进程内线程；多进程；
-pthread_mutexattr_settype()	 //锁的类型
+
+#include <pthread.h>
+int pthread_mutexattr_gettype(const pthread_mutexattr_t *restrict attr, int *restrict type);
+	//从attr中获取锁的类型、存储于type；
+int pthread_mutexattr_settype(pthread_mutexattr_t *attr, int type);
+	//设置锁的类型；默认为PTHREAD_MUTEX_DEFAULT；
+	//锁的类型会直接影响到.lock(), .unlock()的行为；
 ```
 
 锁的类型很多，Linux下实现了如下：（其中np结尾的不是posix标准）
 
-| 类型 | 名称 |
-|:--|:--|
-|fast |PTHREAD_MUTEX_INITIAL
-|recursive |PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP
-|error check |PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP
+| Mutex Type               | Robustness | Relock             | Unlock When Not Owner | Unlock When Lock Not locked. |
+| ------------------------ | ---------- | ------------------ | --------------------- | ---------------------------- |
+| PTHREAD_MUTEX_DEFAULT    |            | undefined behavior | undefined behavior    | undefined behavior           |
+| PTHREAD_MUTEX_NORMAL     |            | shall deadlock     | undefined behavior    | undefined behavior           |
+| PTHREAD_MUTEX_ERRORCHECK |            | got error          | got error             | got error                    |
+| PTHREAD_MUTEX_RECURSIVE  |            | succeed            | got error             | got error                    |
 
-- mutex.lock()
-	- mutex被其它线程locked
-		- fast, 挂起当前线程, 直到被其他线程unlock；
-		- resursive, 挂起当前线程, 直到被其他线程unlock；
-		- errorCheck, 挂起当前线程, 直到被其他线程unlock；
-	- mutex被自己locked
-		- fast, 挂起当前线程；（不就是死锁了吗）
-		- resursive, 成功并立刻返回当前被锁定的次数；
-		- errorCheck, 立刻返回EDEADLK；
-- mutex.unlock()
-	- mutex被其它线程locked
-		- fast, --未定义？
-		- resursive, --未定义？
-		- errorCheck, 返回EPERM； 
-	- mutex被自己locked
-		- fast, 唤醒第一个被锁定的线程；
-		- resursive, 减少lock数(这个数仅仅是被自己lock的, 不关其它线程的) 当lock数等于零的时候, 才被unlock并唤醒第一个被锁定的线程；
-		- errorCheck, 唤醒第一个被锁定的线程；
+
 
 锁的竞争条件？
 > 先到先得吗，还是按优先级先到先得？ --就是先到先得，唤醒第一个被锁定的的；
 
 
 ### 读写锁
-其api如下
+假设一个场景：
+有很多reader线程，只有一个writer线程；并且共享资源用互斥量进行加减锁；
+那么就会有：write会被过多的reader饿死，解决之道？  ---读写锁
+
+ 读写锁API如下：
+
 ```cpp
 int pthread_rwlock_init ()
 int thread_rwlock_destroy()
@@ -333,10 +332,16 @@ int pthread_rwlock_unlock()
 ```
 
 非常适用于读多，写少的场景；
-> 并发性肯定比单纯的mutex高；（因为mutex即使遇到读所有线程都会被串行化）
+并发性肯定比单纯的mutex高；（因为mutex即使遇到读所有线程都会被串行化）
+
+> 互斥量要么是锁住状态，要么是不加锁状态，而且一次只有一个线程对其加锁。
+> 读写锁可以有三种状态：读模式下加锁状态，写模式下加锁状态，不加锁状态。
+> 一次只有一个线程可以占有写模式的读写锁，但是多个线程可用同时占有读模式的读写锁。
+
 
 
 ### 条件变量
+
 需要一个mutex进行配合；为什么？
 > 当cond不成立的时候需要把call thread放在等待cond成立的等待列表中；（保证原子）
 
@@ -383,6 +388,85 @@ pthread_cond_signal();
 ```
 A线程在unlock前发通知，那么其所通知的B线程会去lock() mutex；
 > 如果此时线程恰好从A切到B，那么A中的mutex未被释放，B又锁不上mutex，所以B再度进入阻塞休眠状态；
+
+
+
+#### Demo
+
+```cpp
+/*
+    pthread_cond_wait()具有原子解锁、加锁功能。
+    pthread_cond_signal() 则没有以上功能。
+*/
+/*
+pthread_cond_wait() 必须与pthread_mutex 配套使用。
+pthread_cond_wait()函数一进入wait状态就会自动release mutex。
+当其他线程通过pthread_cond_signal()或pthread_cond_broadcast，把该线程唤醒，使pthread_cond_wait()通过（返回）时，该线程又自动获得该mutex。
+ 
+pthread_cond_signal函数的作用是发送一个信号给另外一个正在处于阻塞等待状态的线程,使其脱离阻塞状态,继续执行.
+如果没有线程处在阻塞等待状态,pthread_cond_signal也会成功返回。
+*/
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+ 
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;/*初始化互斥锁*/  
+pthread_cond_t cond = PTHREAD_COND_INITIALIZER;/*初始化条件变量*/  
+void *thread1(void *);  
+void *thread2(void *);  
+int i=1;  
+
+int main(void)  
+{  
+    pthread_t t_a;  
+    pthread_t t_b;  
+    pthread_create(&t_a,NULL,thread1,(void *)NULL);/*创建进程t_a*/  
+    pthread_create(&t_b,NULL,thread2,(void *)NULL); /*创建进程t_b*/  
+    pthread_join(t_a, NULL);/*等待进程t_a结束*/  
+    pthread_join(t_b, NULL);/*等待进程t_b结束*/  
+    pthread_mutex_destroy(&mutex);  
+    pthread_cond_destroy(&cond);  
+    exit(0);  
+}  
+
+void *thread1(void *junk)  
+{  
+    for(i=1;i<=6;i++)  
+    {  
+        pthread_mutex_lock(&mutex);/*锁住互斥量*/  
+        printf("thread1: lock %d\n", __LINE__);  
+        if(i%3==0){  
+            printf("thread1:signal 1  %d\n", __LINE__);  
+            pthread_cond_signal(&cond);/*条件改变，发送信号，通知t_b进程*/ 
+			/*不会马上切换到被通知线程，因为此线程还未对互斥锁进行解锁。*/ 
+            printf("thread1:signal 2  %d\n", __LINE__);
+            sleep(5);  
+        }  
+        pthread_mutex_unlock(&mutex);/*解锁互斥量*/  
+        printf("thread1: unlock %d\n\n", __LINE__);  
+        sleep(1);  
+    }  
+}  
+
+void *thread2(void *junk)  
+{  
+    while(i<6)  
+    {  
+        pthread_mutex_lock(&mutex);  
+        printf("thread2: lock %d\n", __LINE__);  
+        if(i%3!=0){  
+            printf("thread2: wait 1  %d\n", __LINE__);  
+            pthread_cond_wait(&cond,&mutex);/*解锁mutex，并等待cond改变*/  
+            printf("thread2: wait 2  %d\n", __LINE__);  
+        }  
+        pthread_mutex_unlock(&mutex);  
+        printf("thread2: unlock %d\n\n", __LINE__);  
+        sleep(1);  
+    }  
+}  
+```
+
+
 
 
 
@@ -434,4 +518,31 @@ int pthread_spin_lock (__pthread_spinlock_t *__lock);
 >> 条件变量、信号量；
 >> 信号量多用于进程间的同步；条件变量多用于线程间的同步；
 >
+
+
+
+## Thread Pool
+
+什么时候用线程池？---如果：T1 + T3 远大于 T2，则可以采用线程池，以提高服务器性能。
+
+> T1 创建线程时间；
+> T2 在线程中执行任务的时间；
+> T3 销毁线程时间；
+
+
+
+### components
+
+- 线程池管理器（ThreadPool）：用于创建并管理线程池。
+  - 创建线程池
+  - 销毁线程池
+  - 添加新任务
+- 工作线程（PoolWorker）：线程池中线程，在没有任务时处于等待状态，可以循环的执行任务；
+- 任务接口（Task）：每个任务必须实现的接口，以供工作线程调度任务的执行，它主要规定了
+  - 任务的入口
+  - 任务执行完后的收尾工作
+  - 任务的执行状态等
+- 任务队列（taskQueue）：用于存放没有处理的任务。提供一种缓冲机制。
+
+
 
