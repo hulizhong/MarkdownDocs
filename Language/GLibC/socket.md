@@ -1,6 +1,145 @@
+[TOC]
+
+## ReadMe
+
+glibc下socket编程接口；
 
 
-## 各种转换函数
+
+## API
+
+### socket
+
+创建一个网络套接字；
+
+```cpp
+#include <sys/types.h>
+#include <sys/socket.h>
+int socket(int domain, int type, int protocol);
+```
+
+
+
+
+
+### bind
+
+### listen
+
+### accept
+
+### read
+
+### write
+
+### close
+
+关闭套接字，并释放资源；
+
+```cpp
+#include <unistd.h>
+int close(int fd);
+	//会把sock_fd的内部计数器减1；
+	//并且当sock_fd == 0，则调用shutodwn() && 释放文件描述符；
+
+#include <sys/socket.h>
+int shutdown(int sockfd, int how);
+	//只进行了TCP连接的断开, 并没有释放文件描述符
+```
+
+
+
+### setsockopt
+
+设置、获取套接字的选项；
+
+```cpp
+int getsockopt(int sock, int level, int optname, void *optval, socklen_t *optlen);
+int setsockopt(int sock, int level, int optname, const void *optval, socklen_t optlen);
+	//成功，返回0；
+	//失败，返回-1，errno有被设置。
+```
+
+
+
+SOL_SOCKET级别的选项
+
+|   选项名称    | 说明                   | 类型           |
+| :-----------: | :--------------------- | :------------- |
+| SO_BROADCAST  | 允许发送广播数据       | int            |
+|   SO_DEBUG    | 允许调试               | int            |
+| SO_DONTROUTE  | 不查找路由             | int            |
+|   SO_ERROR    | 获得套接字错误         | int            |
+| SO_KEEPALIVE  | 保持连接               | int            |
+|   SO_LINGER   | 延迟关闭连接           | struct linger  |
+| SO_OOBINLINE  | 带外数据放入正常数据流 | int            |
+|   SO_RCVBUF   | 接收缓冲区大小         | int            |
+|   SO_SNDBUF   | 发送缓冲区大小         | int            |
+|  SO_RCVLOWAT  | 接收缓冲区下限         | int            |
+|  SO_SNDLOWAT  | 发送缓冲区下限         | int            |
+|  SO_RCVTIMEO  | 接收超时               | struct timeval |
+|  SO_SNDTIMEO  | 发送超时               | struct timeval |
+| SO_REUSERADDR | 允许重用本地地址和端口 | int            |
+| SO_REUSEPORT  | linux3.9+, 重用端口    |                |
+|    SO_TYPE    | 获得套接字类型         | int            |
+| SO_BSDCOMPAT  | 与BSD系统兼容          | int            |
+
+SO_REUSERADDR只包括了adder而非port？？？  
+SO_REUSERADDR VS SO_REUSEPORT ??
+
+
+
+IPPRO_TCP级别选项
+
+|  选项名称   | 说明                | 类型 |
+| :---------: | :------------------ | :--- |
+| TCP_MAXSEG  | TCP最大数据段的大小 | int  |
+| TCP_NODELAY | 不使用Nagle算法     | int  |
+
+IPPROTO_IP级别选项
+
+|  选项名称  | 说明                 | 类型 |
+| :--------: | :------------------- | :--- |
+| IP_HDRINCL | 在数据包中包含IP首部 | int  |
+| IP_OPTINOS | IP首部选项           | int  |
+|   IP_TOS   | 服务类型             |      |
+|   IP_TTL   | 生存时间             | int  |
+
+Refer: http://www.cnblogs.com/eeexu123/p/5275783.html
+
+
+
+## Socket & Error
+
+各种错误码；
+
+### EINTR
+
+网络读写被信号所打断。
+
+### sigpipe
+
+socket向一个关闭的连接发数据，那么首次会得到一个rst包，再发会得到内核发送的sigpipe信号。
+sigpipe默认动作：结束进程。
+
+```cpp
+#include <signal.h>
+signal(SIGPIPIE, SIG_IGN);    
+```
+
+
+
+## IO Multiplexing 
+
+一种机制，可以监视多个描述符，一旦某个描述符就绪（一般是读就绪或者写就绪），能够通知程序进行相应的读写操作。
+
+select, poll, epoll
+本质上它们都是同步io的手段（数据需要自己动手拷贝）即读写是阻塞的；
+而异步I/O则无需自己负责进行读写，异步I/O的实现会负责把数据从内核拷贝到用户空间。
+
+
+
+## 地址、大小端转换函数
 ### 字节序
 字节序与系统有关还是cpu架构有关？？
 
@@ -26,3 +165,90 @@ int inet_aton(const char *cp, struct in_addr *inp);
 	//将cp转换成inp；
 	//返回非0如果cp为合法Ip；0如果cp无效；
 ```
+
+
+
+## Max Connection Number
+
+最大连接数量，
+
+首先了解linux用4元组来标志一个连接，即{lip, lport, rip, rport}。  
+其次如果没有设置地址、端口重用下，默认都是独占的。
+
+### client's max tcp connection
+
+client每次发起tcp连接请求时，除非绑定端口，通常会让系统选取一个空闲的本地端口（local port），该端口是独占的，不能和其他tcp连接共享。  
+
+> tcp端口的数据类型是unsigned short，因此本地端口个数最大只有65536，端口0有特殊含义，不能使用，这样可用端口最多只有65535，所以在全部作为client端的情况下，最大tcp连接数为65535，这些连接可以连到不同的server ip。
+
+### server's max tcp connection
+
+场景设定：只在一台机器上的一个端口；
+
+server通常固定在某个本地端口上监听，等待client的连接请求。
+
+```bash
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      2323/sshd      tcp        0     96 172.22.48.101:22        172.22.48.100:50888     ESTABLISHED 6402/2
+```
+
+不考虑地址重用（unix的SO_REUSEADDR选项）的情况下，即使server端有多个ip，本地监听端口也是独占的，因此server端tcp连接4元组中只有remote ip（也就是client ip）和remote port（客户端port）是可变的，因此最大tcp连接为客户端ip数×客户端port数，对IPV4，不考虑ip地址分类等因素，最大tcp连接数约为2的32次方（ip数）×2的16次方（port数），也就是server端单机最大tcp连接数约为2的48次方。
+
+> lip,lport - rip,rport   
+> 那么一个server上端口全开呢？那么internet上全部的连接数呢？
+
+
+
+### at last
+
+上面给出的是理论上的单机最大连接数，在实际环境中，受到机器资源、操作系统等的限制，特别是sever端，其最大并发tcp连接数远不能达到理论上限。  
+在unix/linux下限制连接数的主要因素是
+
+- 用户进程允许打开的文件描述符个数（每个socket就是一个文件描述符） 
+- 网络内核对TCP连接的有关限制
+- 使用支持高并发网络I/O的编程技术
+- 内存（每个tcp连接都要占用一定内存）
+- 另外1024以下的端口通常为保留端口。
+
+
+
+server端，通过增加内存、修改最大文件描述符个数等参数，单机最大并发TCP连接数超过10万 是没问题的，国外  Urban Airship 公司在产品环境中已做到 50 万并发 。在实际应用中，对大规模网络应用，还需要考虑C10K 问题。	
+
+http://blog.csdn.net/guowake/article/details/6615728  
+http://blog.sae.sina.com.cn/archives/1988  
+
+
+
+## Socket & Tcp connection status
+
+tcp的3次握手、4次挥手如下：
+
+![](img\socket-handshakeWave.png)
+
+持续监测各种状态的连接数量，如下：
+
+```bash
+watch -n 0.6 -d 'netstat -t | grep 8837 | grep CLOSE_WAIT |  wc -l'
+watch -n 0.6 -d 'netstat -t | grep 8837 | grep TIME_WAIT |  wc -l'
+watch -n 0.6 -d 'netstat -t | grep 8837 | grep ESTABLISHED |  wc -l'
+```
+
+
+
+### time_wait
+
+主动关闭连接的一方会进入这入这个状态。  
+
+> 根据TCP协议，主动发起关闭的一方，会进入TIME_WAIT状态，持续2*MSL(Max Segment Lifetime)，缺省为240秒。  
+
+注意：对于基于TCP的HTTP协议，关闭TCP连接的是Server端，这样Server端会进入TIME_WAIT状态。
+
+
+
+### tcp connection
+
+四元组是：源IP地址、目的IP地址、源端口、目的端口
+五元组是:   源IP地址、目的IP地址、源端口、目的端口、协议号
+七元组是:   源IP地址、目的IP地址、源端口、目的端口、协议号、服务类型、接口索引
+
+
+

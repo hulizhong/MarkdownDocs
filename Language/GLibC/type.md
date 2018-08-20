@@ -1,4 +1,4 @@
-[toc]
+[TOC]
 
 ## ReadMe
 各种类型；
@@ -54,4 +54,18 @@ bzero(&mysock,sizeof(mysock));
 mysock.sin_family = AF_INET;
 mysock.sin_port = htons(800);
 mysock.sin_addr.s_addr = inet_addr("192.168.1.0");
+```
+
+
+
+## 时间相关
+
+timeval
+
+```cpp
+struct timeval {
+    time_t      tv_sec;  //秒s
+    suseconds_t tv_usec; //微秒us
+};
+1s = 1000ms = 1000000us
 ```

@@ -6,10 +6,10 @@ perl的regex；
 ## 匹配、替换、转化
 Perl的正则表达式的三种形式，分别是匹配，替换和转化:
 ```perl
-if ($txt =~ m/$rgx/g) { #匹配
+while ($txt =~ m/$rgx/g) { #匹配
 	# =~表示匹配， !~表示不匹配
 }
-if ($txt =~ /$rgx/g) { #匹配
+while ($txt =~ /$rgx/g) { #匹配
 }
 
 if ($txt =~ s/pattern/replace/g) { #替换
@@ -19,7 +19,7 @@ if ($txt =~ s/pattern/replace/g) { #替换
 	#e 替换字符串作为表达式，表达式参数为匹配中的字符串；
 }
 
-if ($txt =~ tr/$rgx/xx/g) { #转化
+while ($txt =~ tr/$rgx/xx/g) { #转化
 	#c 转化所有未指定字符；
 	#d 删除所有指定字符；
 	#s 把多个相同的输出字符压缩成一个；

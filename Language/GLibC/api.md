@@ -1,19 +1,47 @@
-[toc]
+[TOC]
 
-## 目录
+## ReadMe
 
-- getcwd() 当前工作目录的绝对路径
+全局介绍glibc的功能；
 
-	```cpp
-	#include <unistd.h>
+查看api说明，需要安装manpages-dev；
+Manual pages about using GNU/Linux for development.
 
-	//废弃不用了，用getcwd()
-	char *getwd(char *buf);
 
-	char *getcwd(char *buf, size_t size); 
-		//getcwd(NULL, 0);  返回char*的当前目录路径
-		//getcwd(buf, size);  当前目录放置于buf中；
-	```
+
+## 异常机制
+
+c没有高级语言的try, catch功能；
+只有个全局的错误码errno；及一些辅助工具如断言；
+
+### assert
+
+```cpp
+#include <assert.h>
+void assert(scalar expression);
+	//只在NDEBUG宏未开启时有效；否则该宏不会产生任务代码；
+	//当expression为false那么向std error输出错误信息，并调用abort()终止程序运行；
+```
+
+
+
+### errno
+
+
+
+### errno to string
+
+```cpp
+#include <string.h>
+char *strerror(int errnum);
+
+#include <stdio.h>
+perror("prefix str to errorString.")
+```
+
+
+
+
 
 
 ## eventfd
@@ -43,12 +71,6 @@ close(evfd)
 > 只有当内核计数器为0才会释放evfd；
 
 
-## 其它
 
-```cpp
-#include <assert.h>
-void assert(scalar expression);
-	//只在NDEBUG宏未开启时有效；否则该宏不会产生任务代码；
-	//当expression为false那么向std error输出错误信息，并调用abort()终止程序运行；
-```
+
 

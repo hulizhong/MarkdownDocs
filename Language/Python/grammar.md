@@ -149,6 +149,9 @@ print str.join(lst)
 strFormat = "I'm format string with %-10s %d %.2f" % (format1, format2, format3)  
 # 法二用字典：
 print("I'm %(name)s. I'm %(age)d year old" % {'name':'Vamei', 'age':99})
+
+str = u"1234"; str.isdecimal()  #检测unicode字符串是否只包含十进制字符；
+str.isdigit()  #检测字符串是否只由数字组成。
 ```
 
 ### 列表list []
