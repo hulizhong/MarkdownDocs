@@ -48,13 +48,15 @@ root@deboost# uname -r //print the kernel release
 
 提供了内核级的包过滤技术、早期支撑起了简单的防火墙功能（2、3、4层包过滤）及一些NAT功能；
 
+Refer: [netfileter文章](netfilter.md)
+
 
 
 ### netfilter之iptable
 
 netfilet只是内核中的包过滤框架，但包过滤的规则得靠管理员手动输入，所以有了iptable, iptalbes.
 
-
+Refer: [netfileter文章中相关章节](netfilter.md#iptables)
 
 
 
