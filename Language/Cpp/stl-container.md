@@ -2,31 +2,65 @@
 
 ## readme
 
-- 容器分类
-	- 顺序容器
-		- vector
-			- 一段连续的内存地址，基于数组的实现。
-		- list
-			- 非连续的内存，基于链表实现。
-		- deque
-			- 与vector类似，但是对于首元素提供删除和插入的双向支持。
-
-	- 关联容器（就是有key-value形式的，其中set的key,value一样）
-		- map：key-value形式的。
-			- 元素默认升序
-		- multimap：
-			- key值可以相同。
-		- set：
-			- 元素默认升序
-			- key,value一样
-		- multiset：
-			- key值可以相同。
-
 容器类自动申请和释放内存，我们无需new和delete操作。
 
 
+
+顺序容器
+vector 一段连续的内存地址，基于数组的实现。
+list  非连续的内存，基于链表实现。
+deque 与vector类似，但是对于首元素提供删除和插入的双向支持。
+
+
+
+关联容器（就是有key-value形式的，其中set的key,value一样）
+map：key-value形式的。
+	元素默认升序
+multimap：key值可以相同。
+set：key,value一样
+	元素默认升序
+multiset：key值可以相同。
+hash_set, hash_map, hash_multiset, hash_multimap
+	有hash前缀的：底层实现为hashtable，否则底层是为红黑树实现的。
+	区别在于：红黑树提供的默认是排好序的，而hashtable提供的则不是。
+
+
+
+其它杂项
+stack
+queue
+valarray
+bitset
+
+
+
+容器大比拼
+
+|名称 |内部数据结构 |操作元素的方式 |插入删除操作迭代器是否失效 |
+|----|-----------|------------|----------------------|
+|vector |连续存储的数组形式（一端开口） |下标运算符、迭代器  |会|
+|deque |连续或分段连续存储数组（两端开口） |下标运算符、迭代器 |插入迭代器失效；删头尾指向被删除节点的迭代器失效，删除中间元素所有迭代器失效|
+|list |双向环状链表 |迭代器 |删除指向被删除的迭代器失效|
+|set |红黑树 |迭代器 |删除指向被删除的迭代器失效|
+|multiset |红黑树 |迭代器 |删除指向被删除的迭代器失效|
+|map |红黑树 |迭代器 |删除指向被删除的迭代器失效|
+|multimap |红黑树 |迭代器 |删除指向被删除的迭代器失效|
+
+
+
 ## vector
+
+增加和获取元素效率很高  
+插入和删除的效率很低
+
+> Random access - constant O(1)    
+> Insertion or removal of elements at the end - amortized constant O(1)   
+> Insertion or removal of elements - linear in distance to the end of the vector O(n)
+
+
+
 ### 增、删、改、查
+
 定义
 ```cpp
 vector<int> vec1;    //默认初始化，vec1为空
@@ -83,7 +117,18 @@ critical handler: signal 6 is triggered.
 ```
 
 ## deque
+
+增加和获取元素效率较高  
+插入和删除的效率较高 ----看来这是有问题的，请看下面官网上的时间复杂度描述（这样看也只是vector的改良版本）。  
+
+> Random access - constant O(1)   
+> Insertion or removal of elements at the end or beginning - constant O(1)   
+> Insertion or removal of elements - linear O(n)  
+
+
+
 ### 增、删、改、查
+
 定义
 ```cpp
 std::deque dq;
@@ -101,9 +146,17 @@ push_front()
 //no data
 ```
 
-
 ## list
+
+增加和获取元素效率很低  
+插入和删除的效率很高 
+
+> 双向链表查找O(n)； 插入、删除为O(1)
+
+
+
 ### 增、删、改、查
+
 定义和初始化
 ```cpp
 list<int> lst1;          //创建空list
@@ -201,7 +254,10 @@ std::string value = mp.at("key");
 ```
 
 ## set集合
-它是一个有序的容器，里面的元素都是排序好的支持插入、删除、查找等操作，就像一个集合一样，所有的操作都是严格在$\log_2 N$时间内完成，效率非常高。
+它是一个有序的容器，里面的元素都是排序好的（默认为升序）支持插入、删除、查找等操作，就像一个集合一样，所有的操作都是严格在$\log_2 N$时间内完成，效率非常高。
+
+> set可以在时间复杂度为O(logN)情况下插入、删除和查找数据（红黑树的特性）。    
+> hash_set操作的时间复杂度则比较复杂，这取决于哈希函数和哈希表的负载情况。stl中最好的情况是O(1)，最坏是O(N)（其它几个hash_XX也一样）。    
 
 ### 增、删、改、查
 定义
@@ -221,10 +277,13 @@ std::string value = mp.at("key");
 
 
 ## 经验
-- 不要在循环中删除迭代器
-	- 在循环中erase(it)会引发迭代器失效；
-- 什么样的场景该用哪种容器？？
-- 它们的效率对比是怎么样的？
+如何选择容器呢？
+
+> 如果你需要高效的随即存取，而不在乎插入和删除的效率，使用vector   
+> 如果你需要大量的插入和删除，而不关心随即存取，则应使用list   
+> 如果你需要随即存取，而且关心两端数据的插入和删除，则应使用deque。
+
+
 
 
 ## 扩展：std::string

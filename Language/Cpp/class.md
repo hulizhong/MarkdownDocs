@@ -1,4 +1,4 @@
-[toc]
+[TOC]
 
 ## 友元
 允许一个类将对其非公有成员的访问权（protect, private）授予指定的函数或者类。
@@ -91,7 +91,59 @@
 > 内部类主要是为了避免命名冲突；（内部类定义为public）
 > 为了隐藏名称（内部类定义为private/protected）
 
+
+
+为public属性
+
+```cpp
+class Base    
+{             
+public:       
+	virtual void fun() = 0;
+	class Impl; //这样写的最大好外：Base有好几种实现方法（当然Base得有一堆的virtual接口）；
+};
+
+//内部类得加上其外部类的类名；
+//亦可继承其外部类；
+class Base::Impl : public Base                           
+{
+private:
+	//new add property.
+}
+Base::Impl obj;
+obj.fun();
+```
+
+
+
+为private属性
+
+```cpp
+class Base    
+{             
+public:
+	void fun1() {impl_->fun1();}
+	void fun2() {impl_->fun2();}
+private:
+	class Impl; //这样写的最大好外：Base有好几种实现方法。（不能用vitrual，即继承）
+	Impl *impl_;
+};
+
+class Base::Impl
+{
+public:
+	void fun1();
+	void fun2();
+}
+Base::Base() {impl_ = new Impl()} //如果Impl继承Base，那么构造对象时会发生死循环。
+```
+
+
+
+
+
 ### 单例类
+
 请看一种实现
 ```cpp
 class Demo
@@ -153,7 +205,58 @@ Demo *obj = Demo::getInstance();
 ```
 
 ## 类内部关系
+
+### static
+
+static属性的变量、方法均属于类，而非对象；但这些static属性、方法却也属于对象（故可以对象调用static方法、对象可以访问static属性）；
+
+```cpp
+class Base{
+public:
+	static int s_int;
+    static void s_print() {
+        //只能处理static的属性、调用static的方法；
+    }
+    void comman_fun() {
+        //可处理static的属性、调用static的方法；
+    }
+}
+
+int Base::s_int = 0;  //类外初始化，前缀不能再加static
+void Base::s_print() {…}  //类外，前缀不能再加static
+```
+
+### enum
+
+枚举的使用记得带上类名；包括（枚举变量、枚举常量）  
+
+```cpp
+class Base
+{   
+public:
+	enum STATE { UNINITIALIZED, STARTING, STARTED, JOINING, STOPPING, STOPPED };
+};  
+Base::STATE state; //定义带上类名。
+state = Base::UNINITIALIZED;  //使用带上类名，当作域作用符吧。
+```
+
+
+
 ## 类与类的关系
 ### 继承
+
+virtual
+
+```CPP
+class BB : public AA {
+public:
+	virtual void v_print() override;
+}
+
+void Base::v_print() {..}  //类外，前缀不能再加 virtual
+```
+
+
+
 ### 组合
 
