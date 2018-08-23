@@ -32,6 +32,9 @@
 
 ## Nginx
 
+可负载4、7层流量；
+Refer [nginx lb](../../OSS/nginx.md)
+
 
 
 ## ToDo

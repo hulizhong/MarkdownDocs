@@ -102,7 +102,7 @@ Context:	http, server, location
 
 #### nginx 504(Gateway timeout)
 
-```sh
+```bash
 error.log: upstream timed out(110: connection timed out) while reading response header from upstream.
 ```
 
@@ -110,7 +110,7 @@ error.log: upstream timed out(110: connection timed out) while reading response 
 
 #### nginx 502(bad-gateway)
 
-```sh
+```bash
 error.log connected failed.(111: connectionn refused) while connecting to upstream.
 ```
 
