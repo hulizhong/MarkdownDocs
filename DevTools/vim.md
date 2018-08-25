@@ -1,4 +1,4 @@
-[toc]
+[TOC]
 
 ## vim
 
@@ -45,14 +45,15 @@ vim -d a b 等效于vimdiff a b
 
 命令模式下各种指令
 ```bash
-替换
-:m,ns/str1/str2/c    m到n行
-:%s/str1/str2/c    整个文件
+#替换
+:m,ns/str1/str2/c    #m到n行
+:%s/str1/str2/c      #整个文件
 
-:r !ls 读取后接指令执行结果到当前文本
+:r !ls #读取后接指令执行结果到当前文本
 
-设置
-:set ignorecase  搜索大小写不敏感
-:set hls 搜索高亮
-:set nu  显示行号
+#设置
+:set ignorecase  #搜索大小写不敏感
+:set hls #搜索高亮
+:set nu  #显示行号
 ```
+

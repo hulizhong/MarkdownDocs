@@ -1,9 +1,8 @@
 [TOC]
 
-
 | lib name |  lib des |
 |----------|----------|
-|bisect |二分算法：查找、插入
+|bisect |二分算法：查找、插入|
 |hashlib |hash库
 |struct |二进制字节流的处理
 

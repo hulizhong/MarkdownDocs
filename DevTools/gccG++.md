@@ -54,35 +54,42 @@ g++ use.cpp libdemo.a
 
 ### 查看库
 静态库、动态库的查看
+
+```bash
 nm -s libxx.so
 nm -s libxx.a
+```
 
-静态库的查看
-ar 
+静态库的查看ar 
+
 ```bash
-c 创建静态库;        ar cr libxx.a xx.o
-r 往静态库中增文件； ar r libxx.a yy.o
-d 从静态库中删文件； ar d libxx.a yy.o
-t 查看静态库中的文件；  ar t libxx.a
+ar cr libxx.a xx.o  #c 创建静态库; 
+ar r libxx.a yy.o   #r 往静态库中增文件；
+ar d libxx.a yy.o   #d 从静态库中删文件；
+ar t libxx.a        #t 查看静态库中的文件；
+```
+
+目标文件使用了哪些库
+
+```bash
+ldd a.out
 ```
 
 
-目标文件使用了哪些库
-ldd a.out
 
 
 ## 头文件
 
 
 ## 查看elf工具
-用nm查看链接的库里有没有start\_thread\_noexcept这个符号表
+编译失败，用nm查看链接的库里有没有start\_thread\_noexcept这个符号表
 ```cpp
 eventTst.cpp:(.text._ZN5boost6thread12start_threadEv[_ZN5boost6thread12start_threadEv]+0x15): undefined reference to `boost::thread::start_thread_noexcept()'
 collect2: error: ld returned 1 exit status
 make: *** [ev] Error 1
 ```
 
-## 宏
+## 特殊宏
 探测OS类型
 ```bash
 #if defined(__linux__)
@@ -95,3 +102,4 @@ make: *** [ev] Error 1
 #if defined(WIN32)
 	win32
 ```
+
