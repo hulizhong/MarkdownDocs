@@ -1,5 +1,15 @@
 [TOC]
 
+
+
+## ReadMe
+
+tcp协议相关内容；
+
+
+
+## TCP Package
+
 tcp的包长的像这样（一个刻度表示1个二进制位（比特））    
 
 ![这是一张图片](img/tcp-packet.png)
@@ -148,15 +158,21 @@ TCP连接中如果只发送数据无结构（如文件传输，这样发送方�
 
 
 
-## 半连接 与 SYN Flood
+## HalfConnection & SYN Flood
 
-半连接
-> 顾名思义就是还没有完成三次握手建立连接。具体是指服务端在收到客户端的SYN包后，会据此生成一个半连接的对象，并将其存储在一个半连接队列(SYN Queue)中进行维护。一旦收到客户端的ACK包后会将该对象从半连接队列(SYN Queue)转移到已连接队列(Accept Queue)中等待accept系统调用。一经accept调用，数据的传输和接收才会正式开始。队列肯定是不能无限长的，因为每个对象都会占据存储资源，
+### Half Connection
 
-SYN FLood攻击
-> 利用了半连接队列的长度限制来完成攻击的。
->
-> > 攻击策略为伪造大量SYN包发送给服务端，但不返回ACK包，导致服务端半连接队列被迅速占满，正常的连接被抛弃。服务端会有大量处于SYN_RECV状态的连接，其会尝试重发ACK包给实际不存在的客户端，导致CPU满负载，内存耗尽，从而达到攻击效果。
+顾名思义就是还没有完成三次握手建立连接。
+
+具体是指服务端在收到客户端的SYN包后，会据此生成一个半连接的对象，并将其存储在一个半连接队列(SYN Queue)中进行维护。一旦收到客户端的ACK包后会将该对象从半连接队列(SYN Queue)转移到已连接队列(Accept Queue)中等待accept系统调用。一经accept调用，数据的传输和接收才会正式开始。队列肯定是不能无限长的，因为每个对象都会占据存储资源。
+
+
+
+### SYN FLood
+
+利用了半连接队列的长度限制来完成攻击的。
+
+攻击策略为伪造大量SYN包发送给服务端，但不返回ACK包，导致服务端半连接队列被迅速占满，正常的连接被抛弃。服务端会有大量处于SYN_RECV状态的连接，其会尝试重发ACK包给实际不存在的客户端，导致CPU满负载，内存耗尽，从而达到攻击效果。
 
 
 
@@ -186,7 +202,7 @@ SYN FLood攻击
 
 ### Switch
 
-#### syn_recv相关
+#### About syn_recv
 
 net.ipv4.tcp_synack_retries = 5
 server决定内核在放弃连接之前所送出的 SYN+ACK （连接第2步）数目。
@@ -200,7 +216,7 @@ net.ipv4.tcp_syncookies = 1
 
 
 
-#### time_wait相关
+#### About time_wait
 
 net.ipv4.tcp_fin_timeout = 60    
 减小fin_timeout（单位为s），减少TIME_WAIT连接数量。
@@ -213,7 +229,7 @@ net.ipv4.tcp_tw_recycle = 0
 
 
 
-#### 连接数相关
+#### About Connection Num
 
 - /proc/sys/net/ipv4/tcp_max_syn_backlog = 1024
 - /proc/sys/net/core/somaxconn = 128  
