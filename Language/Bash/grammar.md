@@ -1,9 +1,37 @@
 [TOC]
 
-[此章节内容大部分请参考](http://www.runoob.com/linux/linux-shell-include-file.html)
+## ReadMe
+
+Linux Bash相关语法；
+
+http://www.runoob.com/linux/linux-shell-include-file.html)
+
+
+
+```bash
+set -e
+	# 失败退出
+	#这句语句告诉bash后面的语句 如果任何语句的执行结果不是true（0代表true）则应该退出
+
+pass
+	#空语句
+
+if [ "${stra}"x = "strb"x ] 
+	#字符串判断防空
+	
+commands_succeed && succeed_process
+commands_failed || failed_process
+	#巧用连接符判断成功与否
+```
+
 
 
 ## 变量
+
+shell变量分为：局部变量、环境变量
+
+> 局部变量：当前shell实例可用的变量；
+> 环境变量：所有的程序，包含shell启动的程序都能访问的变量；
 
 ```bash
 var=value #变量定义不能有空格； 变量的二次赋值不能用$var，直接用变量名则可。
@@ -14,45 +42,134 @@ $var
 ${var} #增加变量名边界的定位
 ```
 
-### shell变量、局部变量、环境变量
-> 局部变量：当前shell实例可用的变量；	
-> 环境变量：所有的程序，包含shell启动的程序都能访问的变量；	
-> Shell变量：前面两种的总称！
+/etc/bashrc vs /etc/profile中的环境变量关系？
 
-/etc/bashrc vs /etc/profile中的环境变量关系？	
+	
 
 ### 整数
-暂无
+请看如下demo.
+
+```bash
+let "a++"
+	#自增自减
+```
+
+
 
 ### 字符串
-字符串形式：
-- 单引号：
-> 不能包含变量； 原样输出；
+字符串形式
+```bash
+str='i am string.'
+	#原样输出；
+str="i am string, eq ${var}.\n"
+	#可包含变量、转义字符、单引号；
+```
 
-- 双引号：
-> 可以包含变量；可以有转义字符；可以包含单引号；
 
-#### 各种操作
-- 拼接：把字符串/变量连在一起就行了（不需要任何符号）
-- 长度：${#strval}
-- 截串：${string:1:4}
-- 查找子串：`expr index "$string" u`
+
+各种操作
+
+```bash
+$str="abc"
+$str"def"
+	#拼接：直接相连接即可，无需要连接符；
+${#str}
+	#字符串长度
+${str:1:4}
+	#字符串截取
+`expr index "${str}" u`
+	#查找字串
+```
+
 
 
 ### 数组
+
 只支持一维数组
-Array=(1 2 3 4)，值之间的隔离用 空格或者换行。
+
+```bash
+array=(1 2 3 4)
+	#值之间的隔离用 空格或者换行。
 
 
-#### 各种操作：
-- 单个元素获取：${array[0]}
-- 获取全部元素：${array_name[@]}  ${array_name[*]}
-- 数组的长度：${#array_name[@]} 或者 ${#array_name[*]}
-- 单个元素的长度：lengthn=${#array_name[n]}
+
+#-----------------------------各种操作
+${array[0]}
+	#单个元素获取
+
+${array_name[@]}
+${array_name[*]}
+	#获取全部元素
+
+${#array_name[@]}
+${#array_name[*]}
+	#数组的长度：
+
+lengthn=${#array_name[n]}
+	#单个元素的长度
+```
+
+
+
+## 分支控制
+
+if
+
+```bash
+if [ $a -eq $b ]
+then
+	echo $a "==" $b
+elif [ $a -gt $b ]; then  #要将分支控制的助词如then, do提前一句，那么需要在前一句话后加分号;再加此助词。
+	echo $a ">" $b
+else
+	echo $a "<" $b
+fi
+```
+
+
+
+for
+
+```bash
+#for ((i=0; i<5; i++))
+#for (( i=0; i<5; i++ ))
+for i in 0 1 2 3 4 #只能空格为间隔，加,则会解释成数据
+do
+  	echo 'hello', $i
+done
+```
+
+
+
+while
+
+```bash
+#while(($a<=3)) ##cant use -le
+while [ $a -le 3 ]
+do
+	   echo $a
+    let "a++"
+done
+```
+
+
+
+
+
+### 死循环
+
+```bash
+while(true)  
+while [ true/1/false ]  
+for ((;;))
+```
+
 
 
 ## 函数
+
 形式如下  
+
 ```bash
 # 不带任何参数
 # /bin/sh不能带function关键字，/bin/bash则可有可无function
@@ -65,123 +182,125 @@ Array=(1 2 3 4)，值之间的隔离用 空格或者换行。
 ```
 
 
-## 分支控制
 
-- if
+### 参数
 
-	```bash
-	if [ $a -eq $b ]
-	then
-		echo $a "==" $b
-	elif [ $a -gt $b ]; then  #要将分支控制的助词如then, do提前一句，那么需要在前一句话后加分号;再加此助词。
-		echo $a ">" $b
-	else
-		echo $a "<" $b
-	fi
-	```
-
-- for
-
-	```bash
-	#for ((i=0; i<5; i++))
-	#for (( i=0; i<5; i++ ))
-	for i in 0 1 2 3 4 #只能空格为间隔，加,则会解释成数据
-	do
-    	echo 'hello', $i
-	done
-	```
-
-- while
-
-	```bash
-	#while(($a<=3)) ##cant use -le
-	while [ $a -le 3 ]
-	do
- 	   echo $a
-	    let "a++"
-	done
-	```
-
-
-
-### 死循环
+参数名、意义
 ```bash
-while(true)  
-while [ true/1/false ]  
-for ((;;))
+$#
+	#传递到脚本的参数个数
+$*
+$@
+	#传递到脚本的所有参数，但最好用$@，请看下面的demo.
+
+$$
+	#脚本运行的当前进程ID号
+$!
+	#后台运行的最后一个进程的ID号	
+$-
+	#显示Shell使用的当前选项，与set命令功能相同。
+$?
+	#显示最后命令的退出状态。0表示没有错误，其他任何值表明有错误。
+
+$0
+	#Shell脚本名
+$1
+	#第1个参数，。。
+```
+
+```bash 
+#$* vs $@     不加‘’时两都一样，加‘’时$*为一整体，$@为原始参数
+function showDollarVar()
+{
+	echo '-------------$*' 
+	for arg in $*
+	do
+		echo $arg
+	done
+	echo '-------------$@'
+	for arg in $@
+	do
+		echo $arg
+	done
+	
+	echo '-------------"$*"'
+	for arg in "$*"
+	do
+		echo $arg
+	done
+	echo '-------------"$@"'
+	for arg in "$@"
+	do
+		echo $arg
+	done
+}
+
+showDollarVar "hua jiang hu" zhi
+root@shellLang# ./grammar.sh 
+-------------$* #以一个单字符串的形式显示所有向脚本传递的参数。
+hua
+jiang
+hu
+zhi
+-------------$@ #同于没有加“”的$*
+hua
+jiang
+hu
+zhi
+-------------"$*" #全部参数视为一个整体
+hua jiang hu zhi
+-------------"$@" #原始参数一个个解析出来（默认为空格）
+hua jiang hu
+zhi
 ```
 
 
-## 参数
-|参数名 | 意义|
-|:-----|:----| 
-|$# |传递到脚本的参数个数
-|$*	| 
-|$@	|
-|$$	|脚本运行的当前进程ID号
-|$!	|后台运行的最后一个进程的ID号	
-|$-	|显示Shell使用的当前选项，与set命令功能相同。
-|$?	|显示最后命令的退出状态。0表示没有错误，其他任何值表明有错误。
-|$0 |Shell脚本名
-|$1 … |第1个参数，。。
 
-- 问题：$* vs $@  <font color=red>不加‘’时两都一样，加‘’时$*为一整体，$@为原始参数</font>
 
-	```bash 
 
-	function showDollarVar()
-	{
-    	echo '-------------$*' 
-    	for arg in $*
-    	do
-    	    echo $arg
-    	done
-		echo '-------------$@'
-    	for arg in $@
-    	do
-    	    echo $arg
-    	done
-		
-    	echo '-------------"$*"'
-    	for arg in "$*"
-    	do
-    	    echo $arg
-    	done
-    	echo '-------------"$@"'
-    	for arg in "$@"
-    	do
-    	    echo $arg
-    	done
-	}
+### 获取返回值
 
-	showDollarVar "hua jiang hu" zhi
-	root@shellLang# ./grammar.sh 
-	-------------$* #以一个单字符串的形式显示所有向脚本传递的参数。
-	hua
-	jiang
-	hu
-	zhi
-	-------------$@ #同于没有加“”的$*
-	hua
-	jiang
-	hu
-	zhi
-	-------------"$*" #全部参数视为一个整体
-	hua jiang hu zhi
-	-------------"$@" #原始参数一个个解析出来（默认为空格）
-	hua jiang hu
-	zhi
-	```
+两种方式返回：return & echo .
+
+```bash
+return_ret()
+{          
+    return 1  
+}
+return_ret
+aa=$?   #return返回的值，只能用$?获取；（但是只能返回0-255之间的整数）
+echo $aa  #1
+           
+echo_ret()
+{          
+    echo 3
+}          
+bb=$(echo_ret)  #echo返回的值，只能用命令替换来获取；
+echo $bb  #3
+```
+
+```bash
+############## $?只能返回0-255之间的数字。高于它将会被除以256。
+returnValue()               
+{                           
+    size=256  #### bash里面变量默认为全局
+    return $size            
+}                           
+returnValue                 
+echo "returnValue", $?, $size  ###0, 256
+```
+
+
 
 
 
 ## 输入、输出
 
-- Echo
+- echo
 
 	```bash
-	Echo –e “…\x” 开启转义
-	Echo –e “…\c” 不换行
+	echo –e “…\x” 开启转义
+	echo –e “…\c” 不换行
 	```
 
 - printf 比echo更强大，移植性更好；
@@ -198,14 +317,14 @@ for ((;;))
 ### 输入出重定向
 
 - 输入：n <& m	将输入文件 m 和 n 合并。
-- 输出：n >& m	将输出文件 m 和 n 合并。   
-- 标记块：<< tag	将开始标记 tag 和结束标记 tag 之间的内容作为输入。  
+   输出：n >& m	将输出文件 m 和 n 合并。   
+    标记块：<< tag	将开始标记 tag 和结束标记 tag 之间的内容作为输入。  
 
-	看下面把标准输出、错误输出打印到file.log里
-	```bash
-	$ command > file.log 2>&1  #只能将2写在前面
-	$ command $> file.log
-	```
+   看下面把标准输出、错误输出打印到file.log里
+   ```bash
+   $ command > file.log 2>&1  #只能将2写在前面
+   $ command $> file.log
+   ```
 
 
 
@@ -224,9 +343,9 @@ let a=a+1
 > -z长度是否为0、-n长度是否不为0  
 > str是否不为空（这点如下）。  
 ```cpp
-	if [ $string ]; then 
-		echo ‘string not empty’
-	fi
+if [ $string ]; then 
+	echo ‘string not empty’
+fi
 ```
 
 - 布尔运算符
@@ -265,15 +384,56 @@ let a=a+1
 	-g file	检测文件是否设置了 SGID 位，如果是，则返回 true。  
 
 
-## 高级问题
+
+## 高级话题
+
 ### Shell运行环境
 登录到linux就有个登录shell
 > 可以在此登录shell中执行语句，也可以执行shell脚本（开个子shell执行shell语句）；
 
 - 与环境有关系的指令：
-	- export var  在任何子shell中均有该变量的拷贝
+  - export var  在任何子shell中均有该变量的拷贝
 
-		> 子shell继承了父shell， 但子shell不能影响父shell的变量值；  
+    > 子shell继承了父shell， 但子shell不能影响父shell的变量值；  
 
-	- source var  当前shell 中执行命令；
+  - source var  当前shell 中执行命令；
+
+
+
+
+
+### 命令替换
+
+命令替换
+
+```bash
+# echo $(date)
+Sat Jun 10 16:28:00 HKT 2017
+# echo `date` 
+Sat Jun 10 16:28:02 HKT 2017
+```
+
+
+
+
+
+### 各种括号
+
+() vs {} 将多个命令组合在一起执行，相当于一个命令组。
+
+> () 是在子shell中执行。  
+>
+> > $() ``的命令替换，注意$()跟单纯的()是不一样（还有()$呢）。
+>
+> {} 是在当前shell中执行；{}两边必须有空格；{}中最后一条指令必须以;结束。
+
+test vs []
+
+> 等价  
+> [[]] 是[]的加强版。如果你遇到[]搞不定的，记得用[[]]。
+
+(()) 专门用于数值计算。 
+
+> (())内不能出现-ne之类的test关键词的用语，而用> < ++之类的数值运行符。   
+> 使用 (( )) 时，不需要空格分隔各值和运算符，使用[]和[[ ]] 时需要用空格分隔各值和运算符包括’[‘’]’符（如 elif [ $a -gt $b ]; then）。
 
