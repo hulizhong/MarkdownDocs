@@ -38,7 +38,7 @@ boost 1.58的智能指针源码目录结构如下：
 [基础用法](#共享指针基础用法)
 [易出问题的点](#共享指针难点)
 
-### 共享指针基础用法
+### Basic Usage
 构造
 ```cpp
 class Person {
@@ -48,21 +48,22 @@ public:
 	}
 };
 
-1、make_shared方法
+//-----------------------------------1、make_shared方法
 #include <boost/make_shared.hpp>
 boost::shared_ptr<Person> p1 = boost::make_shared<Person>(1);  
 	//参数为构造类型的构造函数参数；
 
-2、用裸指针构造
+//------------------------------------------2、用裸指针构造
 boost::shared_ptr<Person> p2(new Person(2));  
-boost::shared_ptr<Person> p2 = boost::shared_ptr<Person>(new Person(2)); //这样行吗？用=号了。。。 rwhy
+boost::shared_ptr<Person> p2 = boost::shared_ptr<Person>(new Person(2));
+	//这样行吗？用=号了。。。 rwhy
 	//这句话不可以分成两部的，看如下解释：
-		// Person *ptr = New Person(2); p2 = ptr; 因为一个是类，一个是指针所以是没法赋值的！
+		// Person *ptr = New Person(2); p2 = ptr; 因为一个是类，一个是指针！
 p2.reset(new Person(5));
 	//新new一个对象；执行reset语义; 给p2赋上一个新的对象；
 	//这个有风险，如果reset count!=0呢，原有对象有没有释放呢？？？ rwhy
 
-补充：指定删除器；
+//-------------------------------------补充：指定删除器；
 boost::shared_ptr<Person> p3 = boost::shared_ptr<Person>(new Person(3), boost::bind(&Person::del, this, _1));
 	//同于std::shared_ptr的默认删除器不支持数组对象；
 ```
@@ -85,7 +86,10 @@ if (intPtr)
 	cout << " ..has value " << endl;
 ```
 
-### 共享指针难点
+
+
+### Key Points
+
 错误点：一个裸指针创建多个智能指针
 ```cpp
 int *ptr = new int(5);
@@ -99,15 +103,19 @@ a.out(72137,0x7fffe33033c0) malloc: *** error for object 0x7fa1ce4002d0: pointer
 Abort trap: 6
 ```
 
+
+
 ## weak\_ptr
+
 弱指针，shared\_ptr的助手，配合shared\_ptr避免循环引用；
 没有指针的行为；
+
 > 重载\*
 > 重载->
 
 是shared\_ptr的观察者对象，而不进行引用（即赋值之后，引用计数不会+1）；
 
-### 成员函数
+### Member Function
 ```cpp
 //可以观测资源的引用计数
 use_count()
@@ -140,7 +148,7 @@ lock()
 和scoped\_ptr类似，用来处理数组；
 
 
-## 智能指针小结
+## SmartPointer Summing-Up
 - scoped\_ptr
 	- 不共享所有权、不转移所有权、不管理数组对象；
 	- 可以置换所有权；
@@ -171,7 +179,7 @@ lock()
 
 
 
-## 智能指针的转换
+## SmartPointer Cast
 如同我们用dynamic\_cast对“裸”指针进行类层次上的上下行转换时一样；
 当我们对智能指针进行类层次上的上下行转换时，则需要如下:
 dynamic cast

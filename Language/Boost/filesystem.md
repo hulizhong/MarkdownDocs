@@ -1,9 +1,9 @@
 [TOC]
 
 ## ReadMe
-boost filesystem相关类的用法；
 
-目录架构   
+boost中文件系统相关操作；
+
 ```bash
 ▾ filesystem/       
   ▸ detail/         

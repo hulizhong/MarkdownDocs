@@ -1,4 +1,4 @@
-[toc]
+[TOC]
 
 ## ReadMe
 讲解boost thread同步的一些知识；
@@ -6,7 +6,7 @@
 
 对于mutex和lock，要明确一点，真正起到互斥作用的mutex，而lock只是协助mutex令我们在使用时更方便。
 
-## mutex
+## Mutex
 互斥量各类较多，如下：
 [mutex](#mutex)
 [shared\_mutex](#shared_mutex)
@@ -63,7 +63,7 @@ mt.timed_lock();
 
 
 
-## lock
+## Lock
 boost实现了各种lock来帮助mutex的使用；
 它们的原理就是RAII：在lock的构造函数中调用T.lock()、析构函数中调用T.unlock()；和智能指针类似；
 [lock\_guard](#lock_guard)
@@ -118,7 +118,7 @@ ul.timed_lock() //等待一定的时间以获得互斥体
 
 
 
-## 条件变量
+## Condition Variable
 消费者
 ```cpp
 boost::condition_variable cond;

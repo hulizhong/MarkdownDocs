@@ -1,4 +1,4 @@
-[toc]
+[TOC]
 
 ## ReadMe
 boost
@@ -35,51 +35,4 @@ int fun()
 ```
 
 
-## uuid
-源码目录架构   
-```bash
-▾ uuid/                 
-  ▸ detail/             
-    name_generator.hpp  
-    nil_generator.hpp   
-    random_generator.hpp
-    seed_rng.hpp        
-    sha1.hpp            
-    string_generator.hpp
-    uuid.hpp            
-    uuid_generators.hpp 
-    uuid_io.hpp         
-    uuid_serialize.hpp  
-```
-
-生成uuid
-```cpp
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_io.hpp>
-#include <boost/uuid/uuid_generators.hpp>
- 
-boost::uuids::uuid a_uuid = boost::uuids::random_generator()();
-	// 这里是两个() ，因为这里是调用的 () 的运算符重载.
-const string str_uuid = boost::uuids::to_string(a_uuid);
-	//uuid转string.
-```
-
-## 特殊功能类
-收录一些功能类，我们只需要继承这些类就能实现特定功能，如下：
-[noncopyable](#boost::noncopyable)
-
-### boost::noncopyable
-禁止拷贝类
-主要看点：拷贝构造函数、=重载符 置为私有的属性。如下：  
-```cpp
-class noncopyable
-{
- protected: //为什么是protected？
-    noncopyable() {}
-    ~noncopyable() {}
- private:  // emphasize the following members are private
-    noncopyable( const noncopyable& ); 
-    const noncopyable& operator=( const noncopyable& );
-};
-```
 

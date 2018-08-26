@@ -4,7 +4,8 @@
 线程对象boost::thread
 > 不可复制，但可转移；
 > 对象析构了，线程还存在，只是为detached状态；
->> 亦可调用detach()来让线程与线程对象分离；
+>
+> > 亦可调用detach()来让线程与线程对象分离；
 >
 
 callback的形式
@@ -18,8 +19,8 @@ boost线程退出的正常手法是
 g++ tst.cpp -lboost_thread -lboost_system
 ```
 
-## thread对象创建
-### cb为非类成员函数
+## Thread Create
+### cb was NonClassMemFun
 cb不需要参数
 ```cpp
 void fun1()
@@ -61,7 +62,7 @@ int main(int argc, char* argv[])
 }                      
 ```
 
-### cb为类的成员函数
+### cb was ClassMemberFun
 - 线程在哪里创建
 	- 类内创建
 		- cb是否为静态成员函数
@@ -147,7 +148,7 @@ int main(int argc, char* argv[])
 }
 ```
 
-## thread使用
+## Thread Usage
 线程的使用；
 
 ### API
@@ -175,7 +176,7 @@ boost::thread::hardware_concurrency(); //返回cpu的线程数；
 	t.timed_join();
 }
 ```
- 
+
 ## boost::thread\_group
 用于管理一组线程（如同线程池一样），内部使用std::list；
 ```cpp
@@ -199,8 +200,8 @@ int fun()
 }
 ```
 
-## interrupt
-在一个线程中调用interrupt()，那么会在被设置线程内产生一个中断；（boost::thread_interrupted异常）
+## Interrupt
+在一个线程中调用interrupt()，那么会在被设置线程内产生一个中断异常；（boost::thread_interrupted异常）
 但是这个中断只能在中断点被检测到；
 线程只会在中断点才会去检测自己是否被中断过，从而决定是否抛出boost::thread_interrupted异常；
 ```cpp
@@ -216,7 +217,7 @@ void thread()
 } 
 ```
 
-### 中断点
+### Interrupt Point
 Boost.Thread定义了一系列的中断点如下：
 ```cpp
 boost::thread::join()
@@ -233,7 +234,7 @@ boost::this_thread::sleep()
 boost::this_thread::interruption_point()
 ```
 
-### 可中断段、非中断段
+### Disable/Enable Interrupt
 以下类型是通过RIIA来实现的
 ```cpp
 //如下类型变量，到该变量析构间的代码不能被中断；
@@ -243,8 +244,8 @@ boost::this_thread::disable_interruption di;
 boost::this_thread::restore_interruption ri(di);
 ```
 
-## TLS（线程本地存储）
-TLS的变量可以被看作是一个只对某个特定线程而非整个程序可见的全局变量。
+## Thread Local Storage
+TLS（线程本地存储）的变量可以被看作是一个只对某个特定线程而非整个程序可见的全局变量。
 ```cpp
 //定义一个bool类型的tls变量，它的行为就像一个普通的指针（->, *）；
 boost::thread_specific_ptr<bool> tls;
