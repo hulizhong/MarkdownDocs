@@ -116,6 +116,26 @@ libc++abi.dylib: terminating with uncaught exception of type std::length_error: 
 critical handler: signal 6 is triggered.
 ```
 
+
+
+## queue
+
+the functions in queue template class, as follow.
+
+```cpp
+queue<int> q;
+q.push(4); //push to item at the end of queue.
+q.front(); //return the first item, but not remove it.
+q.back();  //return the lastest item, but not remove it.
+q.pop();   //remove the first item, but not return.
+```
+
+<font color=red>如果queue内没有元素，那么front()，back(),pop()的执行都会导致未定义的行为，所以在执行这三个操作是，可以通过size()和empty()判断容器是否为空</font>；
+
+
+
+
+
 ## deque
 
 增加和获取元素效率较高  
