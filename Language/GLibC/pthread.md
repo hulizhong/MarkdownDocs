@@ -1,3 +1,7 @@
+[TOC]
+
+
+
 ## ReadMe
 
 介绍posix的线程库api，其中有些标识了_NP的是不属于posix标准的，移植性不是那么的好；
@@ -8,7 +12,15 @@
 ## API
 
 ```cpp
-int pthread_create(pthread_t *thread, const pthread_attr_t *attr, void *(*start_routine) (void *), void *arg);
+int pthread_create(pthread_t *thread, const pthread_attr_t *attr, 
+                   void *(*start_routine) (void *), void *arg);
+
+int pthread_mutex_lock(pthread_mutex_t *mutex);
+int pthread_mutex_unlock(pthread_mutex_t *mutex);
+
+int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
+int pthread_cond_broadcast(pthread_cond_t *cond);
+int pthread_cond_signal(pthread_cond_t *cond);
 ```
 
 ## 线程属性
@@ -361,11 +373,12 @@ int pthread_cond_broadcast()
 
 pthread\_cond\_wait阻塞时、唤醒时各自有什么操作？
 > 当cond不成立时，即阻塞时：
->> 把call thread放到了等待cond的thead list中；
->> 对参数mutex进行unlock()；
+> > 把call thread放到了等待cond的thead list中；
+> > 对参数mutex进行unlock()；
 >
 > 当cond成立时，即唤醒时：
->> 对mutex进行lock()；
+>
+> > 对mutex进行lock()；
 
 
 #### pthread\_cond\_signal
@@ -518,31 +531,6 @@ int pthread_spin_lock (__pthread_spinlock_t *__lock);
 >> 条件变量、信号量；
 >> 信号量多用于进程间的同步；条件变量多用于线程间的同步；
 >
-
-
-
-## Thread Pool
-
-什么时候用线程池？---如果：T1 + T3 远大于 T2，则可以采用线程池，以提高服务器性能。
-
-> T1 创建线程时间；
-> T2 在线程中执行任务的时间；
-> T3 销毁线程时间；
-
-
-
-### components
-
-- 线程池管理器（ThreadPool）：用于创建并管理线程池。
-  - 创建线程池
-  - 销毁线程池
-  - 添加新任务
-- 工作线程（PoolWorker）：线程池中线程，在没有任务时处于等待状态，可以循环的执行任务；
-- 任务接口（Task）：每个任务必须实现的接口，以供工作线程调度任务的执行，它主要规定了
-  - 任务的入口
-  - 任务执行完后的收尾工作
-  - 任务的执行状态等
-- 任务队列（taskQueue）：用于存放没有处理的任务。提供一种缓冲机制。
 
 
 

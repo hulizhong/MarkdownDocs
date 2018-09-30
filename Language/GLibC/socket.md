@@ -62,7 +62,9 @@ int setsockopt(int sock, int level, int optname, const void *optval, socklen_t o
 
 
 
-SOL_SOCKET级别的选项
+#### SOL_SOCKET options
+
+该级别的选项
 
 |   选项名称    | 说明                   | 类型           |
 | :-----------: | :--------------------- | :------------- |
@@ -84,19 +86,110 @@ SOL_SOCKET级别的选项
 |    SO_TYPE    | 获得套接字类型         | int            |
 | SO_BSDCOMPAT  | 与BSD系统兼容          | int            |
 
-SO_REUSERADDR只包括了adder而非port？？？  
-SO_REUSERADDR VS SO_REUSEPORT ??
+
+
+##### reuseAddr & reusePort
+
+**SO_REUSEADDR**
+
+SO_REUSEADDR只包括了adder而非port？？？ <font color=red>两者都包含</font>！
+
+reuseaddr只能复用<font color=red>non-active listening</font>的socket。如下：
+
+> socket1.bind(172.20.20.1, 8080); socket2.bind(172.21.20.1, 8080);
+> ​	---这个不需要reuseaddr都可以。
+>
+> socket1.bind(172.20.20.1, 8080); socket2.bind(172.20.20.1, 8080);  
+> ​	---这个是不可以的，但当socket1处于non-active listening的情况下是可以reuseaddr的，比如主动关闭时的time_wait.
 
 
 
-IPPRO_TCP级别选项
+**SO_REUSEPORT**
+
+linux 3.9引入了SO_REUSEPORT，可以完美解决同一个ip, port的复用问题，同时也解决了惊群效应；
+
+> socket1.bind(172.20.20.1, 8080); socket2.bind(172.20.20.1, 8080); 
+> ​	----这种操作只要对socket设置上reuseport即可；
+
+对应的编程模式也变了：
+
+```cpp
+// --------------------------------------------old Mode v1 as follow.
+int main() {
+    lfd = socket();
+    bind(lfd, ..);
+    listen(lfd, ..);
+    while (true) {
+        thread(lfd);
+    }
+    waitClose(); //block until the stop operation.
+}
+void* WorkerThreadPool.thread1(void*) {
+    cfd = accept(lfd, ..); //这样当一个连接来时会有惊群效应；
+    read(cfd, ..);
+    write(cfd, ..);
+    close(cfd);
+}
+
+
+// --------------------------------------------old Mode v2 as follow.
+void* listenThread(void*) {
+    lfd = socket();
+    bind(lfd, ..);
+    listen(lfd, ..);
+    while (true) {
+        cfd = accept(lfd, ..);
+        //newTask and insert task into WorkerThreadPool.
+        WorkerThreadPool.addTask(new Task(cfd));
+    }
+}
+void* WorkerThreadPool.thread1(void*) {
+    task = taskQeue.getTask(); //wait taskQueue has task and got one.
+    read(cfd, ..);
+    write(cfd, ..);
+    close(cfd);
+}
+
+
+// --------------------------------------------New Mode as follow.
+void* WorkerThreadPool.thread1(void*) {
+    lfd = socket();
+    setsockopt(lfd, SOL_SOCKET, SO_REUSEPORT, &val, sizeof(val));
+    bind(lfd, "127.0.0.1", 8080);
+    listen(lfd, 5);
+    while (true) {
+        cfd = accept(lfd, ..);
+        read(cfd, ..);
+        write(cfd, ..);
+        close(cfd);
+    }
+}
+
+void* WorkerThreadPool.thread2(void*) {
+	//工作线程2，实现同工作线程1.
+}
+```
+
+Notice. <font color=red>如上由哪个工作线程中的lfd来接收这个2元组(lip, lport)上的连接请求，由内核进行负载</font>；
+
+
+
+
+
+#### IPPRO_TCP options
+
+该级别选项
 
 |  选项名称   | 说明                | 类型 |
 | :---------: | :------------------ | :--- |
 | TCP_MAXSEG  | TCP最大数据段的大小 | int  |
 | TCP_NODELAY | 不使用Nagle算法     | int  |
 
-IPPROTO_IP级别选项
+
+
+#### IPPROTO_IP options
+
+该级别选项
 
 |  选项名称  | 说明                 | 类型 |
 | :--------: | :------------------- | :--- |
@@ -224,6 +317,14 @@ tcp的3次握手、4次挥手如下：
 
 ![](img\socket-handshakeWave.png)
 
+**Notice.** 
+​	主动connect()，是在发送ack k+1之后才是established. 而不是在收到syn k的时候；
+​	主动close()，是在发送完ack n+1之后才是time_wait，而不是在收到fin n的时候；
+​		fin_wait_2就是平时我们说的半关闭；
+​		time_wait到closed之间需要2MSL时长；（保证最后一个ACK能成功的被对端接收）
+​	被动accept()，是在发送完syn k, ack j+1之后才是syn_rcvd状态；
+​	被动close()，是发送ack m+1之后才是close_wait状态；
+
 持续监测各种状态的连接数量，如下：
 
 ```bash
@@ -249,6 +350,150 @@ watch -n 0.6 -d 'netstat -t | grep 8837 | grep ESTABLISHED |  wc -l'
 四元组是：源IP地址、目的IP地址、源端口、目的端口
 五元组是:   源IP地址、目的IP地址、源端口、目的端口、协议号
 七元组是:   源IP地址、目的IP地址、源端口、目的端口、协议号、服务类型、接口索引
+
+
+
+
+
+## Other
+
+B/S
+跨平台（部署成本低）、工作量少；
+
+C/S
+客户端可以缓存大量数据；速度快；自定义协议；（协议选择灵活）
+
+----
+
+网络环境用大端；PC环境用小端；
+
+inet_ntop();
+inet_pton();
+
+htonl()
+
+htons()
+
+
+
+
+
+----------
+
+ctags ./* -R
+
+ctrl + ]
+
+ctrl + t
+
+----
+
+半关闭状态：fin包已经收到对端的ack了，但对端的fin未到达的这段时间；（只能收、不能发）
+
+调用close()成功返回、那么不能再往对端写数据了；
+
+------
+
+socket是一个fd对应两个buffer、有对应的read/write buffer.
+
+管道则是一个buffer对应两个fd，有对应的读、写fd；
+
+
+
+----
+
+tcp sliding window 滑动窗口大小
+
+fast sender & slow receiver.
+
+tcp的6个标志
+
+urg, ack, psh, rst, syn, fin.
+16位窗口大小，65535
+
+------
+
+recv() == -1
+
+eagain/ewouldblock 设置了非阻塞方式读，但没有数据到达；
+
+eintr 意味着read这个慢系统调用被中断了；
+
+
+
+----
+
+https://www.cnblogs.com/kex1n/p/7437290.html
+
+
+
+---
+
+close() VS shutdown()
+
+shutdown可以灵活指定关闭哪端（读端、写端、读写端）；close只能是写端？
+
+shutown会重置fd的引用数为0（如之前dup出来的fd），然后关闭对应的端；而close只是fd的引用数-1，当为0时才会进行相应的操作；
+
+struct linger
+
+https://www.cnblogs.com/pengyusong/p/6434253.html
+
+
+
+-------
+
+select
+
+缺点：监听上限受文件描述符限制(1024，要修改只能去编译内核)；轮询满足条件的fd（3，4， 1023）这种场景需要额外编码来提高效率；
+
+优点：跨平台，如win, linux, mac, 类unix, mips；
+
+
+
+poll
+
+优点：自带数组结构；监听事件集合与返回事件集合分离；突破1024监听限制；
+
+缺点：不能跨平台（linux）; 无法直接定位到满足监听事件的fd，还是得靠轮询增加编码难度；
+
+
+
+
+
+----
+
+skill, check the big data.
+
+```cpp
+std::vector<ConnectionObj> vec; //There are many elements in vec.
+for (int i=0; i<100; i++, checkpoint++) {
+    //reset the checkpoint when checkpoint reach the max value.
+    if (vec[checkpoint].isTimeout()) {
+        ;//...
+    }
+}
+```
+
+
+
+
+
+tcp vs udp
+
+面向连接，可靠数据包传输（对IP层进行优化）；
+​	传输慢、开销大；
+​	适用场景：追求数据的完整性要求高于效率，如文件传输、大数据传输；
+
+无连接，不可靠的数据报传递；
+​	传输快、开销小；
+​	适用场景：追求时效性比数据完整性高，如游戏、视频会议电话；
+
+UDP+自己封装应用层数据校验协议，也可弥补udp的不足；
+
+
+
+
 
 
 

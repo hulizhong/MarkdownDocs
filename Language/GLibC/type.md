@@ -69,3 +69,15 @@ struct timeval {
 };
 1s = 1000ms = 1000000us
 ```
+
+
+
+```cpp
+int gettimeofday (struct timeval * tv, struct timezone * tz);
+struct timeval tv, tv2;
+gettimeofday(&tv, NULL);
+//...do things
+gettimeofday(&tv1, NULL);
+int ms = (tv1.tv_sec*1000 + tv1.tv_usec/1000) - (tv.tv_sec*1000 + tv.tv_usec/1000);
+```
+
