@@ -55,5 +55,7 @@ vim -d a b 等效于vimdiff a b
 :set ignorecase  #搜索大小写不敏感
 :set hls #搜索高亮
 :set nu  #显示行号
+
+:g!/ERROR/d   #删除非ERROR行，即只保留ERROR行。
 ```
 

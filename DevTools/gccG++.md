@@ -90,16 +90,23 @@ make: *** [ev] Error 1
 ```
 
 ## 特殊宏
-探测OS类型
+### 探测OS类型
+
 ```bash
 #if defined(__linux__)
-	linux
+linux platform code.
+#endif
 
 #if defined(__APPLE__) && defined(__MACH__)
-	mac
+mac platform code.
+#endif
 
-#ifdef WIN32
-#if defined(WIN32)
-	win32
+#if defined(_WIN32) || defined(WIN32)
+win platform include 32bit and 64bit.
+#endif
+
+#ifdef _WIN64
+win 64 bit platform.
+#endif
 ```
 
