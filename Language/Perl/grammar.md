@@ -270,23 +270,21 @@ use feature 'state';
 字符串的常见处理
 ```perl
 my $str = 'Rabin';
+
 my $sz = length($val);  #计算长度
+$str eq "strvalue";
+	#字符串的对比，不能用==, <之类的（专用于数字类型对比）；
+	#lt, eq==, gt, le=<, ge>=, ne!=, cmp返回1、0、-1;
+print $a, $b;   #print的连接符号','只能用于print；
+$value = 1234.56789;
+print sprintf "%.4f\n", $value;
+	#sprintf打印格式；
 
-my $newVal = substr($string, offset, length);  #截取子串
-	#offset开始截取的位置；如果是负数，那么从右边开始截取；
-	#length省略，那么截取到最后一个字符；
-substr($src, index($src, $srcb), length($srcb), $srcc);
-	#查找并替换；
+$str2 = lc($str);  #转小写
+$str2 = uc($str)   #转大写
+$str2 = lcfirst $str;   #第1个字母转小写
+$str2 = ucfirst $str;   #第1个字母转大写
 
-$str2 = lc($str);
-$str2 = lc $str;
-	#转小写
-$str2 = lcfirst $str;
-	#第1个字母转小写
-$str2 = uc $str;
-	#转大写
-$str2 = ucfirst $str;
-	#第1个字母转大写
 
 index(str, beg=0, end=len(string))
 	#顺序查找，找不到返回-1。
@@ -294,25 +292,20 @@ index(str, beg=0, end=len(string))
 rindex( str, beg=0,end=len(string))
 	#逆序查找。
 
-$str eq "strvalue";
-	#字符串的对比，不能用==, <之类的（专用于数字类型对比）；
-	#lt, eq==, gt, le=<, ge>=, ne!=, cmp返回1、0、-1;
+my $newVal = substr($string, offset, length);  #截取子串
+	#offset开始截取的位置；如果是负数，那么从右边开始截取；
+	#length省略，那么截取到最后一个字符；
+substr($src, index($src, $srcb), length($srcb), $srcc);
+	#查找并替换；
 
-$value = 1234.56789;
-print sprintf "%.4f\n", $value;
-	#sprintf打印格式；
-
-join($str, @array)
-	#字符串合并；其中arr要用qw方式定义；
-$line = $line . "456";
+join($str, @array)      #字符串合并；其中arr要用qw方式定义；
+$line = $line . "456";  #字符串连接；
 $line .= "456";
-print "ok"x3; #okokok
-	#重复连接符号x；
-print $a, $b;
-	#print的连接符号','只能用于print；
-@arr = split(/pattern/, $str);
-	#字符串分隔；
-@arr = split(//, $str);  #强制按每个字符进行分隔；
+print "ok"x3; #okokok   #重复连接符号x；
+
+@arr = split(/pattern/, $str);   #字符串分隔；
+@arr = split(//, $str);    #强制按每个字符进行分隔；
+	#可用于遍历字符串；（先分隔成数组，再遍历数组内容）
 
 $count = grep(/on/, @array)
 	#匹配数组内字符串；其中//是固定修饰字符；
@@ -320,7 +313,24 @@ $count = grep(/on/, @array)
 	#匹配数组内字符串；
 ```
 
+字符处理
+
+```perl
+chr(65);  #整数转ASCII字母；
+ord(A);   #ascii字母转整数；
+
+#判断字符是否是数字
+use POSIX qw (isdigit)
+if (isdigit('A')) {;}
+if ('A' =~ m/\d/) {;}
+```
+
+
+
+
+
 ### 数组（列表）
+
 使用
 ```perl
 my @arr = ($arg1, $arg2);

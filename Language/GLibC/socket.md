@@ -24,13 +24,36 @@ int socket(int domain, int type, int protocol);
 
 ### bind
 
-### listen
 
-### accept
 
-### read
+### Build tcp connection
 
-### write
+#### listen
+
+#### accept
+
+#### connect
+
+
+
+### IO operation
+
+#### tcp recv send
+
+send
+
+#### udp recv send
+
+```cpp
+ssize_t recvfrom(fd, *buffer, bufferLen, recvFlag, 
+                 *outputPeerAddr, *outputPeerAddrLen);
+	//返回成功接收的数据；-1失败，0对端关闭
+
+ssize_t sendto(fd, *buffer, bufferLen, sendFlag, *inputDstAddr, inputDstAddrLen);
+	//返回发送成功的字节数，-1失败；
+```
+
+
 
 ### close
 
@@ -477,7 +500,7 @@ for (int i=0; i<100; i++, checkpoint++) {
 
 
 
-
+------
 
 tcp vs udp
 
@@ -495,5 +518,102 @@ UDP+自己封装应用层数据校验协议，也可弥补udp的不足；
 
 
 
+-----
 
+udp通信
+
+server peer.
+
+```cpp
+lfd = socket(sock_dgram);
+bind(lfd, ..);
+while (true) {
+    recvfrom(lfd, remoteAddr);
+    sendto(lfd, dstAddr);
+}
+close(lfd);
+```
+
+ client peer.
+
+```cpp
+fd = socket(sock_dgram);
+while (true) {
+    sendto(fd, dstAddr);
+    recvfrom(fd, remoteAddr);
+}
+close(fd);
+```
+
+
+
+---
+
+nc 
+
+```bash
+nc ip port
+启动ip, port的tcp服务
+```
+
+
+
+---
+
+ipc
+
+pipe, fifo, mmap, signal, unix socket.
+
+
+
+本地socket编程模式同于tcp socket流程（bind, listen, accept, connect），但区别如下：
+
+```cpp
+fd = socket(AF_UNIX/AF_LOCAL, anytype, 0); //协议可以任意选择；
+
+#include <stddef.h>
+#define offsetof(type, member) ((size_t)&((type*)0)->member)
+	//((int)&((type*)0)->member) 只能用于32bit platform.
+	//((long)&((type*)0)->member) 只能用于64bit platform.
+struct sockaddr_un
+{
+    sa_family_t sun_family; //AF_UNIX.
+    char sun_path[108];  //unix path.
+}; //不同点：地址结构；
+unlink(addr.sun_path);  //不同点：bind之前删除sun_path，保证bind成功；
+bind(fd, addr, offsetof(struct sockaddr_un, sun_path)+strlen(addr.sun_path));
+	//不同点：地址长度设置；
+	//bind会创建一个文件sun_path.
+
+socket(); bind(); listen(); accept(); recv(); send();
+socket(); bind(); connect(); send(); recv();
+	//client在connect()之前需要bind().
+```
+
+
+
+size_t
+
+```cpp
+//size_t defined 'unsigned int' on 32bit in libc.
+//size_t defined 'unsigned long int' on 64bit in libc.
+#if __WORDSIZE == 32   //on 32bit.
+typedef unsigned int       size_t;
+#else
+typedef unsigned long int  size_t;
+#endif
+printf("size_t.%d int.%d long.%d ptr.%d\n", 
+       sizeof(size_t), sizeof(int), sizeof(long), sizeof(int*));
+	//size_t.4 int.4 long.4 ptr.4  ----on 32bit platform.
+	//size_t.8 int.4 long.8 ptr.8  ----on 64bit platform.
+	//指针的长度intptr_t 应该是unsigned long int型的；
+```
+
+
+
+| **位数** | **char**   | **short**   | **int**     | **long**        | **指针**        |
+| -------- | ---------- | ----------- | ----------- | --------------- | --------------- |
+| 16       | 1个字节8位 | 2个字节16位 | 2个字节16位 | **4个字节32位** | **2个字节16位** |
+| 32       | 1个字节8位 | 2个字节16位 | 4个字节32位 | **4个字节32位** | **4个字节32位** |
+| 64       | 1个字节8位 | 2个字节16位 | 4个字节32位 | **8个字节64位** | **8个字节64位** |
 

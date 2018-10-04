@@ -115,12 +115,12 @@ $
 (pattern)
 	#捕获匹配，匹配 pattern 并获取这一匹配。
 	#所捕获的匹配从左到右存储于一个顺序缓存区，编号从1-99，可用\n来访问各缓冲区；
-	#例如：\b(\w+)\b\s+\1\b可以用来匹配重复的单词，像go go, 或者kitty kitty。
+	#法一：\b(\w+)\b\s+\1\b可以用来匹配重复的单词，像go go, 或者kitty kitty。
 		#这个也叫反向引用；
-	#例如：\b(?<CaptureName>\w+)\b\s+\k<CaptureName>\b
-		#可以用?<name>进行命名、用\k<name>来引用；
-	#例如：\b(?'CaptureName'\w+)\b\s+\k'CaptureName'\b
-		#可以用?'name'进行命名、用\k'name'或\g{name}来引用；
+	#法二：\b(?<CaptureName>\w+)\b\s+\k<CaptureName>\b
+		#可以用?<name>进行命名、用\k<name>来引用，其中的的<>是必须的！
+	#法三：\b(?'CaptureName'\w+)\b\s+\k'CaptureName'\b
+		#可以用?'name'进行命名、用\k'name'或\g{name}来引用，其中的''{}亦是必须的！
 (?:pattern)
 	#非捕获匹配，匹配 pattern 但不获取匹配结果，不进行存储供以后使用。
 (?=pattern)

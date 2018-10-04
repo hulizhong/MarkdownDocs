@@ -1,11 +1,11 @@
-[toc]
+[TOC]
 
-## base\_free死锁
+## base\_free deadlock.
 场景如下：
-> 
 > A线程evthread_use_pthreads, base_new然后跑event_base_loop
 > B线程event_add, event_del, base_loopbreak, base_free
->> 有时候就会base_free卡住，此时base_loop也未退出来；
+>
+> > 有时候就会base_free卡住，此时base_loop也未退出来；
 
 查看event_base里有什么相关的结构
 ```cpp
@@ -297,6 +297,93 @@ struct event_config *evcfg = event_config_new();
 event_config_set_flag(evcfg, EVENT_BASE_FLAG_EPOLL_USE_CHANGELIST);
 mBase = event_base_new_with_config(evcfg);
 ```
+
+
+
+## event_base_new failed.
+
+server code demo as follow.
+
+```cpp
+#ifdef WIN32
+	evthread_use_windows_threads();
+#else
+	evthread_use_pthreads();
+#endif
+
+if (event_base_new() == NULL) {
+    printf("init event_base failed.\n");
+}
+```
+
+由于是server端程序，所以<font color=red>在daemon模式</font>下运行会得到如下日志
+
+> init event_base failed.
+
+<font color=red>为了得到更详尽的日志，在前台模式下运行程序</font>，得到如下日志
+
+> Use windows threads lock in libevent
+> [warn] evsig_init_: socketpair: 提供了一个无效的参数。
+> [warn] event_base_new_with_config: Unable to make base notifiable.
+> ...
+
+跟踪libevent代码，
+
+```cpp
+int evsig_init_(struct event_base *base) {
+    int evutil_make_internal_pipe_(evutil_socket_t fd[2]);
+}
+
+int evutil_make_internal_pipe_(evutil_socket_t fd[2]) {
+    //call pipe2() or pipe() when switch on;
+    //socketpair(AF_INET) or unix socket.
+}
+```
+
+**综上所述**
+
+很有可能因为网络问题造成windows下socketpaire失败，导致evsig_init_()失败，最终引起event_base_new()失败；--应该查看网络状况！
+
+
+
+## https server longconnection.
+
+Version. 2.1.5-beta
+用libcurl作为客户端 对 libevent http server进行长连接请求； ---可以正常工作；
+用libcurl作为客户端 对 libevent https server进行长连接请求；---第二个https请求就会被reset掉；
+
+
+
+Solution 1.  去掉libcurl上传大于1024 byte就100-continue的机制；
+
+Solution 2.  将以下代码write enable放到函数的最后去；（一般都是处理完数据之后才enable write.）
+
+```cpp
+static void 
+evhttp_send_continue(struct evhttp_connection *evcon,
+			struct evhttp_request *req)
+{
+	bufferevent_enable(evcon->bufev, EV_WRITE); //move the enable write to last.
+	evbuffer_add_printf(bufferevent_get_output(evcon->bufev),
+			"HTTP/%d.%d 100 Continue\r\n\r\n",
+			req->major, req->minor);
+	evcon->cb = evhttp_send_continue_done;
+	evcon->cb_arg = NULL;
+	bufferevent_setcb(evcon->bufev,
+	    evhttp_read_cb,
+	    evhttp_write_cb,
+	    evhttp_error_cb,
+	    evcon);
+}
+```
+
+
+
+<font color=red>疑问：虽然提前enable了，但为什么会reset掉client的https connection呢？？</font>？
+
+
+
+
 
 ## 待续
 

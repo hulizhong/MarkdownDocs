@@ -10,12 +10,19 @@
 
 ## ReadMe
 
+<font color=red>只有在脚本文件中变量才有%%i，而在cmd窗口中变量则用%i</font>
+
+
+
+
+
 
 ## Grammar
 
 -------
 for
 四种参数
+
 ```bash
 rem https://www.cnblogs.com/yang-hao/p/6003923.html
 ```
@@ -23,6 +30,11 @@ rem https://www.cnblogs.com/yang-hao/p/6003923.html
 @echo off
 for %%i in (*.docx) do (
 	echo %%i
+)
+
+# /l means i=1; i<=100; i=i+1
+for /l %%i in (1, 1, 100) do (
+	echo %%i;
 )
 
 pause
