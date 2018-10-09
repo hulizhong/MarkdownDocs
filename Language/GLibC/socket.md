@@ -20,19 +20,71 @@ int socket(int domain, int type, int protocol);
 
 
 
-
-
-### bind
-
-
-
 ### Build tcp connection
 
-#### listen
+建立tcp连接，需要以下代码协同完成。
 
-#### accept
+```cpp
+/* ---- server side code.  */
+int bind(int sockfd , const struct sockaddr * my_addr, socklen_t addrlen);
+int listen(int sockfd, int backlog); 
+while (true) {
+    int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+}
 
-#### connect
+
+/* ---------client side code  */
+int connect(int s, const struct sockaddr * name, int namelen);
+
+
+/* ----------api des. */
+int listen(int sockfd, int backlog);
+//args
+	//backlog, 指定AcceptQueue的长度。
+//Syns Queue.
+	//表示处于syn_recv状态的队列。
+	//max(64, /proc/sys/net/ipv4/tcp_max_syn_backlog=2048)
+
+int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+//Accept Queue.
+	//表示已完成连接的队列，等待被accept函数取走。
+	//min(backlog, /proc/sys/net/core/somaxconn), ----backlog是listen(lfd, backlog)中的backlog。
+//Switch.
+	///proc/sys/net/ipv4/tcp_abort_on_overflow = 0
+		//队列满的时：如果为1，则在listen队列满的时候返回reset，如果为0，则还是正常三次握手。
+	///proc/sys/net/ipv4/tcp_synack_retries = 5
+//TCP_DEFER_ACCEPT option.
+	//1. 收到第三次握手ack的时候，内核将这个连接标记为acked，然后把这个包丢掉。
+	//2. 不往上传递accept，也就是应用层不会accept，并且连接保持在syn_recv的状态。
+	//3. 重传超时计时器继续，也就是如果之后没有带数据的包过来，就会重传syn+ack，并且在超过syn次数之后，reset这个连接
+	//4. 如果在重传之前，有数据包过来，才会带着数据包，将accept请求传递上去。
+
+```
+
+
+
+
+
+<font color=red>内核会为每个listen状态的socket维护两个队列！（syn/accept queue）</font>具体情况如下图：
+http://jm.taobao.org/2017/05/25/525-1/
+
+![如图，创建连接的过程](img/socket-tcpSyncAcceptQueue.jpg)
+
+第一步，Client会发送一个SYN包，简单情况是SYN发送成功了，然后Client会把这个连接的Socket放入一个Socket等待队列，是Client这边维护的一个队列，<font color=blue>但是如果这里发送失败了，Server如果不给回复，它会按这个间隔去重新发送，3、6、12、24…重试十几次，会返回一个Connect Time out</font>.
+
+第二步，Server收到SYN包，然后把这个Socket放入Server这边维护的<font color=red>SYN Queue</font>，然后返回SYN+ACK报文，syn queue size = <font color=red>max(64，/proc/sys/net/ipv4/tcp_max_syn_backlog)</font>.
+
+第三步，Client收到Server发过来的ACK+SYN报文，相当于Client这边来看的话其和Server端的连接完成了，然后会返回一个ACK给Server。
+
+第四步，正常情况是ACK收到，然后Server端看来建立也连接成功，然后把Socket从维护的SYN Queue放入Accept Queue，这样整个连接建立。但是Accept Queue也是有长度限制的。
+<font color=blue>如果Accept队列满了，则需要按照内核参数/proc/sys/net/ipv4/tcp_abort_on_overflow来进行处理</font>：
+如果==1，首先它会丢弃ACK，然后返回一个RST，这样的话就需要整个重新建立连接，Client会返回来一个Connection reset by peer。
+如果==0，那么Server这边会不处理这个ACK，直接丢弃，~~那么Client是怎么知道的呢，其实是在靠Read函数来确定的，Client在确定建立连接之后会紧接着发数据给Server，但是Server还没有建立连接，所以它会不理会，然后会一直重发，直到超时，这时候返回一个Read timeout~~（这应该是正确的描述，不应该打删除线）, server过一段时间再次发送syn+ack给client（也就是重新走握手的第二步），<font color=red>形成重传的效果</font>，如果client超时等待比较短，就很容易异常了。（总体来说client觉得自己连上了，server认为这个连接没建立成功，于是会有大量的重传，不管是client的数据传输，还是server的连接建立包重传。----Rabin）
+Accept Queue满了会drop掉握手的第1个包（syn）。  ----refer tcp_v4_conn_request()
+
+
+
+
 
 
 
@@ -42,7 +94,7 @@ int socket(int domain, int type, int protocol);
 
 send
 
-#### udp recv send
+#### udp recvfrom sendto
 
 ```cpp
 ssize_t recvfrom(fd, *buffer, bufferLen, recvFlag, 
@@ -199,14 +251,17 @@ Notice. <font color=red>如上由哪个工作线程中的lfd来接收这个2元�
 
 
 
-#### IPPRO_TCP options
+#### IPPROTO_TCP options
 
 该级别选项
 
-|  选项名称   | 说明                | 类型 |
-| :---------: | :------------------ | :--- |
-| TCP_MAXSEG  | TCP最大数据段的大小 | int  |
-| TCP_NODELAY | 不使用Nagle算法     | int  |
+|     选项名称     | 说明                                                         | 类型 |
+| :--------------: | :----------------------------------------------------------- | :--- |
+|    TCP_MAXSEG    | TCP最大数据段的大小                                          | int  |
+|   TCP_NODELAY    | 不使用Nagle算法                                              | int  |
+| TCP_DEFER_ACCEPT | 延迟accept()，保证只要accept()返回就会有数据到达，即recv()不会再阻塞住了。 | int  |
+
+
 
 
 
