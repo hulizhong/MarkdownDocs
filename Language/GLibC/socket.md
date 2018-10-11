@@ -146,32 +146,106 @@ ssize_t sendto(fd, *buffer, bufferLen, sendFlag, *inputDstAddr, inputDstAddrLen)
 
 ### close
 
+有两种关闭连接的方法shutdown, close.
+
+
+
+问题：如果存在大量的CLOSE_WAIT，怎么办？
+
+> 说明程序未关闭socket或者并发量太大来不及，或者你用的网络库有bug.
+
+问题：半连接是什么？
+
+> 就是双通道中的一条被关闭了，一般都是指关闭写端；
+> 如果关闭写端，那么first write()会得到rst，second write()会得到sigpipe.
+
+问题："bad file descriptor" VS "broke pipe"
+
+> 在close(fd)之后，fd的连接已经释放、fd文件描述符号也被释放了，调用read/write会得到ebadf.
+> 在close(fd)之后，fd的连接处于半连接，向写关闭的连接进行两次write()，得到sigpipe.
+> 所以：bad file descriptor表示文件描述符非法；Broken Pipe表示文件描述符还合法，但是连接状态非法。
+
+
+
+---------
+
+**close**
+
 关闭套接字，并释放资源；
 
 ```cpp
 #include <unistd.h>
 int close(int fd);
-    //会把sock_fd的内部计数器减1；
-    //并且当sock_fd == 0，则调用shutodwn() && 释放文件描述符；
+    //Step1. 会把sock_fd的内部计数器减1；
+    //Step2. 并且当sock_fd == 0，则调用shutodwn() && 释放文件描述符；
+```
 
+
+
+
+
+------
+
+**shutdown()**
+
+```cpp
 #include <sys/socket.h>
 int shutdown(int sockfd, int how);
     //只进行了TCP连接的断开, 并没有释放文件描述符
 ```
 
-**close() VS shutdown()**
+`shutdown(fd, shut_wr)`  关闭本端写端
+会给对端发送一个FIN包，如果底层sendbuffer中尚有数据未发送，那么会尽力发送完这些数据并在最后一个报文中加上FIN标志，同时关闭angle算法（减少网络中小报文）。【如果sendbuffer中没有数据，那么直接FIN包】
+
+`shutdown(fd, shut_rd)`关闭本端读端
+不会向对端发送任何消息，只是限制本地API对fd的read()直接返回EOS。（这个过程依赖OS的实现）
+Unix会确认它、并且丢弃它；
+Linux会确认它、并且缓冲它，最终会给对端发rst来停止对端的运行；
+Win会发送一个RST，此时对端会报"Connection Rest By Peer".
+
+
+
+
+
+------
+
+**close VS shutodown**
+
 shutdown可以灵活指定关闭哪端（读端、写端、读写端）；close只能是写端？
+
 shutown会重置fd的引用数为0（如之前dup出来的fd），然后关闭对应的端；而close只是fd的引用数-1，当为0时才会进行相应的操作；
 
 
-**半关闭状态**
-调用close()成功返回、那么不能再往对端写数据了；
-fin包已经收到对端的ack了，但对端的fin未到达的这段时间；（只能收、不能发）
 
------
-**struct linger**
+
+
+------------
+
+**linger算法**
 
 https://www.cnblogs.com/pengyusong/p/6434253.html
+
+当tcp向对端发送fin时(close/shutdown)，会依赖linger算法，SO_LINGER选项如下:
+
+```cpp
+struct linger{
+	int l_onoff;    //0=off，nonzero=on
+	int l_linger;    //linger time
+};
+//linux, 默认关闭的，即(linger.l_onoff=0)
+	//此时close()返回时，tcp sendbuffer中有可能还有数据。
+	//上述的这些数据不能保证被对端接收；
+```
+
+linger的处理流程如下：
+
+| l_onoff | l_linger | close行为                                                    | 发送队列                                     | TCP协议栈                                                    |
+| ------- | -------- | ------------------------------------------------------------ | -------------------------------------------- | ------------------------------------------------------------ |
+| 零      | 忽略     | 立即返回                                                     | 保持直至发送完成                             | 接管套接字并保证将数据发送至对端                             |
+| 非零    | 零       | 立即返回                                                     | 立即放弃                                     | 直接发送RST，自身立即复位，不用经过2MSL状态，对端收到复位错误码 |
+| 非零    | 非零     | 阻塞直到l_linger时间超时或数据发送完成(**套接字必须设置为阻塞**) | 在超时时间段内保持尝试发送，若超时则立即放弃 | 超时则同第二种情况，若发送完成则皆大欢喜                     |
+
+ 
 
 
 
