@@ -74,6 +74,13 @@ tcp的包长的像这样（一个刻度表示1个二进制位（比特））
 7-1.用户数据……
 ```
 
+**tcp的6个标志**
+urg, ack, psh, rst, syn, fin.
+
+16位窗口大小，**65535**.
+
+
+
 
 
 ## TCP Features
@@ -84,7 +91,7 @@ refer. https://blog.csdn.net/changyourmind/article/details/53127100
 
 ### Flow Control
 
-流量控制也是保证可靠性的一个重要措施，若无流控，可能会因接收缓冲区溢出而丢失大量数据，导致许多重传，造成网络拥塞恶性循环。
+流量控制是保证可靠性的一个重要措施，若无流控，可能会因接收缓冲区溢出而丢失大量数据，导致许多重传，造成网络拥塞恶性循环。主要解决“fast sender & slow receiver.”的问题！
 
 TCP采用滑动窗口进行流量控制，<font color=red>由接收方控制发送方发送的数据量</font>。
 

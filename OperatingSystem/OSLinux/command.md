@@ -90,6 +90,12 @@ netstat -natp
 
 
 
+### nc 
+
+```bash
+# nc ip port
+启动ip, port的tcp服务
+```
 
 
 

@@ -29,6 +29,22 @@ tcp连接建立的目的是为连接分配资源、协商ISN值、告知mss值�
 ![这是一张图片](img/tcp-connectionBuildFreeSequence.png)
 
 
+**Notice.** 
+主动connect()，是在发送ack k+1之后才是established. 而不是在收到syn k的时候；
+主动close()，是在发送完ack n+1之后才是time_wait，而不是在收到fin n的时候；
+​    fin_wait_2就是平时我们说的半关闭；
+​    time_wait到closed之间需要2MSL时长；（尽力保证最后一个ACK能成功的被对端接收）
+被动accept()，是在发送完syn k, ack j+1之后才是syn_rcvd状态；
+被动close()，是发送ack m+1之后才是close_wait状态；
+
+持续监测各种状态的连接数量，如下：
+
+```bash
+watch -n 0.6 -d 'netstat -t | grep 8837 | grep CLOSE_WAIT |  wc -l'
+watch -n 0.6 -d 'netstat -t | grep 8837 | grep TIME_WAIT |  wc -l'
+watch -n 0.6 -d 'netstat -t | grep 8837 | grep ESTABLISHED |  wc -l'
+```
+
 
 内核相关参数：
 
@@ -247,9 +263,59 @@ setsockopt(sd, SOL_SOCKET, SO_NOSIGPIPE, (void  *)&set, sizeof(int));
 
 
 
+## Max Connection Number
+
+最大连接数量，
+
+首先了解linux用4元组来标志一个连接，即{lip, lport, rip, rport}。  
+> 四元组是：源IP地址、目的IP地址、源端口、目的端口
+> 五元组是: 源IP地址、目的IP地址、源端口、目的端口、协议号
+> 七元组是: 源IP地址、目的IP地址、源端口、目的端口、协议号、服务类型、接口索引
+
+其次如果没有设置地址、端口重用下，默认都是独占的。
+
+
+### client's max tcp connection
+
+client每次发起tcp连接请求时，除非绑定端口，通常会让系统选取一个空闲的本地端口（local port），该端口是独占的，不能和其他tcp连接共享。  
+
+> tcp端口的数据类型是unsigned short，因此本地端口个数最大只有65536，端口0有特殊含义，不能使用，这样可用端口最多只有65535，所以在全部作为client端的情况下，最大tcp连接数为65535，这些连接可以连到不同的server ip。
+
+### server's max tcp connection
+
+场景设定：只在一台机器上的一个端口；
+
+server通常固定在某个本地端口上监听，等待client的连接请求。
+
+```bash
+tcp   0  0   0.0.0.0:22              0.0.0.0:*               LISTEN      2323/sshd
+tcp   0  96  172.22.48.101:22        172.22.48.100:50888     ESTABLISHED 6402/2
+```
+
+不考虑地址重用（unix的SO_REUSEADDR选项）的情况下，即使server端有多个ip，本地监听端口也是独占的，因此server端tcp连接4元组中只有remote ip（也就是client ip）和remote port（客户端port）是可变的，因此最大tcp连接为客户端ip数×客户端port数，对IPV4，不考虑ip地址分类等因素，最大tcp连接数约为2的32次方（ip数）×2的16次方（port数），也就是server端单机最大tcp连接数约为2的48次方。
+
+> lip,lport - rip,rport   
+> 那么一个server上端口全开呢？那么internet上全部的连接数呢？
 
 
 
+### at the end
+
+上面给出的是理论上的单机最大连接数，在实际环境中，受到机器资源、操作系统等的限制，特别是sever端，其最大并发tcp连接数远不能达到理论上限。  
+在unix/linux下限制连接数的主要因素是
+
+- 用户进程允许打开的文件描述符个数（每个socket就是一个文件描述符） 
+- 网络内核对TCP连接的有关限制
+- 使用支持高并发网络I/O的编程技术
+- 内存（每个tcp连接都要占用一定内存）
+- 另外1024以下的端口通常为保留端口。
+
+
+
+server端，通过增加内存、修改最大文件描述符个数等参数，单机最大并发TCP连接数超过10万 是没问题的，国外  Urban Airship 公司在产品环境中已做到 50 万并发 。在实际应用中，对大规模网络应用，还需要考虑C10K 问题。	
+
+http://blog.csdn.net/guowake/article/details/6615728  
+http://blog.sae.sina.com.cn/archives/1988  
 
 
 

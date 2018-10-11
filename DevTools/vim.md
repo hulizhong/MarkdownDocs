@@ -23,22 +23,31 @@ vim是跨平台的，在win下叫vim.
 		>> <C-V> "+gP
 	- 待续
 
-## vimdiff
 
-vimdiff == vim -d a b
+## vim配置
+如下，只收录了一些初始配置
+```bash
+:set ignorecase  #搜索大小写不敏感
+:set hls #搜索高亮
+:set nu  #显示行号
 
-- 合并
-	- dp (diff put)
-	- do (diff got)
+#自动缩进
+set autoindent
+set cindent
 
-- 对比
-	- :diffupdate == :diffu 更改后再次刷新对比
+#Tab键的宽度
+set tabstop=4
+#统一缩进为4
+set softtabstop=4  #在 insert 模式下，一个 tab 键按下后，展示成几个空格。
+set shiftwidth=4   #选中行后左移<右移>的空格数.
+#用空格代替制表符
+set expandtab
+#在行和段开始处使用制表符
+set smarttab
 
-- 指令加a
-	- wa 两边都写入
-	- qa 两边都退出
+```
 
-## 常用指令
+## vim指令
 vim -o a b 打开a b于上下两窗口
 vim -O a b 打开a b于左右两窗口
 vim -d a b 等效于vimdiff a b
@@ -51,11 +60,35 @@ vim -d a b 等效于vimdiff a b
 
 :r !ls #读取后接指令执行结果到当前文本
 
-#设置
-:set ignorecase  #搜索大小写不敏感
-:set hls #搜索高亮
-:set nu  #显示行号
-
 :g!/ERROR/d   #删除非ERROR行，即只保留ERROR行。
+
+:retab   #按照expandtab, noexpandtab的指示将tab替换成空格、空格替换成tab.
 ```
+
+## vimdiff
+
+vimdiff == vim -d a b
+
+- 合并
+    - dp (diff put)
+    - do (diff got)
+
+- 对比
+    - :diffupdate == :diffu 更改后再次刷新对比
+
+- 指令加a
+    - wa 两边都写入
+    - qa 两边都退出
+
+
+## ctags
+
+usage as follow.
+
+```bash
+ctags ./* -R
+ctrl + ]
+ctrl + t
+```
+
 
