@@ -7,12 +7,17 @@ win平台下的指令集；
 
 ### About OS
 
+#### winver
+
 查看os版本
 
-```bash
-winver
-msinfo32
-```
+
+
+#### msinfo32
+
+查看系统摘要、硬件、软件、组件信息。
+
+
 
 
 
@@ -20,7 +25,9 @@ msinfo32
 
 ### About Network
 
-netstat, 网络连接状态
+#### netstat
+
+网络连接状态
 
 ```bash
 netstat -nato | findstr 445
@@ -33,7 +40,9 @@ netstat -nato | findstr 445
 
 
 
-nbtstat, 早期的netbios名称解析系统
+#### nbtstat
+
+早期的netbios名称解析系统
 
 ```bash
 nbtstat -a 172.22.48.100
@@ -43,9 +52,58 @@ nbtstat -a 172.22.48.100
 
 
 
+#### ipconfig
+
+```bash
+/renew           更新指定适配器的 IPv4 地址。
+/flushdns        清除 DNS 解析程序缓存。
+/displaydns      显示 DNS 解析程序缓存的内容。
+/all             显示完整配置信息。
+```
+
+
+
+
+
+#### tracert
+
+-w 每个icmp回复至多等待ms.
+-d 不将地址解析成主机名。
+
+```bash
+C:\Users\hulizhong>tracert -d www.baidu.com
+
+通过最多 30 个跃点跟踪
+到 www.a.shifen.com [220.181.111.188] 的路由:
+
+  1    <1 毫秒   <1 毫秒   <1 毫秒 172.22.0.1
+  2    <1 毫秒   <1 毫秒   <1 毫秒 172.21.21.254
+  3     6 ms     4 ms     5 ms  124.127.119.209
+```
+
+如上：
+第1跳（发送了三个icmp包，三个icmp包都能在1ms内返回）；
+第3跳（三个icmp的回复分别为6、4、5ms）；
+
+
+
+#### route
+
+```bash
+route PRINT
+```
+
+
+
+
+
+
+
 ### About Process
 
-tasklist, 进程列表
+#### tasklist
+
+进程列表
 
 ```bash
 tasklist /fi "imagename eq niginx.exe"
@@ -59,7 +117,9 @@ tasklist /fi "pid eq 4"
 
 
 
-taskkill, 杀进程
+#### taskkill
+
+杀进程
 
 ```bash
 taskkill /im xx.exe
@@ -70,7 +130,9 @@ taskkill /pid 13116
 
 ---
 
-sc, 服务
+#### sc
+
+服务
 
 ```bash
 sc create xx
@@ -94,7 +156,9 @@ sc config xx start=disabled
 
 
 
-net, 服务
+#### net
+
+服务
 
 ```bash
 net start
