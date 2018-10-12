@@ -61,6 +61,10 @@ while (true) {
 
 /* ---------client side code  */
 int connect(int s, const struct sockaddr * name, int namelen);
+	//非阻塞connect()怎么实现；
+		//请参照[socket & Errno]中的eInProgress章节！
+	//阻塞connect()被信号打断了怎么办？
+		//会得到eIntr，此时我们不能再调用connect()否则会报eAddrInUse，这时候处理同于nonblock connect()用select去判断！！！ ---rabin.
 
 
 /* ----------api des. */
@@ -118,17 +122,50 @@ Accept Queue满了会drop掉握手的第1个包（syn）。  ----refer tcp_v4_co
 
 #### tcp recv send
 
-send
-```cpp
-if (recv() == -1) {
-    if (errno == eagain/ewouldblock) {
-        //设置了非阻塞方式读，但没有数据到达；
-    }
-    if (errno == eintr) {
-        //eintr 意味着read这个慢系统调用被中断了；
-    }
-}
-```
+默认都为阻塞调用。
+
+> 阻塞IO，只有IO操作完成、或者错误才会返回。
+> 非阻塞IO，无论操作是否完成均会立即返回，需要借助其它手段去判断操作是否成功。
+> ​	对于connect, accept需要通过select判断；
+> ​	对于recv/recvfrom, send/sendto通过返回值+errno来判断；
+
+
+
+--------
+
+**recv/read/msgrcv()读**
+
+从底层recvbuff中copy数据到参数指定的buffer地址，而recvbuffer中的数据则是协议栈帮我们收取、写入的。
+
+1. 阻塞读（<font color=red>数据在不超过指定的长度的时候有多少读多少，没有数据就会一直等待</font>）
+   1. 没有数据则一直等待；
+   2. 有数据但不满足参数中的读取长度，立即返回；（**所以一般要循环读，以达到指定长度**）
+   3. 可能被打断；
+2. 非阻塞读（<font color=red>有多少读多少，没有就立即返回</font>）
+   1. 没有数据就直接立即返回；
+   2. 有数据时也是有多少读多少；（**也是需要循环读取的**）
+   3. 可能被打断；
+
+阻塞、非阻塞读的区别在于：**没有数据到达的时候是立即返回还是一直等待！**
+
+
+
+-----
+
+**send/write/msgsnd()写**
+
+把用户指定的data copy到底层的sendbuffer中，并返回。
+
+1. 阻塞写（<font color=red>会一直等待，直到write完所有的数据</font>）
+   1. 可能被打断；（**所以也要循环write**）
+2. 非阻塞写（<font color=red>可以写多少就写多少</font>）
+   1. 能写多少受sendbuffer大小、本地网络拥塞状态决定；
+   2. 在没被中断的前提下，可能只写入了一部分数据，但一般会成功；（**所以也要循环write**）
+   3. 这个过程可被打断；
+
+
+
+
 
 
 #### udp recvfrom sendto
@@ -302,27 +339,59 @@ int setsockopt(int sock, int level, int optname, const void *optval, socklen_t o
 
 #### SOL_SOCKET options
 
-该级别的选项
+SOL_SOCKET级别的选项
 
-|   选项名称    | 说明                   | 类型           |
-| :-----------: | :--------------------- | :------------- |
-| SO_BROADCAST  | 允许发送广播数据       | int            |
-|   SO_DEBUG    | 允许调试               | int            |
-| SO_DONTROUTE  | 不查找路由             | int            |
-|   SO_ERROR    | 获得套接字错误         | int            |
-| SO_KEEPALIVE  | 保持连接               | int            |
-|   SO_LINGER   | 延迟关闭连接           | struct linger  |
-| SO_OOBINLINE  | 带外数据放入正常数据流 | int            |
-|   SO_RCVBUF   | 接收缓冲区大小         | int            |
-|   SO_SNDBUF   | 发送缓冲区大小         | int            |
-|  SO_RCVLOWAT  | 接收缓冲区下限         | int            |
-|  SO_SNDLOWAT  | 发送缓冲区下限         | int            |
-|  SO_RCVTIMEO  | 接收超时               | struct timeval |
-|  SO_SNDTIMEO  | 发送超时               | struct timeval |
-| SO_REUSERADDR | 允许重用本地地址和端口 | int            |
-| SO_REUSEPORT  | linux3.9+, 重用端口    |                |
-|    SO_TYPE    | 获得套接字类型         | int            |
-| SO_BSDCOMPAT  | 与BSD系统兼容          | int            |
+|     选项名称     | 说明                   | 类型           |
+| :--------------: | :--------------------- | :------------- |
+| **SO_BROADCAST** | 允许发送广播数据       | int            |
+|     SO_DEBUG     | 允许调试               | int            |
+|   SO_DONTROUTE   | 不查找路由             | int            |
+|   **SO_ERROR**   | 获得套接字错误         | int            |
+|   SO_KEEPALIVE   | 保持连接               | int            |
+|    SO_LINGER     | 延迟关闭连接           | struct linger  |
+|   SO_OOBINLINE   | 带外数据放入正常数据流 | int            |
+|    SO_RCVBUF     | 接收缓冲区大小         | int            |
+|    SO_SNDBUF     | 发送缓冲区大小         | int            |
+|   SO_RCVLOWAT    | 接收缓冲区下限         | int            |
+|   SO_SNDLOWAT    | 发送缓冲区下限         | int            |
+| **SO_RCVTIMEO**  | 接收超时               | struct timeval |
+| **SO_SNDTIMEO**  | 发送超时               | struct timeval |
+|  SO_REUSERADDR   | 允许重用本地地址和端口 | int            |
+|   SO_REUSEPORT   | linux3.9+, 重用端口    |                |
+|     SO_TYPE      | 获得套接字类型         | int            |
+|   SO_BSDCOMPAT   | 与BSD系统兼容          | int            |
+
+
+
+##### keepalive
+
+如果不用默认的keepalive参数（默认的KeepAlive超时需要2小时，探测次数为5次。）
+
+```bash
+/proc/sys/net/ipv4/tcp_keepalive_time
+	#空闲探测时长，7200s=2h
+/proc/sys/net/ipv4/tcp_keepalive_intvl
+	#失败探测间隔，75
+/proc/sys/net/ipv4/tcp_keepalive_probes
+	#失败探测次数，5
+```
+
+那么可以自定义自己的keepalive。（设置太短，有可能短暂的网络波动会导致健康的TCP连接断开。）
+
+```cpp
+setsockopt(SOL_TCP, TCP_KEEPIDLE, int);
+	//开始首次KeepAlive探测前的TCP空闭时间.
+setsockopt(SOL_TCP, TCP_KEEPINTVL, int);
+	//两次KeepAlive探测间的时间间隔.
+setsockopt(SOL_TCP, TCP_KEEPCNT, int);
+	//判定断开前的KeepAlive探测次数.
+```
+
+
+
+**Notice**.设置系统开关会影响所有系统上的进程。
+
+
 
 
 
@@ -417,7 +486,7 @@ Notice. <font color=red>如上由哪个工作线程中的lfd来接收这个2元�
 
 #### IPPROTO_TCP options
 
-该级别选项
+IPPROTO_TCP级别选项
 
 |     选项名称     | 说明                                                         | 类型 |
 | :--------------: | :----------------------------------------------------------- | :--- |
@@ -444,13 +513,174 @@ Refer: http://www.cnblogs.com/eeexu123/p/5275783.html
 
 
 
-## Socket & Error
+## Socket & Errno
 
-各种错误码；
+socket api的各种错误码。
 
-### EINTR
+**send/sendto/sendmsg(), recv/recvfrom/recvmsg(), connect() 共有**
 
-网络读写被信号所打断。
+| errno          | case     | des                                                          |
+| -------------- | -------- | ------------------------------------------------------------ |
+| eAgain=11      | block    | 发送超时(buffer full)、接收超时(buffer empty)。（用setsockopt()设置） |
+|                | nonblock | 非阻塞模式下调用了阻塞操作，在该操作没有完成就返回eAgain错误。如send()时sendbuffer已满、recv()时recvbuffer没有数据。 |
+| eWouldBlock=11 |          | 在VxWorks, Windows上，EAGAIN的名字叫做EWOULDBLOCK。          |
+| eBadF          |          | 不是一个正常的文件描述符。                                   |
+| eFault         |          | 地址错误。                                                   |
+| eIntr          |          | 慢系统调用被信号中断。<br />需要手动重启API调用，但**connect()是不能重启的**。 |
+|                | recv     | 有数据**之前**可能被打断；                                   |
+|                | send     | 数据传输**之前**可能被打断；                                 |
+|                | connect  | 系统调用可能被打断；                                         |
+| eNotSock       |          | fd不是一个socket文件。                                       |
+
+**send/sendto/sendmsg(), recv/recvfrom/recvmsg() 共有**
+
+| errno    | case | des                                                        |
+| -------- | ---- | ---------------------------------------------------------- |
+| eInval   |      | Invalid argument passed.                                   |
+| eNoMem   |      | No memory available.                                       |
+| eNotConn |      | The socket is not connected, and no target has been given. |
+
+**recv()**
+
+| errno        | des                                                    |
+| ------------ | ------------------------------------------------------ |
+| eConnRefused | 远端拒绝允许连接；（**典型的是远端没有运行对应服务**） |
+
+**send/sendto/sendmsg()**
+
+| errno        | des                                                          |
+| ------------ | ------------------------------------------------------------ |
+| eAcces       | 没有写权限；                                                 |
+| eConnReset   |                                                              |
+| eDestAddrReq | The socket is not connection-mode, and no peer address is set. |
+| eIsConn      | 连接已指定了接收端，但发送时又指定了接收地址；<br />这种场景要不返回此错误，要不指定发送的接收地址被忽略； |
+| eMsgSize     |                                                              |
+| eNoBufs      | 发送队列满了，一般标志着网口已停止发送；<br />一般不会在linux中遇到，一般queue中的数据会被静默drop掉。 |
+| eOpNotSupp   | send中flags参数指定的特性不被该socket类型所支持。            |
+| ePipe        |                                                              |
+
+**connect()** 
+
+| errno           | des                                                          |
+| --------------- | ------------------------------------------------------------ |
+| eAcces          | unix-socket没有对伪文件的写权限；或者伪文件的路径权限有问题； |
+| eAcces, ePerm   | 用一个没有broadcast特性的socket连接一个broadcast地址；<br />连接请求被本地防火墙阻止； |
+| eAddrInUse      | 本地地址正在使用中。                                         |
+| eAfNoSupport    | 对端的协议族与本端的协议族不匹配。                           |
+| eConnRefused    | 连接请求被对端拒绝。                                         |
+| **eAlready**    | fd为非阻塞，并且等待前一次的连接尝试完成。                   |
+| **eInProgress** | fd为非阻塞，并且连接正在进行中尚未结束；<br />需要在后续select中进行检测成功与否； |
+| **eIsConn**     | 已经连接成功连接到对端。                                     |
+| eNetUnreach     | 网络不可达；                                                 |
+| eTimedout       | 建立连接超时。                                               |
+
+
+
+### eInProgress
+
+https://yq.aliyun.com/articles/41748?spm=5176.10695662.1996646101.searchclickresult.780a3ac2X4WwV9http://phpstudy.php.cn/b.php/10356.html
+
+这个错误会出现在异步、非阻塞connect()的过程中；
+
+> linux下连接建立超时时间为75s，如果网络不好那么这是一段相当长的时间。可以用非阻塞connect()来节省下这段时间去处理其它业务。
+
+非阻塞connect返回eInProgress需要用select进一步进行判断连接成功与否。
+select 和非阻塞 I/O 相关的规则如下： 
+
+> A. 当连接建立成功时，套接口描述符变成 **可写** （连接建立时，写缓冲区空闲，所以可写） 。
+> B. 当连接建立出错时，套接口描述符变成 **既可读又可写** （由于有未决的错误，从而可读又可写） 。
+> ​	如果在select()调用之前，连接成功并且对端有数据发送过来，那么岂不是可读可写！！
+
+非阻塞的connect()处理模式如下：
+
+```cpp
+bool connect_nonb(int fd)
+{
+    int flags = fnctl(fd, f_getFl, 0);
+    fcnt(fd, f_setFl, flags|o_noblock);
+    
+    int res = connect(fd, sockaddr, addrlen);
+    if (res == 0) {
+        cout << "connect success immediately." << endl;
+        return true;
+    }
+    else {//if (res == -1) {
+        if ((errno != eInProgress) &&
+            (errno != eAlready) && 
+            (errno != eWouldBlock)) {
+            cout << "connect error." << endl;
+            return false;
+        }
+        fd_set rset, wset;
+        fd_zero(&rset); fd_zero(&wset);
+        fd_set(fd, &rset); fd_set(fd, &wset);
+        timeval tv; tv.tv_sec=75; tv.tv_usec=0;
+        res = select(fd+1, &rset, &wset, NULL, tv);
+        if (res == 0) {
+            cout << "select timeout." << endl;
+            return false;
+        }
+        else if (res > 0) {
+            /* Method 0, 不具有可移植性。*/
+            if(FD_ISSET(fd, &rset) || FD_ISSET(fd, &west)) {
+                //case 1. 可写，连接建立；
+                //case 2. 可读可写，连接未建立；
+                //case 3. 可读可写，连接建立、并且对端有数据发过来了；
+                int error = 0; int len = sizeof(error);
+                res = getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len);
+#if Berkeley
+                if (res == 0) { //berkeley实现的getsockopt正常返回为0
+                    if (error == 0) { //fd上没有错误发生；
+                        return true;
+                    }
+                }
+                return false;
+#endif
+#if Solaris
+                if (res == -1) { //solaris实现的getsockopt正常返回为-1
+                    if (error == 0) { //fd上没有错误发生；
+                        return true;
+                    }
+                }
+#endif
+            }
+            
+            /* Method 1, getpeername(). */
+            // 如果未连接成功，则调用getpeername()失败，并errno=eNotConn.
+            
+            /* Method 2, read() 0 size data. will got 0, otherwise notconnected.*/
+            res = read(fd, buffer, 0);
+            if (res == 0) { //got 0 means connected.
+                return true;
+            }
+            else {
+                cout << "connect failed." << endl;
+                return false;
+            }
+            
+            /* Method 3, call connect() again. */
+            connect(fd, sockaddr, addrlen);
+            if (errno == eIsConn) { //got eIsConn means connected.
+                return true;
+            }
+            else {
+                cout << "connect failed." << endl;
+                reutrn false;
+            }
+        }
+        else { //select==-1.
+            if (errno != eIntr) { //errno==eIntr.
+                cout << "select < 0, error." << endl;
+                tryToConnectAgain();
+            }
+			cout << "select < 0, error." << endl;
+            return false;
+        }
+    }
+}
+```
+
+
 
 ### sigpipe
 
@@ -462,6 +692,10 @@ sigpipe默认动作：结束进程。
 signal(SIGPIPIE, SIG_IGN);    
 ```
 
+
+
+
+
 ## IO Multiplexing 
 
 一种机制，可以监视多个描述符，一旦某个描述符就绪（一般是读就绪或者写就绪），能够通知程序进行相应的读写操作。
@@ -469,7 +703,6 @@ signal(SIGPIPIE, SIG_IGN);
 select, poll, epoll
 本质上它们都是同步io的手段（数据需要自己动手拷贝）即读写是阻塞的；
 而异步I/O则无需自己负责进行读写，异步I/O的实现会负责把数据从内核拷贝到用户空间。
-
 
 **select**
 缺点：监听上限受文件描述符限制(1024，要修改只能去编译内核)；轮询满足条件的fd（3，4， 1023）这种场景需要额外编码来提高效率；
