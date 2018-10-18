@@ -21,7 +21,6 @@ socket是一个fd对应两个buffer、有对应的read/write buffer.
 
 UDP+自己封装应用层数据校验协议，也可弥补udp的不足；
 
-
 **b/s vs c/s**
 
 B/S
@@ -73,7 +72,8 @@ int listen(int sockfd, int backlog);
 	//backlog, 指定AcceptQueue的长度。
 //Syns Queue.
 	//表示处于syn_recv状态的队列。
-	//max(64, /proc/sys/net/ipv4/tcp_max_syn_backlog=2048)
+	//max(64, /proc/sys/net/ipv4/tcp_max_syn_backlog=128)
+	//if (synQueueFull) {newConnect will get eConnRefused.}   ---rabin.
 
 int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
 //Accept Queue.
@@ -129,7 +129,10 @@ Accept Queue满了会drop掉握手的第1个包（syn）。  ----refer tcp_v4_co
 > ​	对于connect, accept需要通过select判断；
 > ​	对于recv/recvfrom, send/sendto通过返回值+errno来判断；
 
+return value
 
+> send() >=0,  -1.   **两种情况**
+> recv() >0,  =0, =-1.  **三种情况** 
 
 --------
 
@@ -228,7 +231,8 @@ int close(int fd);
 ```cpp
 #include <sys/socket.h>
 int shutdown(int sockfd, int how);
-    //只进行了TCP连接的断开, 并没有释放文件描述符
+	//Step1. 把sock_fd的refercount置0；
+	//Step2. 只进行了TCP连接的断开, 并没有释放文件描述符；
 ```
 
 `shutdown(fd, shut_wr)`  关闭本端写端
@@ -310,6 +314,8 @@ uint16_t ntohs(uint16_t netshort);
 
 [各种地址的定义查看：](./type.md#网络地址)
 ```cpp
+#include <arpa/inet.h>
+
 char *inet_ntoa(struct in_addr in);
 	//将ip地址转成字符串；
 in_addr_t inet_addr(const char *cp);
@@ -526,7 +532,7 @@ socket api的各种错误码。
 | eWouldBlock=11 |          | 在VxWorks, Windows上，EAGAIN的名字叫做EWOULDBLOCK。          |
 | eBadF          |          | 不是一个正常的文件描述符。                                   |
 | eFault         |          | 地址错误。                                                   |
-| eIntr          |          | 慢系统调用被信号中断。<br />需要手动重启API调用，但**connect()是不能重启的**。 |
+| eIntr          |          | 慢系统调用被信号中断。<br />需要手动重启API调用，但**connect/accept()是不能重启的**。 |
 |                | recv     | 有数据**之前**可能被打断；                                   |
 |                | send     | 数据传输**之前**可能被打断；                                 |
 |                | connect  | 系统调用可能被打断；                                         |
@@ -737,6 +743,7 @@ client peer as follow.
 
 ```cpp
 fd = socket(sock_dgram);
+//bind(), also can use bind the specify ip and port.
 while (true) {
     sendto(fd, dstAddr);
     recvfrom(fd, remoteAddr);

@@ -1,4 +1,4 @@
-[toc]
+[TOC]
 
 ## ReadMe
 
@@ -116,7 +116,7 @@ APUE书中：[高级IPC](#IPC高级IPC)
 完了之后，可以查看各种[IPC总结](#IPC总结)
 
 
-### IPC管道
+### 管道
 #### 匿名管道
 匿名管道只能用于相关联进程（如父子）间的通信；
 单向通信；
@@ -136,7 +136,7 @@ int socketpair(int domain, int type, int protocol, int sv[2]);
 int mkfifo(const char *pathname, mode_t mode);
 ```
 
-### IPC共享内存
+### 共享内存
 共享内存（Shared Memory），指两个或多个进程共享一个给定的存储区。
 > 共享内存是最快的一种IPC，因为进程是直接对内存进行存取。
 > 因为多个进程可以同时操作，所以需要进行同步来访问共享内存。
@@ -177,7 +177,7 @@ int munmap(void *addr, size_t length);
 ```
 
 
-### IPC消息队列
+### 消息队列
 消息队列，是消息的链接表，存放在内核中。
 一个消息队列由一个标识符（即队列ID）来标识。
 > 消息队列是面向记录的，其中的消息具有特定的格式以及特定的优先级。
@@ -208,7 +208,7 @@ int mq_close(mqd_t mqdes);
 ```
 
 
-### IPC信号量
+### 信号量
 它是一个非负计数器。
 信号量用于实现进程间的互斥与同步，而不是用于存储进程间通信数据。
 > 信号量用于进程间同步，若要在进程间传递数据需要结合共享内存。
@@ -252,11 +252,11 @@ int sem_timedwait(sem_t *sem, const struct timespec *abs_timeout);
 int sem_post(sem_t *sem);
 ```
 
-### IPCSocket
+### Socket
 socket不仅可实现同机器内多进程的通信，亦可实现跨机器的多进程间通信。
 
 
-### IPC高级IPC
+### 高级IPC
 #### Unix domain socket
 该socket用于一台主机的进程间通信，不需要基于网络协议，主要是基于文件系统的。
 提供的SOCK\_STREAM，类似于TCP，可靠的字节流。
@@ -271,7 +271,7 @@ bind(sockfd, (struct sockaddr*)&un, sizeof(un));
 ```
 
 
-### IPC文件锁（记录锁）
+### 文件锁（记录锁）
 #### flock
 此函数只能锁定整个文件，无法锁定文件的某一区域。
 > dup()或fork()时fd锁状态不会被继承。
@@ -314,7 +314,7 @@ struct flock {
 ```
 
 
-### IPC文件句柄
+### 文件句柄
 进程间传递文件描述符
 如何让接收方创建出来的fd具有同发送方的fd指向同一文件表项呢（即同一文件句柄）？
 
@@ -395,4 +395,19 @@ Posix是Portable Operating System Interface(可移植性操作系统接口)的�
 然而Posix信号量是基于内存的，即信号量值是放在共享内存中的，它使与文件系统中的路径名对应的名字来标识。
 Systemv信号量实现基于内核的，它放在内核里面，要使用SystemV信号量需要进入内核态，所以在多线程编程中一般不建议使用SystemV信号量，因为线程相对于进程是轻量级的，从操作系统的调度开销角度看，如果使用SystemV信号量会使得每次调用都要进入内核态，丧失了线程的轻量优势。
 
+
+
+
+
+## 优先级
+
+
+
+api `sched_xx_series` as follow.
+
+```cpp
+#include <sched.h>
+int sched_setscheduler(pid_t pid, int policy, const struct sched_param *param);
+int sched_setparam(pid_t pid, const struct sched_param *param);
+```
 

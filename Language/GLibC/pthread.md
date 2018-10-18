@@ -120,31 +120,139 @@ int pthread_attr_getstacksize(pthread_attr_t *attr, size_t *stacksize);
 ```
 
 ### 优先级
-默认同于父进程。
-```
-//调度策略
+
+新创建的线程，其调度策略、优先级默认继承自（同于）父进程。
+
+如下，**静态地更改**调度策略、实时进程优先级：
+
+```cpp
+/* Step1. 获取、设置调度策略；*/
 int pthread_attr_setschedpolicy(pthread_attr_t *attr, int policy);
 int pthread_attr_getschedpolicy(pthread_attr_t *attr, int *policy);
 
-//调度参数，包含优先级（每个系统可设值不一样，故先取出最大值、最小值，再去设置大小，Linux为1-99）
-int pthread_attr_setschedparam(pthread_attr_t *attr, const struct sched_param *param);
-int pthread_attr_getschedparam(pthread_attr_t *attr, struct sched_param *param);
-```
-
-获取policy类型对应的最高、低优先级；
-```cpp
-int sched_get_priority_max(int policy=SCHED_OTHER|SCHED_FIFO|SCHED_RR); 
+/* Step2. 获取、设置实时进程的优先级；*/
+struct sched_param {
+    int sched_priority;
+}
+int sched_get_priority_max(int policy);
 int sched_get_priority_min(int policy);
+	//获取调度策略policy的优先级；
+	//只有实时进程有优先级，如sched_fifo/rr两种；其它的都为0；
+	//linux上为1-99越高越优先（每个系统可设值不一样，故先取出最大值、最小值，再去设置大小）；
+int pthread_attr_setschedparam(pthread_attr_t *attr, struct sched_param *param);
+int pthread_attr_getschedparam(pthread_attr_t *attr, struct sched_param *param);
+	//静态的改变；（在创建线程之前设定线程属性，在创建时传入线程属性。）
 
-#ifdef HAVE_SCHED_GET_PRIORITY_MIN
-    int min_priority = sched_get_priority_min(pthread_policy);
-#endif
-#ifdef HAVE_SCHED_GET_PRIORITY_MAX
-    int max_priority = sched_get_priority_max(pthread_policy);
-#endif
+/* Step3. 更改调度策略、优先级使能； inheritsched=PTHREAD_EXPLICIT_SCHED. */
+int pthread_attr_setinheritsched(pthread_attr_t *attr, int inheritsched);
+
+/* Step4. create thread use attr. */
 ```
+
+如下，**动态地更改**调度策略、实时进程优先级：
+
+```cpp
+int pthread_setschedparam(pthread_t thread, int policy, struct sched_param *param);
+int pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *param);
+	//动态的改变调度策略、优先级；（创建线程之后才支更改。）
+	//默认线程得到0(sched_other/normal)，0(param.sched_priority)；
+int pthread_setschedprio(pthread_t thread, int prio);
+	//动态的改变优先级；
+```
+
+
+
+----
+
+**静态优先级 vs 动态优先级**
+
+https://www.cnblogs.com/alantu2018/p/8447598.html
+https://www.cnblogs.com/geneil/archive/2011/11/25/2263497.html
+
+从用户空间来看，进程的优先级表现为：静态优先级nice value、实时优先级scheduling priority，对应到内核，有静态优先级、realtime优先级、归一化优先级、动态优先级等概念。
+
+```cpp
+/* Kernel中保存进程信息的数据结构（进程控制块）。*/
+struct task_struct {
+    int prio, static_prio, normal_prio;
+    	//prio, 动态优先级
+    		//调度器在进行调度时候使用的那个优先级。
+    	//static_prio, 静态优先级
+    		//用户空间可以通过nice()或者setpriority对该值进行修改。
+    	//normal_prio, 归一化优先级
+    		//根据静态优先级、scheduling priority和调度策略来计算得到。
+    		//对于一个线程，其normalized priority的number越小，其优先级越大。
+    unsigned int rt_priority;
+    	//rt_priority, 实时优先级。
+    		//用户空间中的scheduling priority。0是普通进程，1～99是实时进程，99的优先级最高。
+    unsigned int policy;
+    	//policy, 进程调度策略；
+}
+```
+
+小结：
+
+- 静态优先级
+  - “静态”是因为内核不会去更改它，只能用系统调用nice/setpriority()去更改。
+    - 用户态：linux上为-20到19，默认为0，越低越优先。
+    - 内核态：上述映射到内核中为100到139，默认为120，越低越优先。
+  - 对实时进程、deadline类型进程没有影响。
+- 动态优先级
+- 实时优先级
+  - 用户态。
+    - scheduling priority=0，为普通进程；
+    - scheduling priority=1->99，为实时进程，越高越优先。
+  - 映射到内核态prio。（越低越优先）
+    - prio=MAX_RT_PRIO - 1- p->rt_priority;  //MAX_RT_PRIO=99
+- 默认创建的进程、线程具有
+  - 调度策略为0，即sched_other/sched_normal.
+  - static_prio = 120，即nice=0.
+  - rt priority = 0（普通进程）
+- ..
+
+
+
+`top`，`ps -l`可以看进程优先级（PR.进程优先级，NI.nice值）
+
+```bash
+#top
+PID USER      PR  NI 
+8   root      20   0
+6   root      rt   0
+22  root       0 -20
+
+#ps -al
+F S   UID   PID  PPID  C PRI  NI ADDR SZ WCHAN  TTY          TIME CMD
+0 S     0  4667  4529  0  80   0 -  8339 -      pts/0    00:00:04 vim
+```
+
+其中的PR(new) = PR(old) + nice. *如果原本的 PRI 是 50 ，并不是我们给予一个nice = 5 ，就会让 PRI 变成 55 喔！因为 PRI 是系统『动态』决定的，所以，虽然 nice 值是可以影响 PRI ，不过， 最终的 PRI 仍是要经过系统分析后才会决定的。*
+
+
+
+api如下
+
+```cpp
+#include <sys/resource.h>
+int setpriority(int which, int who, int prio);
+int getpriority(int which, int who);
+	//设置进程、进程组和用户的进程执行优先权。
+
+#include <unistd.h>
+int nice(int inc);
+	//调整进程运行的优先级。
+```
+
+
+
+问题：更改nice对实时进程没影响，那么更改scheduling priority对普通进程有影响吗？？
+
+
+
+
 
 ### 亲和性
+
 就是线程核绑定，让哪个线程优先在哪个核运行；（在网络程序开发中特别有用，如绑定数据面、控制面的线程）
 
 ### TSD
@@ -205,9 +313,13 @@ linux采用的是抢占式多任务，具体为OS中的调度器；
 
 linux中调度策略如下：
 /usr/include/x86\_64-linux-gnu/bits/sched.h
+
 ```cpp
  29 /* Scheduling algorithms.  */
- 30 #define SCHED_OTHER     0
+ 30 #define SCHED_OTHER     0   
+ /* #define SCHED_NORMAL    0  
+ 	非实时进程，基于优先级的轮回法（Round Robin） 
+ 	按照优先级进行调度（有些地方也说是CFS调度器） */
  31 #define SCHED_FIFO      1
  32 #define SCHED_RR        2
  33 #ifdef __USE_GNU
@@ -217,22 +329,45 @@ linux中调度策略如下：
  37 	# define SCHED_RESET_ON_FORK    0x40000000
  38 #endif
 ```
-0: 针对的是普通进程（非实时进程）。
-1：针对实时进程的先进先出调度。（适合对时间性要求比较高但每次运行时间比较短的进程）
-2：针对的实时进程的时间片轮转调度。（适合每次运行时间比较长得进程）
-3：针对批处理进程的调度。（适合那些非交互性且对cpu使用密集的进程）
+上述的策略中：
+
+- 实时、抢占（<font color=red>属于实时进程，具有优先级1-99，创建需要root权限</font>）
+  - SCHED_FIFO，1实时进程先进先出，适合对时间性要求比较高但每次运行时间比较短的进程；
+    - 优先级1-99，越大越高；
+  - SCHED_RR，2实时进程时间片轮转，适合每次运行时间比较长得进程；
+    - 优先级1-99，越大越高；
+- 非实时、非抢占、普通（属于普通进程，无优先级）
+  - SCHED_OTHER，0，针对普通进程，<font color=red>linux默认的分时调度策略</font>；
+  - SCHED_BATCH，3，批处理进程，适合那些非交互性且对cpu使用密集的进程；
+  - SCHED_IDLE，5，空闲进程，优先级非常低的后台任务；
+
+nothing.
+
+
 
 #### SCHED\_OTHER
-分时调度策略；
-不支持优先级；
+linux默认的分时调度策略；
+不支持优先级；-----<font color=red>nice值是否只影响，时间算的长度？？ --rwhy</font>
 
 - 执行过程
-	1. 创建任务指定采用分时调度策略，并指定优先级nice值(-20~19)。
-	2. 将根据每个任务的nice值确定在cpu上的执行时间(counter)。
-	3. 如果没有等待资源，则将该任务加入到就绪队列中。
-	4. 调度程序遍历就绪队列中的任务，通过对每个任务动态优先级的计算(counter+20-nice)结果，选择计算结果最大的一个去运行，当这个时间片用完后(counter减至0)或者主动放弃cpu时，该任务将被放在就绪队列末尾(时间片用完)或等待队列(因等待资源而放弃cpu)中。
-	5. 此时调度程序重复上面计算过程，转到第4步。
-	6. 当调度程序发现所有就绪任务计算所得的权值都为不大于0时，重复第2步。
+  1. 创建任务指定采用分时调度策略，并指定优先级nice值(-20~19)。
+  2. 将根据每个任务的nice值确定在cpu上的执行时间(counter)。
+  3. 如果没有等待资源，则将该任务加入到就绪队列中。
+  4. 调度程序遍历就绪队列中的任务，通过对每个任务动态优先级的计算(counter+20-nice)结果，选择计算结果最大的一个去运行，当这个时间片用完后(counter减至0)或者主动放弃cpu时，该任务将被放在就绪队列末尾(时间片用完)或等待队列(因等待资源而放弃cpu)中。
+  5. 此时调度程序重复上面计算过程，转到第4步。
+  6. 当调度程序发现所有就绪任务计算所得的权值都为不大于0时，重复第2步。
+
+
+
+----
+
+**完全公平的调度器CFS**
+
+CFS允许每个进程运行一段时间、循环轮转、选择<font color=blue>运行最少的进程</font>作为下一个运行进程，CFS在所有可运行进程总数基础上计算出一个进程应该运行多久，而不是依靠nice值来计算时间片。<font color=blue>nice值在CFS中被作为进程获得的处理器运行比的权重</font>，越高的nice值（越低的优先级）进程获得更低的处理器使用权重，这是相对默认nice值进程的进程而言的；相反，更低的nice值（越高的优先级）的进程获得更高的处理器使用权重。
+
+CFS内部对每个CPU维护一个以时间为顺序的红黑树。
+
+
 
 
 #### SCHED\_FIFO
@@ -252,27 +387,31 @@ RR来自Round-Robin简称；
 支持优先级，1-99越高越优先；
 
 - 执行过程
-	1. 创建任务时指定调度参数为RR，并设置任务的实时优先级和nice值(nice值将会转换为该任务的时间片的长度)。
-	2. 如果没有等待资源，则将该任务加入到就绪队列中。
-	3. 调度程序遍历就绪队列，根据实时优先级计算调度权值,选择权值最高的任务使用cpu。
-	4. 如果就绪队列中的RR任务时间片为0，则会根据nice值设置该任务的时间片，同时将该任务放入就绪队列的末尾。重复步骤3。
-	5. 当前任务由于等待资源而主动退出cpu，则其加入等待队列中。重复步骤3。
+  1. 创建任务时指定调度参数为RR，并设置任务的实时优先级和nice值(nice值将会转换为该任务的时间片的长度)。
+  2. 如果没有等待资源，则将该任务加入到就绪队列中。
+  3. 调度程序遍历就绪队列，根据实时优先级计算调度权值,选择权值最高的任务使用cpu。
+  4. 如果就绪队列中的RR任务时间片为0，则会根据nice值设置该任务的时间片，同时将该任务放入就绪队列的末尾。重复步骤3。
+  5. 当前任务由于等待资源而主动退出cpu，则其加入等待队列中。重复步骤3。
+
+RR是FIFO的一个延伸
+
+> FIFO时，如果两个进程的优先级一样，则这两个优先级一样的进程具体执行哪一个是由其在队列中的位置决定的，这样导致一些不公正性(优先级是一样的，为什么要让你一直运行?)。
+> 如果将两个优先级一样的任务的调度策略都设为RR,则保证了这两个任务可以循环执行，保证了公平。
+
+
 
 
 #### SCHED小结
-linux 支持两种类型的进程调度，实时进程和普通进程。
+linux 支持两种类型的进程调度：<font color=red>实时进程、普通进程</font>。
 
-- 实时进程按SCHED\_FIFO和SCHED\_RR调度策略；
+- 实时进程按**SCHED_FIFO, SCHED_RR**调度策略；
 	- 实时进程将得到优先调用，实时进程根据实时优先级决定调度权值;（当实时进程准备就绪后，如果当前cpu正在运行非实时进程，则实时进程立即抢占非实时进程。）
 	- 采用实时优先级做为调度的权值标准。
-- 普通进程按SCHED\_NORMAL策略；
+- 普通进程按**SCHED_NORMAL(SCHED_OTHER)**策略；
 	- 分时进程则通过nice和counter值决定权值；
 	- nice越小，counter越大，被调度的概率越大，也就是曾经使用了cpu最少的进程将会得到优先调度。[rwhy]哪来的nice？？？
 
 
-RR是FIFO的一个延伸
-> FIFO时，如果两个进程的优先级一样，则这两个优先级一样的进程具体执行哪一个是由其在队列中的未知决定的，这样导致一些不公正性(优先级是一样的，为什么要让你一直运行?)。
-> 如果将两个优先级一样的任务的调度策略都设为RR,则保证了这两个任务可以循环执行，保证了公平。
 
 
 ## Thread Sync
@@ -359,11 +498,12 @@ int pthread_rwlock_unlock()
 
 api如下：
 ```cpp
-int pthread_cond_init()
-PTHREAD_COND_INITIALIZER
+int pthread_cond_init() //PTHREAD_COND_INITIALIZER
 int pthread_cond_destroy()
+    
 int pthread_cond_timedwait()
 int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
+
 int pthread_cond_signal(pthread_cond_t *cond);
 int pthread_cond_broadcast()
 ```
@@ -387,13 +527,13 @@ pthread\_cond\_wait阻塞时、唤醒时各自有什么操作？
 
 调用时机，请看如下demo
 ```cpp
-//错误的：先通知、再解锁
+/* 错误的：先通知、再解锁 */
 pthread_mutex_lock();
 .. do process ..
 pthread_cond_signal();
 pthread_mutex_unlock();
 
-//正确的：先解锁、再发通知
+/* 正确的：先解锁、再发通知 */
 pthread_mutex_lock();
 .. do process ..
 pthread_mutex_unlock();
@@ -437,8 +577,8 @@ int main(void)
     pthread_create(&t_b,NULL,thread2,(void *)NULL); /*创建进程t_b*/  
     pthread_join(t_a, NULL);/*等待进程t_a结束*/  
     pthread_join(t_b, NULL);/*等待进程t_b结束*/  
-    pthread_mutex_destroy(&mutex);  
-    pthread_cond_destroy(&cond);  
+    //Not need, cause static init. pthread_mutex_destroy(&mutex);  
+    //Not need, cause static init. pthread_cond_destroy(&cond);  
     exit(0);  
 }  
 

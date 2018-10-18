@@ -2,11 +2,13 @@
 
 ## vim
 
+called vim on linux platform.
+
 
 
 ## gvim
 
-vim是跨平台的，在win下叫vim.
+called gvim on win platform.
 
 - 配置文件
 	> .vimrc ==> _vimrc
@@ -24,7 +26,7 @@ vim是跨平台的，在win下叫vim.
 	- 待续
 
 
-## vim配置
+## configs
 如下，只收录了一些初始配置
 ```bash
 :set ignorecase  #搜索大小写不敏感
@@ -47,7 +49,7 @@ set smarttab
 
 ```
 
-## vim指令
+## command sets
 vim -o a b 打开a b于上下两窗口
 vim -O a b 打开a b于左右两窗口
 vim -d a b 等效于vimdiff a b
@@ -86,7 +88,7 @@ vimdiff == vim -d a b
 usage as follow.
 
 ```bash
-ctags ./* -R
+ctags * -R
 ctrl + ]
 ctrl + t
 ```

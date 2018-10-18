@@ -5,20 +5,57 @@ cmake输入文件：<-------   CMakeLists.txt （注意是Lists）
 mkdir build; cd build; cmake ..;   生成Makefile；
 make -j 4;
 
-## 常用
-日志、调试
 
-- message("Will pring val = ${val}")
 
------
-添加头文件、库的搜索路径
-```cmake
-set(CMAKE_INCLUDE_PATH "include_path")
-list(APPEND CMAKE_INCLUDE_PATH "include_path")
+## Grammar
 
-set(CMAKE_LIBRARY_PATH "lib_path")
-list(APPEND CMAKE_LIBRARY_PATH "lib_path") 
+如下demo所示：
+
+```bash
+# comment use '#'.
+# end the statement no ';'.
+
+#define variable.
+set(VarName VarValue)
+
+#use variable. `${varName}`
+include_directories(${PROJECT_SOURCE_DIR}) 
+
+# log.
+message("Will pring val = ${val}")
 ```
+
+
+
+### flow control
+
+包含if, while, foreach, ..
+
+
+
+--------
+
+**if**
+
+Notice. 判断的变量不需要使用`${var}`格式，而是直接使用`var`.
+
+
+
+
+
+--------
+
+**while**
+
+
+
+-----------
+
+**foreach**
+
+
+
+
 
 
 ## finder
@@ -64,7 +101,7 @@ list(APPEND CMAKE_LIBRARY_PATH "lib_path")
 
 
 > FIND\_PACKAGE(
-> 	&lt;name&gt; 
+> ​	&lt;name&gt; 
 >   [version] [EXACT]
 >>  版本格式：major[.minor[.patch[.tweak]]]
 >>  EXACT版本精确匹配
@@ -142,8 +179,70 @@ mark_as_advanced(LIBXML2_INCLUDE_DIR LIBXML2_LIBRARY )
 ### 打成rpm包
 可以打成redhat系列的.rpm包；
 
-
 ## 指令集
+
+Todo. https://blog.csdn.net/z_h_s/article/details/50699905
+
+指令如下：
+
+| key                              | subkey       | value                                           |
+| -------------------------------- | ------------ | ----------------------------------------------- |
+| project(XX)                      |              | 项目名称，${XX_SOURCE_DIR}则为项目根目录。      |
+| cmake_mininum_required(..)       |              | cmake最低版本设置。(VERSION 2.8 FATAL_ERROR)    |
+| include(xx)                      |              | 引入cmake模块xx.                                |
+|                                  |              |                                                 |
+| add_subdirectory(dir)            |              | 包含子目录dir中的CmakeLists.txt.                |
+| aux_source_directory(dir var)    |              | 发现dir下面所有源码文件、并将文件列表赋值给var. |
+| add_executable(obj codefilelist) |              | 生成二进制目标。                                |
+| add_library(obj codefilelist)    |              | 生成库目标。                                    |
+|                                  |              |                                                 |
+| include_directories(xx)          |              | -I参数                                          |
+| link_directories(xx)             |              | -L参数                                          |
+| target_link_libraries(xx)        |              | -l参数                                          |
+|                                  |              |                                                 |
+| add_definitions(-DXX)            |              | 向c/c++编译器添加-DXX定义。                     |
+| cmake_c_flags                    |              | 预置变量：c编译器选项设置；                     |
+| cmake_cxx_flags                  |              | 预置变量：c++编译器选项设置；                   |
+|                                  |              |                                                 |
+| file(subkey ..)                  |              | 文件操作指令                                    |
+| install(subkey ..)               |              |                                                 |
+| find_xx(..)                      |              | find_系列指令                                   |
+|                                  | find_file    |                                                 |
+|                                  | find_library |                                                 |
+|                                  | find_path    |                                                 |
+|                                  | find_program |                                                 |
+|                                  | find_package |                                                 |
+|                                  |              |                                                 |
+|                                  |              |                                                 |
+|                                  |              |                                                 |
+|                                  |              |                                                 |
+|                                  |              |                                                 |
+|                                  |              |                                                 |
+|                                  |              |                                                 |
+|                                  |              |                                                 |
+|                                  |              |                                                 |
+|                                  |              |                                                 |
+|                                  |              |                                                 |
+|                                  |              |                                                 |
+|                                  |              |                                                 |
+|                                  |              |                                                 |
+|                                  |              |                                                 |
+|                                  |              |                                                 |
+|                                  |              |                                                 |
+
+
+
+### find
+
+
+
+### file
+
+
+
+### install
+
+
 
 ### add\_definitions
 option选项，让用户可以根据选项值进行条件编译。（可在cmake .. -DUSE\_A=ON/OFF进行功能开启、关闭）
@@ -170,7 +269,47 @@ add_executable(multimap ${MULTIMAP_SRC})
 #endif
 ```
 
+
+
+
+
+### Add header/lib Search Path.
+
+添加头文件、库的搜索路径
+
+```bash
+set(CMAKE_INCLUDE_PATH "include_path")
+list(APPEND CMAKE_INCLUDE_PATH "include_path")
+
+set(CMAKE_LIBRARY_PATH "lib_path")
+list(APPEND CMAKE_LIBRARY_PATH "lib_path") 
+```
+
+```bash
+include_directories(dir1 dir2)  #找头文件
+
+link_directories(dir1 dir2)  #找库文件
+target_link_libraries(obj lib1 lib2)  #链接库
+```
+
+
+
+### output path
+
+EXECUTABLE_OUTPUT_PATH
+
+executable_output_path()
+
+LIBRARY_OUTPUT_PATH
+
+library_output_path()
+
+
+
+
+
 ## 宏
+
 探测OS类型的宏
 ```cmake
 if (NOT WIN32)

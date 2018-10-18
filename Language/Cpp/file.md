@@ -5,6 +5,44 @@
 
 
 
+## 特殊句柄
+
+包含标准输入、输出、错误输出，。。
+
+
+
+--------
+
+**标准输入、输出、错误**
+
+一套是标准的，为`int`类型，直接被应用于系统调用 ，如下：
+
+```cpp
+#include <unistd.h>
+
+#define STDIN_FILENO 0 /* Standard input. */
+#define STDOUT_FILENO 1 /* Standard output. */
+#define STDERR_FILENO 2 /* Standard error output. */
+	//用于open/read/write/close()系列系统调用中。
+```
+
+
+
+一套是较高级的，为`FILE*`类型，带有buffer的高级IO操作。
+
+```cpp
+stdin;
+stdout;
+stderr;
+	//用于fopen/fread/fwrite/fclose()系列；
+```
+
+
+
+
+
+
+
 ## ifstream
 ```cpp
 ;
@@ -23,7 +61,7 @@ buffer = new char[length];
 t.read(buffer, length);
 t.close();
 ```
-  
+
 读到string
 ```cpp
 #include <fstream>  

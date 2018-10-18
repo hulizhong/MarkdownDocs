@@ -24,16 +24,19 @@ cat /etc/ssh/sshd_config
  HostKey /etc/ssh/ssh_host_rsa_key # SSH version 2 使用的 RSA 私钥
  HostKey /etc/ssh/ssh_host_dsa_key # SSH version 2 使用的 DSA 私钥
  PermitRootLogin yes
- 	#是否允许 root 登入
+ 	#是否允许root进行远程ssh连接。（否则只能本地console登录）
  StrictModes yes
  	#是否让 sshd 去检查用户家目录或相关文件的权限数据  （一般都是’只有属主有权限’，即600）；
+ 
  PubkeyAuthentication yes
- 	#使用密钥登录系统
- AuthorizedKeysFile .ssh/authorized_keys #用户登录公钥存放位置
+ 	#登录验证，基于密钥对验证。
+ AuthorizedKeysFile .ssh/authorized_keys
+ 	#登录用户的公钥存放位置；
 
  PasswordAuthentication yes
- 	#登录密码认证
+ 	#登录验证，基于密码验证；
  PermitEmptyPasswords no #否允许以空的密码登入
+ 
  RhostsAuthentication no #系统不使用 .rhosts认证
  IgnoreRhosts yes #是否取消使用 ~/.ssh/.rhosts 来做为认证
  RhostsRSAAuthentication no #专门给 version 1 用的，使用 rhosts 文件在 /etc/hosts.equiv
@@ -97,6 +100,30 @@ Pluggable Authentication Modules(可插入认证模块)
 #### 集中式认证方式
 
 LDAP是我们常用的一种集中式认证方式。
+
+
+
+### tcp wrappers
+
+/etc/hosts.deny
+
+```bash
+sshd: ALL
+	#拒绝所有远程主机访问sshd服务。
+```
+
+
+
+/etc/hosts.allow
+
+```bash
+sshd: 172.22.48.
+	#只允许xx网段访问sshd服务；
+```
+
+
+
+
 
 
 

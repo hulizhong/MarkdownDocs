@@ -134,7 +134,7 @@ void bufferevent_setcb(*bev, readcb, writecb, eventcb, void *cbarg);
 	//wrtiecb, typedef (*bufferevent_data_cb)(*bev, void *ctx);
 		//设置给写缓冲的cb，一般不用置NULL.
 	//eventcb, typedef void (*bufferevent_event_cb)(*bev, what, void *ctx)
-		//事件回调，处理一些异常、额外的场景；
+		//事件回调，处理一些异常、额外的场景；（不能指定只关心的事件---rabin.）
 		//what
 			//bev_event_reading, 读取操作时发生了某事件，具体看其它标志
 			//bev_event_writing, 写入操作时发生了某事件，具体看其它标志
@@ -272,6 +272,28 @@ int main()
     return 0;
 }
 ```
+
+
+
+## tcp server
+
+server can use.
+
+```cpp
+evconnlistener_new_bind();
+	//listener系统函数创建tcp服务；
+```
+
+
+
+client can use.
+
+```cpp
+bufferevent_socket_connect();
+	//bufferevent系列网络IO集成了connect()；
+```
+
+
 
 
 

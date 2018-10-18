@@ -12,7 +12,7 @@ tcp connection des.
 
 > 因为当处于LISTEN 状态的服务器端SOCKET当收到SYN报文(客户端希望新建一个TCP连接)后，它可以把ACK(应答作用)和SYN(同步作用)放在同一个报文里来发送给客户端。  
 >
-> > 这是不是捎带确认？
+> > 这是不是捎带确认？---**应该就是delay ack.**
 >
 > 但在关闭TCP连接时，当收到对方的FIN报文时，对方仅仅表示对方没有数据发送给你了，但未必你的所有数据都已经全部发送给了对方，所以你大可不必马上关闭SOCKET(发送一个FIN报文)，等你发送完剩余的数据给对方之后，再发送FIN报文给对方来表示你同意现在关闭连接了，所以通常情况下，这里的ACK报文和FIN报文都是分开发送的。 
 
@@ -27,7 +27,6 @@ tcp连接建立的目的是为连接分配资源、协商ISN值、告知mss值�
 
 
 ![这是一张图片](img/tcp-connectionBuildFreeSequence.png)
-
 
 **Notice.** 
 主动connect()，是在发送ack k+1之后才是established. 而不是在收到syn k的时候；
@@ -68,7 +67,7 @@ MSS是在建立连接时协商出来的（只会出现在syn包中），如下�
 
 问题：MTU MSS？
 
-> MTU 即Maximal Transmission Unit，最大传输单元，是指网络接口层中由于受传输介质的物理特性制约一次可以传送的最大字节数，如以太网中MTU为1500Byte。MTU可以由人为修改，从而达到最优网络传输效率。  
+> MTU 即Maximal Transmission Unit，最大传输单元，是指<font color=red>网络接口层</font>中由于受传输介质的物理特性制约一次可以传送的最大字节数，如以太网中MTU为1500Byte。MTU可以由人为修改，从而达到最优网络传输效率。  
 > MSS 即Maximal Segment Size，最大段长度，是传输层中TCP报文段中数据段的最大长度，默认是536Byte。
 
 参考（mtu=ipHead+tcpHead+mss）：
