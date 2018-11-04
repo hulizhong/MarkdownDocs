@@ -188,7 +188,7 @@ Todo. https://blog.csdn.net/z_h_s/article/details/50699905
 | key                              | subkey       | value                                           |
 | -------------------------------- | ------------ | ----------------------------------------------- |
 | project(XX)                      |              | 项目名称，${XX_SOURCE_DIR}则为项目根目录。      |
-| cmake_mininum_required(..)       |              | cmake最低版本设置。(VERSION 2.8 FATAL_ERROR)    |
+| cmake_mini**m**um_required(..)   |              | cmake最低版本设置。(VERSION 2.8 FATAL_ERROR)    |
 | include(xx)                      |              | 引入cmake模块xx.                                |
 |                                  |              |                                                 |
 | add_subdirectory(dir)            |              | 包含子目录dir中的CmakeLists.txt.                |

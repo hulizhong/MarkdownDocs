@@ -755,6 +755,12 @@ close(fd);
 本地socket是ipc的一种；
 > pipe, fifo, mmap, signal, unix socket.
 
+AF_INET需经过多个协议层的编解码，消耗系统cpu，并且数据传输需要经过网卡，受到网卡带宽的限制。**AF_UNIX数据到达内核缓冲区后，由内核根据指定路径名找到接收方socket对应的内核缓冲区，直接将数据拷贝过去，不经过协议层编解码，节省系统cpu，并且不经过网卡，因此不受网卡带宽的限制**，如下图所示。
+
+![这是一张图](img/socket-unixSocketDataFlow.png)
+
+
+
 本地socket**编程模式同于tcp socket流程**（bind, listen, accept, connect），但区别如下：
 
 ```cpp

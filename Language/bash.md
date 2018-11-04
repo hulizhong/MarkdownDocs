@@ -44,7 +44,7 @@ ${var} #增加变量名边界的定位
 
 /etc/bashrc vs /etc/profile中的环境变量关系？
 
-	
+​	
 
 ### 整数
 请看如下demo.
@@ -436,4 +436,28 @@ test vs []
 
 > (())内不能出现-ne之类的test关键词的用语，而用> < ++之类的数值运行符。   
 > 使用 (( )) 时，不需要空格分隔各值和运算符，使用[]和[[ ]] 时需要用空格分隔各值和运算符包括’[‘’]’符（如 elif [ $a -gt $b ]; then）。
+
+
+
+
+
+## Tips demo
+
+### directories traversal
+
+```bash
+function dirlist() {
+    for element in `ls $1`
+    do
+        fp=$1"/"$element
+        if [ -d $fp ]
+        then
+            dirlist $fp
+        else
+            echo $fp
+        fi
+    done
+}
+dirlist ./
+```
 

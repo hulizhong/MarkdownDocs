@@ -128,3 +128,45 @@ pkill -u user 踢除user这个用户和他的所有开启的程序
 
 
 
+### patch包
+
+diff
+
+- -N 使生成的patch能正确处理新增、删除的文件。
+- -u 对比模式Unified，相对默认的模式生成的patch文件会小一点。
+- -a 把所有文件当txt文件处理。
+- -r 递归处理文件。
+
+`diff -Nuar srcDir destDir > add.patch` 生成patch文件，如下格式：
+
+```bash
+diff -Nuar hehe/xx.cpp hehenew/xx.cpp  #注意：前后关系 + 目录级别关系
+--- hehe/xx.cpp 2018-11-03 01:12:48.849856628 -0500   #这是patch前，即源。
++++ hehenew/xx.cpp  2018-11-03 01:13:42.233856652 -0500  #这是patch后，即目标。
+...
+```
+
+patch
+
+- -R反向操作。
+- -pNum 从哪一级目录查找目标文件(夹)，-p0从当前目录查找。
+  - <font color=blue>这个目录级别是指patch中的文件的目录结构！！！</font>
+- -d dir 在处理之前跳转到该目录下。
+
+```bash
+#ls 
+hehe/ add.patch
+
+#patch -p0 < add.patch   给当前目录下olddir打patch
+#patch -Rp0 < add.patch  撤销打包
+
+#cd hehe
+#ls 
+xx.h xx.cpp
+#patch -p1 < add.patch  忽略hehe/目录，向目标文件打patch.
+```
+
+
+
+
+

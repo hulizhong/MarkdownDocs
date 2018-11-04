@@ -6,21 +6,32 @@ python regex. 1.5版本以后引入，它提供 Perl 风格的正则表达式模
 ```python
 import re
 print re.search("\\W+\"rabin\"", 'haha? "rabin"').group()
-	#需要转义pattern中的特殊字符串；
+	#""需要转义pattern中的特殊字符串；
 print re.search(r"\W+\"rabin\"", 'haha? "rabin"').group()
-	#不需要转义pattern中的特殊字符串，但"除外；
+	#r""不需要转义pattern中的特殊字符串，但"除外；
 print re.search(r'\W+"rabin"', 'haha? "rabin"').group()
-	#不需要转义pattern中的特殊字符串；
+	#r''不需要转义pattern中的特殊字符串；
 ```
 
 
 ## 匹配查找
-分为match, search两种；
-re.match 从字符串的开始处进行匹配，直到找一个匹配项，并返回None或匹配对象。
-re.search 匹配整个字符串，直到找到一个匹配，并返回None或匹配对象。
-findall 匹配整个字符串，并找到所有匹配项，并返回一个列表，如果没有找到匹配的，则返回空列表。
-finditer 同于findall，但返回迭代器。
-split 按照能够匹配的子串将字符串分割后返回列表。
+分为以下几种；
+
+- 匹配：只一个
+  - re.match 从字符串的起始位置进行匹配，并返回None或匹配对象。
+  - re.search 匹配整个字符串，并返回None或匹配对象
+- 匹配：全部
+  - re.findall 匹配整个字符串，并并返回一个列表，如果没有找到匹配的，则返回空列表。
+  - re.finditer 同于findall，但返回迭代器。
+- 匹配：分割
+  - re.split 按照能够匹配的子串（即正则）将字符串分割后返回列表。
+- 匹配：替换
+  - re.sub 替换字符串中的匹配项。
+- none.
+
+
+
+
 
 ### match
 re.match(pattern, string, flags=0)
@@ -31,7 +42,7 @@ flags    #匹配的修饰符，如大小写、单行模式之类；
 return
 	#成功则返回匹配对象、失败则返回None（用group/groups处理结果）；
 	#group(num)
-		#group(0) 为匹配中的整个子串
+		#group(0) 为匹配中的整个子串  == group()
 		#group(1) 为第1个分组匹配成功的子串
 	#groups() 全部匹配项，为一元组
 ```
@@ -126,7 +137,8 @@ re.split('a*', 'hello world')
 	#对于一个找不到匹配的字符串而言，split 不会对其作出分割
 ```
 
-## 匹配替换
+### sub
+
 re.sub(pattern, repl, string, count=0, flags=0)
 ```bash
 pattern
@@ -139,7 +151,12 @@ count
 	#替换的次数，0为替换所有；
 ```
 
-## 正则编译
+
+
+## 关于匹配
+
+### 正则编译
+
 编译正则表达式，生成一个正则表达式（ Pattern ）对象，该对象拥有一系列方法用于正则表达式匹配和替换。
 
 re.compile(pattern[, flags])
@@ -158,10 +175,10 @@ m.start(0)   #3
 m.end(0)     #5
 ```
 
+### 匹配选项
 
-## 正则相关
-### 修饰符
 正则模式模式、正则修饰符
+
 ```bash
 re.I
 	#使匹配对大小写不敏感
@@ -181,7 +198,30 @@ re.X
 	#该标志通过给予你更灵活的格式以便你将正则表达式写得更易于理解。
 ```
 
+### 匹配返回
+
+match(), search()的返回结果有如下特征：
+
+```python
+m = pattern.match(..)
+
+m.group(idx=0,)  #匹配的字符串，从1开始（默认为0即全部），可以一次输入多个组号。
+m.groups()  #返回元组，包含所有匹配中的字符串。
+m.groupdict()  #将命名分组匹配的子串，按照字典返回。
+
+m.start(idx=0) #第idx个分组匹配的子串在整个字符串中的起始位置。
+m.end(idx=0)   #第idx个分组匹配的子串在整个字符串中的结束位置。
+m.span(idx=0)  #返回 (start(idx), end(idx))。   
+```
+
+
+
+
+
+## 关于正则
+
 ### 正则
+
 正则表达式
 ```bash
 ^

@@ -23,11 +23,10 @@ use strict;
 ### 简明语法
 概要
 ```perl
-语句结尾;
+# 语句以';'结尾。
+# 用{}进行作用域分隔。
 
-#-------------
 #单行注释
-
 =name
 多行注释
 =cut
@@ -47,7 +46,7 @@ print "<", $var, ">\n";
 	#print用法同于python，但还是有区别的；
 	#python print
 		#会自动添加换行符号；
-		#不同输出项之间的连接符为空格；< var >
+		#不同输出项之间的连接符为空格，如上的输出为'< var >'
 	#perl print
 		#不会自动添加换行符号；
 		#不同输出项之间没有连接符；<var>
@@ -60,11 +59,11 @@ close FP1;
 
 ### 各种循环
 ```perl
---------------------------------------------for
+#--------------------------------------------for
 for (init; condition; increment) {
 }
 
---------------------------------------------foreach
+#--------------------------------------------foreach
 foreach $var (@list) {
 	#use strict模式下不能用此，只能用第三种方法；
 }
@@ -79,7 +78,7 @@ foreach (@arr) {
 	print $_, "\n";
 }
 
---------------------------------------------while
+#--------------------------------------------while
 while (condition) {
 }
 
@@ -104,7 +103,7 @@ while (condition) {
 while (condition) {
 	last; #退出循环
 	next label;  #跳过以下各句，直接执行continue部分、并进入下一次循环
-	redo;  #语句直接转到循环体的第一行开始重复执行本次循环，（continue部分也不执行了）
+	redo;  #语句直接转到循环体的第一行开始重复执行本次循环，（continue + condition不执行）
 	...
 } continue {
 	...
@@ -148,47 +147,100 @@ xx($v1, %map);  #传入函数内，会被扩展成key,value的列表。
 ```
 
 ### 引用
-引用
-```perl
-$refScalar = \$v;   #标量
 
-$refArray = \@v;    #列表
-$refArray = [...]   #匿名列表，[]
+为什么需要引用呢？
 
-$refHash = \%v;     #hash
-$refHash = {key=>v1, key=>v2}  #匿名hash，{}
+- **函数传参只接受`标量`**。
+- **列表、哈希中的元素只支持`标量`。借助引用可构造复杂的结构**。
+  - $hash{"key"} = @array;  <font color=blue>那么只是把array的元素个数赋值给key</font>。
 
-$refFunction = \&v; #子过程
-$refFunction = sub {..}  #匿名子过程
+引用 & 解引用（<font color=red>法一：$var代替var。法二：{$var}代替var。法三：->[idx],->{"key"},->(params)</font>）
 
-$refHandle = \*v;   #句柄
-```
+- 标量
 
-解引用
-```perl
-if (ref $var) {
-	#如果var是引用，则会返回真；
-	#perl中只有引用类型，才可进行类型探测；因为普通类型可以看变量名的前缀，如@, %。
-}
-if ($var1 == $var2);
-if ($var1 eq $var2) {
-	#判断两个引用是否指向同一目标；
-}
+  ```perl
+  my $v = 1;
+  my $refScalar = \$v;
+  
+  $$refScalar;
+  ${$refScalar};
+  ```
 
----------------法一：$var代替var
-$$refScalar;
-@$refArray;
-%$refHash;
+- 数组
 
---------------法二：用{$var}代替var
+  ```perl
+  my @v = (1, 2);
+  my $refArray = \@v;
+  my $refArray = [...];
+  	#匿名列表，[]。（注意左值的类型为'$'）
+  
+  @$refArray;   #全部
+  @{$refArray};    #全部，可用于返回[]/{}中的[]引用。
+  $refArray->[idx];  #单一元素
+  $$refArray[idx];   #单一元素
+  ```
 
---------------法三：
-$refArray->[];
-$refHash->{};
-$refFunction->();
-```
+- 哈希
+
+  ```perl
+  my %v = ("key"=>"val");
+  my $refHash = \%v;
+  my $refHash = {key=>v1, key=>v2};
+  	#匿名hash，{}。（注意左值的类型为'$'）
+  
+  %$refHash;   #全部
+  %{$refHash};   #全部，可用于返回[]/{}中的{}引用。
+  $refHash->{"keyname"};  #单一元素
+  $$refHash{"keyname"};  #单一元素
+  ```
+
+- 函数
+
+  ```perl
+  sub fun {...}
+  my $refFunction = \&fun;
+  	#注意：fun后面没有()，否则为调用关系了！！
+  my $refFunction = sub {..}
+  	#匿名子过程。（注意左值的类型为'$'）
+  
+  $refFunction->();
+  &$refFunction();
+  ```
+
+- glob句柄
+
+  ```perl
+  $refHandle = \*STDOUT;
+  ```
+
+- none
+
+
+
+解引用相关
+
+- 判断
+
+  ```perl
+  if (ref $var) {
+  	#如果var是引用，则会返回真；
+  	#perl中只有引用类型，才可进行类型探测；因为普通类型可以看变量名的前缀，如@, %。
+  }
+  if ($var1 == $var2);
+  if ($var1 eq $var2) {
+  	#判断两个引用是否指向同一目标；
+  }
+  ```
+
+- 解引用方法对比（）
+
+  - $$ref VS ${$ref}，后者能从[]/{}解析出[]/{}的引用。
+  - `$ref->[idx]/{"key"}/(params)`可存取单一元素，或者进行函数调用。 
+
+
 
 ### 运算符号
+
 ```perl
 q{abc}   'abc'
 qq{abc}  "abc"
@@ -329,7 +381,7 @@ if ('A' =~ m/\d/) {;}
 
 
 
-### 数组（列表）
+### 数组、列表
 
 使用
 ```perl
@@ -349,14 +401,43 @@ push @arr, list    #从数组末尾加入元素
 unshift @arr, item #从数组的开头加入元素
 ```
 
-### 哈希（map）
+**Notice**: 定义、使用，注意如下：
+
+- <font color=red>定义使用`@ + ()`，注意不是`[]`。 ---那是匿名引用的`$ + []`</font>。
+- 使用时用`$`。
+
+**Notice**: 匿名数组引用，注意如下
+
+- 定义为`$ + []`。
+
+  ```perl
+  my $arr_r = [1, 2];
+  ```
+
+- 使用时用`-> 或者 $$`。
+
+  ```perl
+  $arr_r->[0] = 'c';  #正确
+  
+  $arr_r[0] = 'C';  #错误！！！修改如下：
+  $$arr_r[0] = 'C'; #正确，对上述的修正。
+  ```
+
+
+
+### 哈希、字典（map）
+
 使用
 ```perl
 my %data = ('google', 'google.com', 'runoob', 'runoob.com', 'taobao', 'taobao.com');
 my %data = ('google'=>'google.com', 'runoob'=>'runoob.com', 'taobao'=>'taobao.com');
+	#注意key,value对，用','或'=>'进行连接，不能用':'。	
 print $data{"google"};
-@names = keys %data;
-@urls = values %data;
+	#使用时用$data，定义时用%data
+
+@names = keys %data;   #获取Keys集
+@urls = values %data;  #获取values集
+$size = @urls;  #获取大小
 
 if( exists($data{'facebook'} ) ) {
 	#是否存在该key
@@ -366,7 +447,35 @@ delete $data{'taobao'};  #删除元素
 $data{'facebooks'} = 'facebooks.com';  #增加元素
 ```
 
+**Notice**: 定义时注意以下几点
+
+- <font color=red>定义符号为`% + ()`，注意不是`{}`。---那是匿名引用的`$ + {}`</font>。
+
+- 连接符没有`:`，默认只有`,`及`=>`两种。
+- 定义时用`%`，使用时用`$`。
+
+**Notice**: 匿名hash引用，注意如下
+
+- 定义为`$ + {}`。
+
+  ```perl
+  my $hash_e = {'a'=>'A'};
+  ```
+
+- 使用时用`-> 或者 $$`。
+
+  ```perl
+  $hash_e->{'c'} = 'C';  #正确
+  
+  $hash_e{'c'} = 'C';  #错误！！！修改如下：
+  $$hash_e{'c'} = 'C'; #正确，对上述的修正。
+  ```
+
+
+
+
 ## 特殊符号
+
 ```perl
 \p{xx}
 	xx代表一个unicode属性；
@@ -378,9 +487,9 @@ Perl 使用一种叫做文件句柄类型的变量来操作文件。文件句柄
 
 看段demo
 ```perl
-open(FFILE, ">> /tmp/data");  追加模式打开文件
-print FFILE $txt;    写入文件
-print FFILE "\n-----------\n"; 追加分隔符
+open(FFILE, ">> /tmp/data");  #追加模式打开文件
+print FFILE $txt;    #写入文件
+print FFILE "\n-----------\n";  #追加分隔符
 close(FFILE);
 ```
 

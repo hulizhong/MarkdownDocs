@@ -2,6 +2,39 @@
 
 ## ReadMe
 
+
+
+## 文件处理
+
+### 按行读取
+
+```python
+file = open("sample.txt")
+
+# Version------------------基础版本
+while 1:
+    line = file.readline() #得到的line本身包含一个换行符号, line=line.strip('\n')
+    if not line:
+        break
+    print line
+
+# Version-----------------带缓存版本的（效率是以上的3倍！）
+while 1:
+    lines = file.readlines(100000)
+    if not lines:
+        break
+    for line in lines:
+        pass # do something
+    
+# Version--------------python2.2以后
+for line in file:
+    pass # do something
+```
+
+
+
+
+
 ## 目录遍历
 os.walk
 ```python

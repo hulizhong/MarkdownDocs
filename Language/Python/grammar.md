@@ -8,15 +8,38 @@ Python是一种解释型、面向对象、动态数据类型的高级程序设�
 
 动态语言？
 > Python是动态语言，类以及根据类创建的实例可以任意绑定属性以及方法。  
->> http://www.cnblogs.com/seirios1993/p/6624157.html
+>
+> > http://www.cnblogs.com/seirios1993/p/6624157.html
 
 
 ## 语法
 ### 简义语法
-语句没有;号作分隔。
-语句靠对齐进行作用域分隔。
 
-变量声明没有修饰字符，使用也没修饰字符；（perl就有各种修饰符号）
+如下，demo
+
+```python
+#单选注释
+'''
+多行注释！！
+'''
+
+var = 100
+	#变量定义无需修饰符号。
+	#语句没有结尾符号。
+print var
+	#变量使用无需修饰符号。
+
+def f1():
+    print var
+    #语句靠`:` + `对齐`进行作用域分隔。
+
+if True:  #条件真为'True'
+    pass  #空语句
+if False:  #条件假为'False'
+    pass
+```
+
+
 
 ### 包、模块
 ```python
@@ -81,7 +104,7 @@ d = copy.deepcopy(a)
 隐式传递。  
 对于不可变对象作为函数参数，相当于C系语言的值传递；   
 对于可变对象作为函数参数，相当于C系语言的引用传递;   
-		
+​		
 ```python
 def __lstTest(lstA, lstB):
 	''' 
@@ -155,6 +178,11 @@ str.isdigit()  #检测字符串是否只由数字组成。
 ```
 
 ### 列表list []
+
+```python
+lst = [1, 2, 3, 4, 5]    #定义
+```
+
 方法
 ```python
 cmp(lst1, lst2)
@@ -177,7 +205,8 @@ sort([func])
 reverse()
 ```
 
-复制是个坑哦
+**注意**：复制是个坑哦
+
 ```python
 L1 = L
 	#L1为L的别名，用C来说就是指针地址相同，对L1操作即对L操作。函数参数就是这样传递的。   
@@ -185,9 +214,13 @@ L1 = L[:]
 	#L1为L的克隆，即另一个拷贝。 
 ```
 
-
 ### 元组tuple ()
+
 同于列表，唯有元素不可改。 
+
+```python
+tup = (1, 2, 3, 4, 5)  #定义
+```
 
 方法
 ```python
@@ -196,7 +229,8 @@ max/min(t)
 tuple(list)	#Seq to tuple
 ```
 
-只有一个值时，需要注意后缀的逗号
+**注意**：只有一个值时，需要注意后缀的逗号
+
 ```python
 t2 = (3)
 print t2  #3
@@ -204,21 +238,19 @@ t3 = (3,)
 print t3  #(3,)
 ```
 
-
 ### 字典 {}
-复制是个坑哦
-```python
-dict1 = dict        #别名  
-dict2 = dict.copy()   #克隆，即另一个拷贝。但这也只是个浅拷贝。  
-```
 
-
-方法
 ```python
-d = {}
+dict = {key1 : value1, key2 : value2}
+	#默认为无序
+
 import collections  #有序字典
 d = collections.OrderedDict()  #有序字典
+```
 
+方法
+
+```python
 cmp()
 len()
 str()
@@ -238,17 +270,92 @@ fromkeys(seq[, val]))
 clear()
 ```
 
+**注意**：复制是个坑哦
+
+```python
+
+dict1 = dict        #别名  
+dict2 = dict.copy()   #克隆，即另一个拷贝。但这也只是个浅拷贝。  
+```
+
+
+
 ### 时间、日期
 
 
+
+## 分支测试
+
+if
+
+```python
+#---------单分支
+if condition1 and/or condition2:
+    pass
+else:
+    pass
+
+#-------------------多分支
+if condition:
+    pass
+elif condition:
+    pass
+else:
+    pass
+
+#-------单语句
+if (var == 100) : print "变量 var 的值为100" 
+```
+
+for
+
+```python
+#-------version.1
+for itr in sequence:  ##list, string, tuple.
+    break #跳出最小封闭for或while循环。
+    continue  #跳出本次循环，进入下一次循环。
+    pass
+
+#----------------------------version.2
+for idx in range(len(lst)):
+    print lst[idx]
+  
+#---------------------version.3
+for itr in seq:
+    pass
+else:
+    pass    #这里只在for正常结束时执行。（break跳出来的不行）
+```
+
+while
+
+```python
+#------------------no else.
+while condition:
+    pass
+
+#------------------ with else.
+while condition:
+    pass
+else:
+    pass  #这里只在while正常结束时执行。（break跳出来的不行）
+```
+
+
+
+
+
+
+
+
 ## 面向对象
-类中要经常用self == cpp中的this指针
+类中要经常用`self` == cpp中的`this`指针
 - 类函数的声明；
 - 类函数的调用；
 
 没有用public，private等关键词来标志；
 > __ 前缀为私有标志
-> self.__A() 可以调用 self.__B吗？    ---可以的
+> self.\_\_A() 可以调用 self.\_\_B()吗？    ---可以的
 
 
 ### 构造函数
@@ -294,14 +401,17 @@ t1.start()
 
 
 ## 注意点
-for
+<font color=yellow>**Notice: **</font>for
+
 ```python
 for .. in ..:   #只有for.. in..， 没有for(;;)这种步阶
 ```
 
-空对象  
+<font color=yellow>**Notice: **</font>空对象
+
 None和任何其他的数据类型比较永远返回False  
 可以将None复制给任何变量，但是你不能创建其他NoneType对象。
+
 ```python
 type(None)    #<class 'NoneType'>
 None == 0     #False
@@ -317,7 +427,8 @@ if (f is None):  #False，is取决是否是同一对象实例；
 if (f == None):  #True，==取决于对象中的__eq__函数；
 ```
 
-if
+<font color=yellow>**Notice: **</font>if
+
 ```python
 if x:
 	#这是True/False判断  
@@ -329,32 +440,40 @@ if x != None:
 	#这是单独判断x不是None
 ```
 
+<font color=yellow>**Notice: **</font>++， --
+
 没有自增、自减
+
 ```python
 i += 1   #没有i++
 i -= 1   #没有i--
 ```
 
-## 常用
-sleep
+## Tips demo
+<font color=yellow>**Tips: **</font>sleep
+
 ```python
 time.sleep(1)  
 time.sleep(0.1)
 ```
 
-时间截
+<font color=yellow>**Tips: **</font>时间截
+
 ```python
 Print time.ctime()
 ```
 
-类型转换
+<font color=yellow>**Tips: **</font>类型转换
+
 ```python
 int(str)   #str -> int
 str(int)   #int -> str
 json.loads(str)   #str -> list
 ```
 
-随机数
+<font color=yellow>**Tips: **</font>随机数
+
 ```python
 random.randint(1,10)
 ```
+

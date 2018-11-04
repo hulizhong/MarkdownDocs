@@ -249,7 +249,7 @@ setsockopt(sd, SOL_SOCKET, SO_NOSIGPIPE, (void  *)&set, sizeof(int));
 ## Rules About Syn Rst Ack
 
 - 关闭端口
-  - 收到SYN/FIN，丢弃并向源RST；
+  - 收到SYN/FIN，丢弃并向源RST；----<font color=red>连接一个不存在的服务（未listen的ip+port）</font>.
   - 收到RST，丢弃；
 - 监听端口
   - 收到不包含SYN的数据包、丢弃；
