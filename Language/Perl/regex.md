@@ -4,10 +4,12 @@
 perl的regex；
 
 ## 匹配、替换、转化
-Perl的正则表达式的三种形式，分别是匹配，替换和转化:
+**匹配、替换、转换**：Perl的正则表达式的三种形式，分别是匹配，替换和转化:
+
 ```perl
 while ($txt =~ m/$rgx/g) { #匹配
-	# =~表示匹配， !~表示不匹配
+	# =~表示匹配， 
+	# !~表示不匹配
 }
 while ($txt =~ /$rgx/g) { #匹配
 }
@@ -26,7 +28,8 @@ while ($txt =~ tr/$rgx/xx/g) { #转化
 }
 ```
 
-匹配结果处理
+**结果处理**：匹配结果处理
+
 ```perl
 if ($txt =~ /$rgx/g) { #匹配
 	print "$`";  #前段
@@ -46,7 +49,8 @@ while($line =~ /(\S)/g){
 }
 ```
 
-正则表达式在求值过程中产生两种情况：
+**正则两种返回值**：正则表达式在求值过程中产生两种情况：
+
 ```perl
 结果状态： $a =~ m/pattern/ 表示$a中是否有子串pattern出现；
 	m//存在返回1，不存在返回空；
@@ -55,9 +59,12 @@ while($line =~ /(\S)/g){
 反向引用： $a =~ s/(key1)(key2)/$2$1/ 表示调换key1,key2两个单词；
 ```
 
-修饰符
+**匹配修饰选项**：修饰符
+
 ```perl
 i  #忽略模式中的大小写
+	# my $re = qr/regex_statement/i;  这样才行。 --------注意！
+	# if ($txt =~ m/$re/i) 这样不行！-------------rwhy？？
 o  #仅赋值一次，仅替换一次；
 m  #多行模式，主要受影响是^$符号
 s  #单行模式，"."匹配"\n"（默认不匹配）
@@ -117,9 +124,11 @@ $
 	#法一：\b(\w+)\b\s+\1\b可以用来匹配重复的单词，像go go, 或者kitty kitty。
 		#这个也叫反向引用；
 	#法二：\b(?<CaptureName>\w+)\b\s+\k<CaptureName>\b
-		#可以用?<name>进行命名、用\k<name>来引用，其中的的<>是必须的！
+		#在正则中可以用?<name>进行命名、用\k<name>来引用，其中的的<>是必须的！
+		#在代码中用$+{name}来获取结果！
 	#法三：\b(?'CaptureName'\w+)\b\s+\k'CaptureName'\b
-		#可以用?'name'进行命名、用\k'name'或\g{name}来引用，其中的''{}亦是必须的！
+		#在正则中可以用?'name'进行命名、用\k'name'或\g{name}来引用，其中的''{}亦是必须的！
+		#在代码中用$+{name}来获取结果！
 (?:pattern)
 	#非捕获匹配，匹配 pattern 但不获取匹配结果，不进行存储供以后使用。
 (?=pattern)
@@ -184,6 +193,9 @@ x|y	#匹配 x 或 y。
 	#ASCII代码中十六进制代码为nn的字符
 \unnnn
 	#Unicode代码中4个十六进制代码为nnnn的字符
+		# Notice.------rwhy. 验证不通过。
+		# \unnnn, \u{nnnn}, \xnnnn均失败！！！
+		# 只能用\x{nnnn}来表示16进行的unicode码！！！
 	#\u4e00-\u9fa5 汉字编码范围；
 ```
 
@@ -240,15 +252,74 @@ ab.*?cc 匹配字符串aabbcc
 ```
 
 ## 问题集
-中文匹配，用Encode来实现
+### unicode串匹配
+
+非ascii码匹配，如中文匹配，<font color=red>待匹配字符串必须要用utf8字符串的模式</font>来进行识别匹配！！
+
 ```perl
 #!/usr/bin/perl -w
 use Encode;
-my $txt = "hulg02fdsajk04\@staff.sina.com.cn;xx\@staff.sina.com.cn";
-Encode::_utf8_on($txt); #这是关键，用uft8方式解释字符串；
-my $rgx = qr/[-\w\x{4e00}-\x{9fa5}]{1,64}\@staff\.sina\.com\.cn/; 
-while ($txt =~ /$rgx/ug) {
-	print "<$&>\n";
+my $data = "name on the c–ommand line, the bytec–ode for the script.";
+Encode::_utf8_on($data);  #点1，用uft8方式解释字符串。
+my $rgx = qr/(c\x{2013}\w*\b)/;
+my $rgx2 = qr/(c.*?\b)/;
+while ($data =~ /$rgx/ug) { #点2，貌似这个没有效果！！ --rwhy
+    print "matched <$&>\n";
+    #print "matched <$1>\n";
+}
+print "------\n";
+while ($data =~ /$rgx2/ug) {
+    print "matched <$&>\n";
+    #print "matched <$1>\n";
+}
+
+#------------output as follow.
+matched <c–ommand>
+matched <c–ode>
+------
+matched <c>
+matched <c>
+matched <cript>
+```
+
+**注1**：`\x{4e00}-\x{9fa5}` 这是汉字的范围。
+​        其中`\x`是16进制的意思，`4e00`是某汉字的unicode码。
+
+
+
+### about regex
+
+**pos()**
+
+正则匹配中，`pos()`必须是`//g`匹配，才会有效！！
+
+
+
+**//g 全局性** ---<font color=#0000ff>针对同一正则而言，即下次该正则从当前匹配位置开始！</font>
+
+```perl
+print "------------------------ 1\n";
+my $txt = "Wang hu lizhong hah";
+my $rega = qr/hu/;
+my $regb = qr/lizhong/;
+
+if ($txt =~ m/$rega/g) {
+    print "a1 found =>", $&, "\n";  #找到'hu'，并记录该正则的该位置。
+}
+if ($txt =~ m/$regb/g) {
+    print "b1 found =>", $&, "\n";  #找到'lizhong'。
+}
+if ($txt =~ m/$regb/g) {
+    print "b2 found =>", $&, "\n";  #未输出！！！！
 }
 ```
+
+
+
+
+
+**忽略大小写**
+
+`my $re = qr/regex_statement/i;`  这样才行。 --------注意！
+`if ($txt =~ m/$re/i)` 这样不行！-------------rwhy？？
 

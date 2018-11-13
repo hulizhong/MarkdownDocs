@@ -193,6 +193,7 @@ re.L
 re.U
 	#根据Unicode字符集解析字符。
 	#这个标志影响 \w, \W, \b, \B, \d, \D, \s, \S.
+	#-----这个好像没什么用！！！---rwhy.
 
 re.X
 	#该标志通过给予你更灵活的格式以便你将正则表达式写得更易于理解。
@@ -215,6 +216,39 @@ m.span(idx=0)  #返回 (start(idx), end(idx))。
 ```
 
 
+
+## 问题集
+
+### unicode串匹配
+
+如下，同时满足：`待匹配的字符串为unicode串` + `正则亦为unicode串`。
+
+```python
+data = u"user1–sky.com; user2@sk.net; user3–ali.net; user4@ba.com"
+	#点1，待匹配的字符串为unicode串。
+rgx = ur'(\w*?\u2013\w*\.\w*)'
+	#点2，正则亦为unicode串。
+rr = re.compile(rgx)
+#rr = re.compile(rgx, re.UNICODE) #点3，是否用unicode编码好像不重要！！--rwhy
+
+res = rr.finditer(data)
+for itr in res:
+    print "---------", itr.group(0)
+    print itr.span(0)
+    print itr.start(0)
+    print itr.end(0)
+
+#------------------output as follow.
+--------- user1–sky.com
+(0, 13)
+0
+13
+--------- user3–ali.net
+(29, 42)
+29
+```
+
+**注1：**python中unicode码只能用`\uNNNN`来表示，而perl中则是`\x{NNNN}`。
 
 
 
@@ -307,10 +341,12 @@ a| b
 ```
 
 ### 分组匹配
-(?P...)
+**命名分组**：(?P...)
+
 ```python
 s = '1102231990xxxxxxxx'
 res = re.search('(?P<province>\d{3})(?P<city>\d{3})(?P<born_year>\d{3})', s)
 print(res.groupdict()) #{'province': '110', 'city': '223', 'born_year': '199'}
+print res.group('province')
 ```
 

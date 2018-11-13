@@ -32,7 +32,7 @@ curl -k https://www.baidu.com
 	-k, --insecure      Allow connections to SSL sites without certs, 忽略https认证；
 ```
 
-	
+
 其它
 ```bash
 --limit-rate 1000B  #限速
@@ -49,7 +49,26 @@ curl -k https://www.baidu.com
 ```
 
 
+
+## ssl相关
+
+```cpp
+curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+    //libclurl是否验证对端
+curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
+    //libcurl验证对端证书的方法：0不检查，1是否有CN字段，2在1的基础上验证当前域名是否与CN一致。
+
+////libopenssl中相关的api
+SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
+SSL_CTX_set_cert_verify_callback(ctx, uuid, callback);
+```
+
+
+
+
+
 ## bug经验
+
 Handshake Failure (40)
 > client没把自己的证书发给server，导致server端握手不成功；
 

@@ -4,6 +4,66 @@
 
 called vim on linux platform.
 
+### 4种模式
+
+vim一共有4个模式：
+
+- 正常模式 (Normal-mode) ，其它模式到此按1/2次`esc`
+- 插入模式 (Insert-mode)，正常到此按`i/I/a/A`
+- 命令模式 (Command-mode)，正常到此按`:`
+- 可视模式 (Visual-mode)，正常到此按`v/V/ctrl+v`
+
+
+
+### 输入unicode码
+
+**查看字符的unicode码**。------4位16进制！
+在非输入状态下，移动光标到某一字符，按<font color=red>`ga`</font>，就会显示该字符对应10，16，8进制的值。
+
+> <s>  115,  Hex 73,  Octal 163
+
+**输入unicode字符**。
+在输入状态，<font color=red>`ctrl+v`</font>，再按<font color=red>`u`</font>，此时输入对应字符的unicode码！
+
+
+
+### 奇异文件
+
+**了解**：dos vs unix格式的文件。
+
+```bash
+:set ff?
+	#查看file format，格式可为dos/unix.
+:set ff=unix
+
+file bk.list
+	#bk.list: ASCII text, with CRLF line terminators
+```
+
+unix/dos格式的文件，会影响文件的按行读取！！---refer. language/bash.md#Tips demo/file operation.
+
+
+
+
+
+### 神操作
+
+**No 1**，查看文本内`\r\n`符号。
+
+```bash
+:set list
+```
+
+
+
+**No 2**，字数统计。
+
+选中需要统计的字符，按`g`，再按`ctrl+g`。
+
+
+
+
+
 
 
 ## gvim
@@ -66,6 +126,8 @@ vim -d a b 等效于vimdiff a b
 
 :retab   #按照expandtab, noexpandtab的指示将tab替换成空格、空格替换成tab.
 ```
+
+
 
 ## vimdiff
 

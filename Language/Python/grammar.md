@@ -50,7 +50,102 @@ from xx import yy
 res = yy()
 ```
 
+
+
+### 函数
+
+```python
+def xx():
+    print "1. def."
+    print "2. ()"
+    print "3. :"
+    
+xx()   #先定义、后调用（！！不能写在def xx前！！）
+```
+
+
+
+### 分支测试
+
+**if**
+
+```python
+#-----------------------------------------------------单分支
+if condition1 and/or condition2:
+    pass
+else:
+    pass
+
+#-----------------------------------------------------多分支
+if condition:
+    pass
+elif condition:
+    pass
+else:
+    pass
+
+#-------单语句
+if (var == 100) : print "变量 var 的值为100" 
+```
+
+**for**
+
+```python
+#-----------------------------------------------------version.1
+for itr in sequence:  ##list, string, tuple.
+    break #跳出最小封闭for或while循环。
+    continue  #跳出本次循环，进入下一次循环。
+    pass
+
+#-----------------------------------------------------version.2
+for idx in range(len(lst)):
+    print lst[idx]
+  
+#-----------------------------------------------------version.3
+for itr in seq:
+    pass
+else:
+    pass    #这里只在for正常结束时执行。（break跳出来的不行）
+```
+
+**while**
+
+```python
+#------------------no else.
+while condition:
+    pass
+
+#------------------ with else.
+while condition:
+    pass
+else:
+    pass  #这里只在while正常结束时执行。（break跳出来的不行）
+```
+
+
+
+### 运算符
+
+| 运算符（优先级从上到下） | 描述                                                   |
+| ------------------------ | ------------------------------------------------------ |
+| **                       | 指数 (最高优先级)                                      |
+| ~ + -                    | 按位翻转, 一元加号和减号 (最后两个的方法名为 +@ 和 -@) |
+| * / % //                 | 乘，除，取模和取整除                                   |
+| + -                      | 加法减法                                               |
+| >> <<                    | 右移，左移运算符                                       |
+| &                        | 位 'AND'                                               |
+| ^ \|                     | 位运算符                                               |
+| <= < > >=                | 比较运算符                                             |
+| <> == !=                 | 等于运算符                                             |
+| = %= /= //= -= += *= **= | 赋值运算符                                             |
+| is is not                | 身份运算符                                             |
+| in not in                | 成员运算符                                             |
+| not and or               | 逻辑运算符                                             |
+
+
+
 ## 变量
+
 python中的变量与对象  
 类型是属于对象的，而不是变量。变量和对象是分离的：对象是内存中储存数据的实体，变量则是指向对象的指针。  
 对象分为：可变对象和不可变对象。---id(obj)获取对象的id
@@ -105,6 +200,7 @@ d = copy.deepcopy(a)
 对于不可变对象作为函数参数，相当于C系语言的值传递；   
 对于可变对象作为函数参数，相当于C系语言的引用传递;   
 ​		
+
 ```python
 def __lstTest(lstA, lstB):
 	''' 
@@ -138,36 +234,36 @@ lstTest()
 ### 字符串
 集成的方法如下：  
 ```python
-#--------------特殊字符
+#-----------------------------------------------------特殊字符
 ''     #原样字符串，特殊字符无需转义；
 ""     #特殊字符需转义；
 r|R""    #正则字符串
 u|U""    #unicode字符串
 
-#----------------大小写
+#-----------------------------------------------------大小写
 str.upper()
 str.lower()
 
-#----------------查找
+#-----------------------------------------------------查找
 str.find(str1)  #return str1's pos, otherwise -1.
 str.rfind(str, beg=0 end=len(string))
 str.index(str1)   #return str1's pos, otherwise raise exception.
 
-#----------------截取
+#-----------------------------------------------------截取
 str[1:3]
 str[1:]
 str[-1]
 
-#--------------------------------分隔，num=1为分割的次数；
-splitLst = str.split("splitStr", num=1)
-
-#---------------合并：+、join()
+#-----------------------------------------------------合并：+、join()、拆分
 str = str1 + str2
 str = '-';
 lst = [a, b, c];
 print str.join(lst)
 
-#---------------------格式化
+splitLst = str.split("splitStr", num=1) #num=1为分割的次数；
+
+
+#-----------------------------------------------------格式化
 # 法一用元组：
 strFormat = "I'm format string with %-10s %d %.2f" % (format1, format2, format3)  
 # 法二用字典：
@@ -203,6 +299,10 @@ remove(obj)
 pop(obj=lst[-1])
 sort([func])
 reverse()
+
+#-----------------------------------------------------遍历
+for v in t:
+    print t
 ```
 
 **注意**：复制是个坑哦
@@ -227,6 +327,10 @@ tup = (1, 2, 3, 4, 5)  #定义
 cmp(tuple1, tuple2)/len()
 max/min(t)
 tuple(list)	#Seq to tuple
+
+#-----------------------------------------------------遍历
+for v in t:
+    print t
 ```
 
 **注意**：只有一个值时，需要注意后缀的逗号
@@ -268,6 +372,17 @@ setdefault(key, default=None)
 update(dict2)
 fromkeys(seq[, val]))
 clear()
+
+#-----------------------------------------------------遍历
+for k in d.keys():
+    print k, d[k]
+    pass
+for v in d.values():
+    print v
+    pass
+for key,value in a.items():
+    print key, value
+    pass
 ```
 
 **注意**：复制是个坑哦
@@ -278,72 +393,7 @@ dict1 = dict        #别名
 dict2 = dict.copy()   #克隆，即另一个拷贝。但这也只是个浅拷贝。  
 ```
 
-
-
 ### 时间、日期
-
-
-
-## 分支测试
-
-if
-
-```python
-#---------单分支
-if condition1 and/or condition2:
-    pass
-else:
-    pass
-
-#-------------------多分支
-if condition:
-    pass
-elif condition:
-    pass
-else:
-    pass
-
-#-------单语句
-if (var == 100) : print "变量 var 的值为100" 
-```
-
-for
-
-```python
-#-------version.1
-for itr in sequence:  ##list, string, tuple.
-    break #跳出最小封闭for或while循环。
-    continue  #跳出本次循环，进入下一次循环。
-    pass
-
-#----------------------------version.2
-for idx in range(len(lst)):
-    print lst[idx]
-  
-#---------------------version.3
-for itr in seq:
-    pass
-else:
-    pass    #这里只在for正常结束时执行。（break跳出来的不行）
-```
-
-while
-
-```python
-#------------------no else.
-while condition:
-    pass
-
-#------------------ with else.
-while condition:
-    pass
-else:
-    pass  #这里只在while正常结束时执行。（break跳出来的不行）
-```
-
-
-
-
 
 
 

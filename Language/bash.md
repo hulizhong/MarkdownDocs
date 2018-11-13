@@ -445,6 +445,8 @@ test vs []
 
 ### directories traversal
 
+目录遍历了解一下。
+
 ```bash
 function dirlist() {
     for element in `ls $1`
@@ -460,4 +462,20 @@ function dirlist() {
 }
 dirlist ./
 ```
+
+
+
+### file operation
+
+按行读取文件，<font color=red size=4>只能读unix格式的文件，dos格式不能这样弄！！</font>
+
+```bash
+cat bk.list | while read line
+do   
+    echo "$line"
+    echo -e "downloadd -------$line, $num.html-----1\n"
+done
+```
+
+
 
