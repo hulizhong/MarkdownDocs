@@ -27,32 +27,6 @@ void SSL_set_verify(SSL *s, int mode, int (*verify_callback)(int, X509_STORE_CTX
 问题：libopenssl中ssl, ssl_ctx分别对应什么？？
 
 
-## openssl 指令
-生成 private/public key 对
-```bash
-openssl genrsa -out private.key 1024
-openssl rsa -in private.key -pubout -out public.key
-```
-
-用s_server, s_client测试连接（连接建立之后传数据）
-```bash
-openssl s_server -accept 12345 -CAfile ca.crt -cert server.pem -key server.key -Verify 5 
-	# Verify是强制认证client，且client证书签发机构的级数；
-openssl s_client -connect 127.0.0.1:12345 -CAfile ca.crt -cert client.pem -key client.key
-
-#还可以带个参数：-pass file:password.txt 这是什么意思？？？
-```
-
-校验证书是否是此CA机构签发
-```bash
-#openssl verify -CApath CApath alice\demoCA\cacert.pem
-openssl verify -CAfile ca.pem  untrust.pem
-```
-
-读取x509证书的内容
-```bash
-openssl x509 -in input.crt -noout -text
-```
 
 ## 证书的制作
 

@@ -461,7 +461,8 @@ TCP为每条连接建立了七个定时器，如下：
 
 **FIN_WAIT_2定时器**
 
-当某个连接从FIN_WAIT_1状态变迁到FIN_WAIT_2状态，并且不能再接收任何新数据时(意味着应用进程调用了close，而非shutdown，没有使用TCP的半关闭功能)，FIN_WAIT_2定时器启动，设为<font color=red>10min</font>。定时器超时后，重新设为<font color=red>75s</font>，第二次超时后连接被关闭。加入这个定时器的目的是为了避免如果对端一直不发送FIN，某个连接会永远滞留在FIN_WAIT_2状态。
+当某个连接从FIN_WAIT_1状态变迁到FIN_WAIT_2状态，并且不能再接收任何新数据时(意味着应用进程调用了close，而非shutdown，没有使用TCP的半关闭功能)，FIN_WAIT_2定时器启动，设为<font color=red>10min</font>。定时器超时后，重新设为<font color=red>75s</font>，第二次超时后连接被关闭。加入这个定时器的目的是为了避免如果对端一直不发送FIN，某个连接会永远滞留在FIN_WAIT_2状态。（超时后应该变为closed吧？？）
+<font color=blue size=4>可对应的Close_Wait却没有超时时间的限制！！</font>
 
 
 

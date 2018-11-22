@@ -4,40 +4,55 @@
 
 ## ReadMe
 
+mac特有指令相关记录。
 
 
-管理相关
+
+## 用户相关
 
 ```bash
 sudo -i
 	#切换到root
+
 su - xx
 	#切换到普通用户xx
-
-
 ```
 
 
 
 
 
-指令集
+## 其它
+
+### otool
 
 ```bash
 otool -L /usr/bin/vim
 	#替代ldd
+```
 
+### dtruss
+
+```bash
 sudo dtruss -aeodf -n wfe_client_util
 	#替代strace
 ```
 
 
 
-## Commands
 
-### install pacakge
 
-#### Using Homebrew
+## macPorts
+
+```bash
+port install ctags
+```
+
+## brew
+
+先依赖curl进行包下载，完了之后才是安装！
+
+### usage
 
 brew commands usage as follow.
 
@@ -53,37 +68,22 @@ brew uninstall FORMULA...
 brew list [FORMULA...]  
 ```
 
-**Notice**. when cant install with ssl.
-
-> 1. find the curl that u installed has support ssl. (curl -V/--version,  curl-config --protocols)
-> 2. is ur system has the cert.
 
 
+### cant install with ssl.
 
-solution 1. config the ca-bundle.crt
+当不能用ssl进行软件安装时，需要确认如下两点：
 
-> export CURL_CA_BUNDLE='/usr/share/curl/curl-ca-bundle.crt'
->
-> cd /usr/share/curl
-> mv download.crt curl-ca-bundle.crt
-
-solution 2. disable the curl ssl verify.
-
-> vim ~/.curlrc
-> insecure
-> cacert=/path/to/my/certs.pem
-
-```bash
-export CURL_CA_BUNDLE='/usr/share/curl/curl-ca-bundle.crt'
-curl-config --ca
-
-curl-ca-bundle.crt
-ca-bundle.crt
-```
+1. find the curl that u installed has support ssl. 
+   1. 法一，`ucrl -V`，`curl --version` 可查看是否有https协议。
+   2. 法二，`curl-config --protocols` 查看是否有https协议。
+2. is ur system has the cert.
 
 
 
-use curl command
+#### curl level
+
+curl层面上的改动，在curl装有https的基础上，更改环境变量`curl-ca-bundle`的指向，或者让curl连接时不进行ssl认证。
 
 ```bash
 curl-config --ca
@@ -97,22 +97,43 @@ vim ~/.curlrc
 
 
 
-#### System Without Certificate
+solution 1. config the ca-bundle.crt
 
-will report error as follow.
-
-Case 1. **curl: (60) SSL certificate problem: self signed certificate in certificate chain** in Debian.
-U can see "Certificate Unknow" 
-
-Case 2. **curl: (60) SSL certificate problem: Invalid certificate chain** in OSX.
-
-then how to resolve ??
+> export CURL_CA_BUNDLE='/usr/share/curl/curl-ca-bundle.crt'
+>
+> cd /usr/share/curl
+> mv download.crt curl-ca-bundle.crt
 
 
 
-------------------
+solution 2. disable the curl ssl verify.
 
-On Debin/Ubuntu System.
+> vim ~/.curlrc
+> insecure
+> cacert=/path/to/my/certs.pem
+
+
+
+
+
+#### system level
+
+系统层面的解决办法，就是装证书！
+
+不系统没有对应连接证书的CA是，经常会报如下错误：
+
+> **curl: (60) SSL certificate problem: self signed certificate in certificate chain** in Debian.
+> U can see "Certificate Unknow" 
+
+> **curl: (60) SSL certificate problem: Invalid certificate chain** in OSX.
+
+
+
+
+
+------
+
+**Resolve base on Debin/Ubuntu**  ---ca-bundle
 
 1. install ca-certificates
 
@@ -137,15 +158,15 @@ dpkg -L curl
 	#/usr/bin/curl
 ```
 
-2. put the ur cert into <font color=red>/usr/share/ca-certificates/</font>
-3. modify the <font color=red>/etc/ca-certificates.conf</font>, add the new relative path into it.
-4. run <font color=red>update-ca-certificates</font> to update /etc/ssl/certs by reading ca-certificates.conf.
+1. put the ur cert into <font color=red>/usr/share/ca-certificates/</font>
+2. modify the <font color=red>/etc/ca-certificates.conf</font>, add the new relative path into it.
+3. run <font color=red>update-ca-certificates</font> to update **/etc/ssl/certs/** by reading ca-certificates.conf.
 
 
 
------------
+------
 
-On OSX System.
+**Resolve base on OSX**
 
 ```bash
 #security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain ~/SkyGuard.crt  
@@ -157,7 +178,7 @@ Password:
 
 
 
----------
+------
 
 On Win System.
 
@@ -165,12 +186,3 @@ On CentOS System.
 
 https://stackoverflow.com/questions/9626990/receiving-error-error-ssl-error-self-signed-cert-in-chain-while-using-npm
 
-
-
-
-
-#### Using MacPorts
-
-```bash
-port install ctags
-```

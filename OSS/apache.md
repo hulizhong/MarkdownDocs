@@ -34,6 +34,85 @@ http://blog.csdn.net/chamtianjiao/article/details/6268746
 
 
 
+## apache config.
+
+### MPM
+
+多进程处理模块、多路处理模块！
+
+如下，查看当前apache采用哪种mpm.（这个不能在配置中看！）
+
+```bash
+#/usr/sbin/apache2 -l
+worker.c
+prefork.c
+```
+
+
+
+prefork mpm
+非线程型的、预派生的web服务器。
+它适合于没有线程安全库，需要避免线程兼容性问题的系统。一个请求出现问题不会影响到其他请求。
+
+```bash
+<IfModule mpm_prefork_module>
+    StartServers          5 #http启动时创建的子进程数；
+    MinSpareServers       5 #最小空闲子进程数。
+		#startsServers数子进程建立后，每隔1s按指数级增长（至多32个）创建子线程到达此n值。
+    MaxSpareServers      10 #最大空闲子进程数。
+    	#超过n，就会被控制进程kill掉。必须>minSpareServers.
+    MaxClients          150 #同时连入的最大request数，超过就会被排队。
+    	#ps -ef|grep http|wc -l 可查看。
+    	#新版本叫MaxRequestWorkers
+    MaxRequestsPerChild   0 #子进程服务了n个请求之后自动销毁。
+    	#0为不销毁，非0可防止内存泄漏！
+</IfModule>
+```
+
+
+
+
+
+worker mpm
+多线程、多进程混合型web服务器。
+1个控制进程，动态创建子进程来调节服务能力；每个子进程内有固定数线程。
+使用线程来处理请求，系统资源的开销小于基于进程的MPM。
+
+```bash
+<IfModule mpm_worker_module>
+    StartServers          2
+    MinSpareThreads      25 #最少空闲线程数。针对apache所有线程而言。
+    MaxSpareThreads      75
+    ThreadLimit          64 #每个子进程可配置的线程数ThreadsPerChild上限。
+    ThreadsPerChild      25 #每个子进程内有n个服务线程，1个监听线程。
+    MaxClients          150
+    MaxRequestsPerChild   0
+</IfModule>
+```
+
+
+
+event mpm
+一种更高处理能力的模型，它把服务进程从连接中分离出来。
+
+```bash
+<IfModule mpm_event_module>
+    StartServers          2
+    MinSpareThreads      25
+    MaxSpareThreads      75
+    ThreadLimit          64
+    ThreadsPerChild      25
+    MaxClients          150
+    MaxRequestsPerChild   0
+</IfModule>
+```
+
+
+
+
+
+
+
 ## LinuxApacheMysqlPhp
 
 ### install process

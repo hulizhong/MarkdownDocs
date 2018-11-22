@@ -6,13 +6,29 @@ Python是一种解释型、面向对象、动态数据类型的高级程序设�
 - 面向对象 = 同c++一样是面向对象
 - 动态数据类型 = 声明变量时不需要声明变量的类型。（是不是只有定义变量这一说了）
 
+
+
 动态语言？
+
 > Python是动态语言，类以及根据类创建的实例可以任意绑定属性以及方法。  
 >
 > > http://www.cnblogs.com/seirios1993/p/6624157.html
 
 
+
+文档查询
+
+```python
+$ python 
+$ import xx
+$ help(xx)
+$ help(xx.fun)
+```
+
+
+
 ## 语法
+
 ### 简义语法
 
 如下，demo
@@ -499,7 +515,10 @@ i += 1   #没有i++
 i -= 1   #没有i--
 ```
 
+
+
 ## Tips demo
+
 <font color=yellow>**Tips: **</font>sleep
 
 ```python
@@ -526,4 +545,18 @@ json.loads(str)   #str -> list
 ```python
 random.randint(1,10)
 ```
+
+
+
+### 神操作
+
+```python
+python -m json.tool < /root/replay/thrift-0.9.3/bower.json  #检查json语法哪里有错误！
+python -m certifi certifi.where  #检查python用的ca-bundle在哪里！
+python -m certifi certifi.oldwhere
+```
+
+
+
+
 

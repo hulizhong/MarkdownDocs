@@ -22,6 +22,54 @@ find ./ -name key.txt
 
 ## network
 
+### curl
+
+```bash
+curl -X POST url [-d ""]   #需要转义data中"，而用'则可避免
+curl -X POST url [--data ""]
+
+curl -X POST url --data @filename
+curl -X POST url -d @filename
+
+curl -X POST url -T filename  #相对直接--data来说：会有个100-continue，并不会判断文件内容类型；
+curl -X POST url -T "{file1,file2}"  #多个文件
+```
+
+multipart怎么传？rwhy.
+
+```bash
+curl  -F "keyName=@fileName;type=text/plain" url  multipart/form-data数据上传
+```
+
+认证
+
+```bash
+curl -u username:password url
+
+curl -k https://www.baidu.com
+	-k, --insecure      Allow connections to SSL sites without certs, 忽略https认证；
+```
+
+其它
+
+```bash
+--limit-rate 1000B  #限速
+
+-C #断点续传
+
+-o newName, -O  #下载文件重命名
+
+-x proxysever:proxyport  #代理
+
+-H 'key:value'
+	#加头, (Wrong: -H '"reqid":123',  Right: -H 'reqid:123')
+	#多个头分开加；
+
+-v #显示详细信息，包含连接建立过程，响应头。
+```
+
+
+
 ### ss
 
 socket statics.
@@ -65,14 +113,49 @@ Recv-Q Send-Q Local Address:Port  Peer Address:Port
 
 
 
+### lsof
+
+`lsof | more` 列出所有打开的文件
+
+> COMMAND     PID   TID          USER   FD      TYPE             DEVICE  SIZE/OFF       NODE NAME
+> init          1                root  cwd       DIR              254,0      4096          2 /
+
+`lsof -c apache` 列出apache程序打开的文件。（apache不需要写完，只需要写对打头）
+
+> COMMAND    PID USER   FD   TYPE             DEVICE SIZE/OFF     NODE NAME
 
 
 
+```bash
+lsof -i tcp/udp
+lsof -i tcp:22
+lsof -i :22  #默认是tcp的
+
+lsof -p pid
+
+lsof -c appname
+
+lsof -u username
+
+lsof filename   #谁正在用这个文件。
+```
+
+
+
+
+
+### nc 
+
+```bash
+# nc ip port
+启动ip, port的tcp服务
+```
 
 ### netstat
 
 ```bash
-netstat -natp
+#netstat -natp
+Proto Recv-Q  Send-Q  LocalAddress  ForeignAddress    State     PID/Program name
 ```
 
 
@@ -90,11 +173,44 @@ netstat -natp
 
 
 
-### nc 
+**连接状态怎么看**？---一定要配合进程id/name进行解读。
+
+> tcp       70      0 172.22.40.1:58903       172.22.40.1:9443        CLOSE_WAIT  3782/java
+
+java进程，利用本地40.1:58901连接9443端口，处于被动关闭的close_wait状态！
+
+
+
+## openssl
+
+生成 private/public key 对
 
 ```bash
-# nc ip port
-启动ip, port的tcp服务
+openssl genrsa -out private.key 1024
+openssl rsa -in private.key -pubout -out public.key
+```
+
+用s_server, s_client测试连接（连接建立之后传数据）
+
+```bash
+openssl s_server -accept 12345 -CAfile ca.crt -cert server.pem -key server.key -Verify 5 
+	# Verify是强制认证client，且client证书签发机构的级数；
+openssl s_client -connect 127.0.0.1:12345 -CAfile ca.crt -cert client.pem -key client.key
+
+#还可以带个参数：-pass file:password.txt 这是什么意思？？？
+```
+
+校验证书是否是此CA机构签发
+
+```bash
+#openssl verify -CApath CApath alice\demoCA\cacert.pem
+openssl verify -CAfile ca.pem  untrust.pem
+```
+
+读取x509证书的内容
+
+```bash
+openssl x509 -in input.crt -noout -text
 ```
 
 
