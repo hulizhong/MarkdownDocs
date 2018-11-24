@@ -40,6 +40,83 @@ sudo dtruss -aeodf -n wfe_client_util
 
 
 
+## Debug 相关
+
+### lldb
+
+http://lldb.llvm.org/tutorial.html
+http://www.cocoachina.com/ios/20150819/11558.html
+https://www.jianshu.com/p/67f08a4d8cf2
+
+
+
+```bash
+# 运行
+process launch
+run
+r
+# run with attach
+process attach --pid 123
+process attach --name Sketch
+process attach --name Sketch --waitfor
+
+# 线程状态
+thread list
+thread backtrace
+thread backtrace all
+
+# 查看调用栈状态
+frame variable
+frame variable variableName  #查看特定的变量
+frame select 9
+```
+
+
+
+#### core文件
+
+设置`ulimit -c`，生成在`/cores/core.pid`下。
+`g++ -g`编译出的来<font color=red size=4>app调试信息单独在`app.dSYM`目录中，而不在app里面？？？</font>
+
+```bash
+# ulimit -c   #设置小了，有可能产生不了core文件，因为实际产生core大小>设置的值，就不会产生！
+unlimited
+# ls /cores/
+core.58704
+
+# lldb a.out /cores/core.58704    得依赖appname.dSYM目录；
+# (lldb) r
+Process 58814 launched: '/Users/Lizhong/a.out' (x86_64)
+size_t.8 int.4 long.8 ptr.8
+Process 58814 stopped
+* thread #1, queue = 'com.apple.main-thread', stop reason = EXC_BAD_ACCESS (code=1, address=0x0)
+    frame #0: 0x0000000100000eec a.out`main at offsetof.cpp:29
+   26       };
+   27  
+   28       char *p = NULL;
+-> 29       *p = 'c';
+   30       /* Output is compiler dependent */
+   31  
+   32       printf("offsets: i=%ld; c=%ld; d=%ld a=%ld\n",
+
+# rm -rf a.out.dSYM
+# lldb a.out /cores/core.58704 
+#(lldb) r
+Process 58790 launched: '/Users/Lizhong/a.out' (x86_64)
+size_t.8 int.4 long.8 ptr.8
+Process 58790 stopped
+* thread #1, queue = 'com.apple.main-thread', stop reason = EXC_BAD_ACCESS (code=1, address=0x0)
+    frame #0: 0x0000000100000eec a.out`main + 108
+a.out`main:
+->  0x100000eec <+108>: movb   $0x63, (%rcx)
+    0x100000eef <+111>: movl   %r9d, %edx
+    0x100000ef2 <+114>: movl   %r10d, %ecx
+    0x100000ef5 <+117>: movl   %r11d, %r8d
+Target 0: (a.out) stopped.
+```
+
+
+
 
 
 ## macPorts

@@ -83,3 +83,80 @@ class Obj : public ReferCount {
 ```
 
 
+
+## macro usage
+
+宏（<font color=red size=4>想归纳几句话作为一个函数进行利用，但用函数又浪费！可以考虑宏~~函数~~哟！</font>）如下，
+
+```cpp
+int fun()
+{
+#define FREE_EVHTTP_WHEN_ERROR() \
+	do {\
+		evhttp_free(mPromptSerHttp);\
+		event_base_free(mPromptSerBase);\
+	} while (false)
+    
+    //process.
+    if (failed) {
+        FREE_EVHTTP_WHEN_ERROR;
+    }
+}
+```
+
+
+
+
+
+## Impl class
+
+### method 1, in thrift.
+
+接口类，如下
+
+```cpp
+class BoostThreadFactory : public ThreadFactory {
+public:
+    virtual void setDetached(bool detached) {
+        impl_->setDetached(value);
+    }
+
+private:
+  class Impl;  //private不能在外面创建 BoostThreadFactory::Impl.
+  boost::shared_ptr<Impl> impl_;
+};
+```
+
+实现类，如下
+
+```cpp
+class BoostThreadFactory::Impl {
+public:
+  void setDetached(bool value) { detached_ = value; }
+}
+```
+
+
+
+### method 2
+
+接口类，如下
+
+```cpp
+class XX {
+public:
+    virtual void fun() = 0;
+    class Impl;
+};
+```
+
+实现类，如下
+
+```cpp
+class XX::Impl : public XX
+{
+public:
+	virtual void fun() override;
+};
+```
+

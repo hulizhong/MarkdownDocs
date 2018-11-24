@@ -71,15 +71,15 @@ is_from_range();
 ### trimming
 
 ```cpp
-trim_left();
+trim_left();   //去掉字符串左边的空格；
 trim_left_if()();
 trim_left_copy()();
 trim_left_copy_if()();
-trim_right();
+trim_right();  //去掉字符串右边的空格；
 trim_right_if();
 trim_right_copy();
 trim_right_copy_if();
-trim();
+trim();  //去掉字符串的空格；
 trim_if();
 trim_copy();
 trim_copy_if();
