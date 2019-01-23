@@ -1,8 +1,48 @@
+[TOC]
+
+## ReadMe
+
+gcc, g++相关。
+
+
+
+问题：debug版本、relese版本与`gcc -g`有什么关系？
+
+> 没有关系。
+> debug/release版本是用宏来实现的，如gcc -Ddebug_macro，而gcc没有此类相关的内置宏。
+> cc -g是在生成的二进制文件里增加调试信息，用于gdb等调试工具。
+>
+> 那么问题来了？能让断言失败assert()的宏NDEBUG是怎么回事？
+
+
+
+## 指令
+
+Gcc编译过程主要的4个阶段：
+
+1. 预处理阶段，完成宏定义和include文件展开等工作；（gcc -E xx.c -o xx.i）
+2. 编译阶段，根据编译参数进行不同程度的优化，编译成汇编代码(gcc -S xx.c xx.s/xx.S)
+3. 汇编阶段，用汇编器把汇编代码进一步生成目标代码(gcc -c xx.c -o xx.o)
+4. 链接阶段，用连接器把生成的目标代码和系统或用户提供的库连接起来，生成可执行文件(cc -o xx xx.c)
+
+
+
+```bash
+#gcc -ggdb3 -O0 xx.c
+	#-g, -gLevel, -ggdbLevel
+		#-g, 只是编译器，在编译的时候，产生调试信息。
+		#-ggdb, 尽可能的生成gdb的可以使用的调试信息。
+		#默认是2级别、0是去除调试信息，1是最小化调试信息，3是增加宏信息。
+	#-O
+```
+
+
+
+
 
 ## 库
-[如何生成动态库、静态库](#生成库)
-[如何使用](#运行库)
-[查看库时包含哪些内容](#查看库)
+
+库相关。
 
 ### 生成库
 生成动态库
@@ -29,28 +69,40 @@ g++ use.cpp libdemo.a
 
 
 ### 运行库
-使用库，应该是包含编译、链接二个方面；
+使用库，应该是包含编译、链接（静态、动态：生成文件大小、运行时依赖）二个方面；
 
 - 编译
-	- -lxx 编译器查找动态连接库时有隐含的命名规则；
-		- 规则为：给定名字前面加上lib，后面加上.so来确定库的名称；
-	- -L 要连接库的路径
-		- 编译期间生效；
-		- 可以相对路径，亦可绝对路径；
-	- -static -l所链接的库为静态库；（更改隐含规则去找.a后缀的库，而非.so）
-		- g++ main.cpp libxx.a也可直接这样用，而不是-l模式；
+  - -lxx 编译器查找动态连接库时有隐含的命名规则；
+  	- 规则为：给定名字前面加上lib，后面加上.so来确定库的名称；
+  - -L 要连接库的路径
+  	- 编译期间生效；
+  	- 可以相对路径，亦可绝对路径；
+  - -static -l所链接的库为静态库；（更改隐含规则去找.a后缀的库，而非.so）
+  	- g++ main.cpp libxx.a也可直接这样用，而不是-l模式；
+- 链接（链接器ld）即运行。
+  1. -Wl,-rpath,/path1/libxx.so 要连接库的路径（rpath前也有,号）
+     1. 运行期间生效，编译期间无效；
+     2. 必须绝对路径；
+  2. LD\_LIBRARY\_PATH
+     1. 配合在bashrc, profile文件里用LD_LIBRARY_PATH定义；
+  3. /etc/ld.so.conf, /etc/ld.so.conf.d/
+     1. ldconfig -> /etc/ld.so.cache
+     2. ld.so.cache是递增式增长，每次ldconfig；除非是重启机器了；
+  4. 默认/lib/, /usr/lib/
 
-- 链接（链接器ld）
-	- 默认/lib/, /usr/lib/
-	- LD\_LIBRARY\_PATH
-		- 配合在bashrc, profile文件里用LD_LIBRARY_PATH定义；
-	- /etc/ld.so.conf, /etc/ld.so.conf.d/
-		- ldconfig -> /etc/ld.so.cache
-		- ld.so.cache是递增式增长，每次ldconfig；除非是重启机器了；
-	- -Wl,-rpath,/path1/libxx.so 要连接库的路径（rpath前也有,号）
-		- 运行期间生效，编译期间无效；
-		- 必须绝对路径；
-	
+**dlpopen使用**
+
+```cpp
+void * dlopen( const char * pathname, int mode ); //打开动态库。
+	//pathname不是绝对路径，则按次序查找库路径。
+	//如果x.so依赖y.so，那么先加载y.so后才能加载x.so.
+int dlclose (void *handle); //只有计数为0，库才会把系统卸载。
+
+void* dlsym(void* handle,const char* symbol); //获取库的函数的指针。
+const char *dlerror(void); //对动态库操作失败的原因。
+```
+
+
 
 ### 查看库
 静态库、动态库的查看
@@ -89,24 +141,5 @@ collect2: error: ld returned 1 exit status
 make: *** [ev] Error 1
 ```
 
-## 特殊宏
-### 探测OS类型
 
-```bash
-#if defined(__linux__)
-linux platform code.
-#endif
-
-#if defined(__APPLE__) && defined(__MACH__)
-mac platform code.
-#endif
-
-#if defined(_WIN32) || defined(WIN32)
-win platform include 32bit and 64bit.
-#endif
-
-#ifdef _WIN64
-win 64 bit platform.
-#endif
-```
 

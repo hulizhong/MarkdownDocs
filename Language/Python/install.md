@@ -215,10 +215,9 @@ urllib3连接https站点时报InsecurePlatformWarning错误
 
 只是警告，不用管！！也可以如下：
 
-```bash
-#是下载的pip-9.0.1安装包 基于 Python 2 >=2.7.9 or Python 3 >=3.4，但自己的python为2.7.3  
-#要不就换更低版本的pip，要不就更换更高版本的python语言。  
-```
+> 法一：~~下载的pip-9.0.1安装包 基于 Python 2 >=2.7.9 or Python 3 >=3.4，但自己的python为2.7.3~~ 
+> 法二：~~要不就换更低版本的pip，要不就更换更高版本的python语言。~~
+> 法三：直接在源码中，将那一行代码注释了！！
 
 
 

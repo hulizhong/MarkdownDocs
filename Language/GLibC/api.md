@@ -4,6 +4,12 @@
 
 全局介绍glibc的功能；
 
+问题：glibc VS glib VS libc ?
+glibc, libc：都是Linux下的c函数库。libc是ansi c库，glibc是gun c库。现在原来linux标准的c库如libc, uclibc, klibc越来越不被维护了，取而代之的是glibc。`ldd --version`可查看gcc用的是什么c库。
+glib, glibc：两者没有太大关系，glib是gtk+库和gnome的基础，只是一个c实现的utilities库。
+
+
+
 查看api说明，需要安装manpages-dev；
 Manual pages about using GNU/Linux for development.
 

@@ -77,3 +77,56 @@ funA.c 在此处引入common.h
 ```
 
 
+
+## 预编译
+
+预编译，时在编译时期发生的，不满足条件的代码段不会被编译成汇编代码。
+
+### 语法
+
+如下，
+
+```cpp
+#define XX 5
+
+/* grammar 1. -------------是否定义了这个宏。  */
+#if defined (XX)
+//是否定义了xx这个宏；
+	//#if !defined (XX)
+	//#ifdef XX
+	//#ifndef XX
+#endif
+
+
+/* grammar 2.-----------------------宏条件是否满足。*/
+#if (XX == 1)
+//条件xx成立，时编译这一段
+#elif (XX == 5)
+//条件yy成立，时编译这一段
+#else
+//条件xx, yy不成立，时编译这一段
+#endif
+```
+
+### OS特定宏
+
+gcc/g++内置了如下宏，用以判断OS的类型，如下：
+
+```cpp
+#if defined(__linux__)
+//linux platform code.
+#endif
+
+#if defined(__APPLE__) && defined(__MACH__)
+//mac platform code.
+#endif
+
+#if defined(_WIN32) || defined(WIN32)
+//win platform include 32bit and 64bit.
+#endif
+
+#ifdef _WIN64
+//win 64 bit platform.
+#endif
+```
+

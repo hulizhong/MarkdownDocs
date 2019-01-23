@@ -45,6 +45,13 @@ Debug with Native Only
 
 
 
+### WinDbg
+
+可以分析dump文件；
+也可以attach到进程，调试运行程序，直到生成dump；
+​	step. attach.
+​	step. g
+
 
 
 ## C++ Crash Code

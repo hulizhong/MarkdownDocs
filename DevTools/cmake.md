@@ -245,18 +245,23 @@ Todo. https://blog.csdn.net/z_h_s/article/details/50699905
 
 
 ### add\_definitions
-option选项，让用户可以根据选项值进行条件编译。（可在cmake .. -DUSE\_A=ON/OFF进行功能开启、关闭）
+option选项，让用户可以根据选项值进行条件编译。（可在`cmake .. -DUSE\_A=ON/OFF`进行功能开启、关闭）
 这个option命令和你本地是否存在编译缓存的关系很大。所以，如果你有关于 option 的改变，那么请你务必清理 CMakeCache.txt 和 CMakeFiles 文件夹。
+
 ```cmake
 OPTION(USE_A "just for test" ON)
 OPTION(USE_A "just for test")  #如果没有提供初始化值，使用OFF。（同于下一句）
 OPTION(USE_A "just for test" OFF)
 message("the use_a value = ${USE_A}")  #要么打OFF，要么打ON
 
-#if (${USE_A} STREQUAL "ON")  #use_a变量的值是否为on；
-if (USE_A)  #是否定义过use_a变量，不关心值的内容；
-	#但这里USE_A为OFF时怎么进不了这个分支呢？不是已经定义过了吗？  --就是这样的呀，没有开启功能
+
+if (DEFINED USE_A)  #是否定义过use_a变量，不关心值的内容；
+	#defined必须大写；
     add_definitions("-DUSE_MACRO")  #在gcc/g++时使用-Duse_macro宏定义；
+endif()
+if (USE_A STREQUAL "ON")  #use_a变量的值是否为on；（未定义此变量不会引起错误！）
+	#strequal必须大写；
+	#use_a也可用${USE_A}; 
 endif()
  
 add_executable(multimap ${MULTIMAP_SRC})

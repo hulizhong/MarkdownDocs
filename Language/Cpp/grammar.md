@@ -40,6 +40,27 @@ delete []aa;
 
 References are extremely useful when used with function arguments since it saves the cost of copying parameters into the stack when calling the function.
 
+引用目的：
+
+> 主要用于在函数参数传递中，解决大块数据或对象的传递效率和空间不如意的问题。（不产生副本、提高传递效率）
+
+
+使用引用的时机
+
+> 流操作符<<和>>
+> 赋值操作符=的返回值、参数
+> 拷贝构造函数的参数
+> .....其它情况都推荐使用引用
+
+引用规则：
+
+> 不能返回局部变量的引用。
+> 原则上：不能返回函数内部new分配的内存的引用。
+> 可以返回类成员的引用，但最好是const。
+> 引用与一些操作符的重载：流操作符<<和>>，赋值操作符号=。
+
+因为常量和引用初始化必须赋值。那函数中的参数怎么解释（具有{}的函数定义哦）！！！ 
+
 
 
 ### Default Parameters

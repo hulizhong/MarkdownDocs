@@ -44,11 +44,13 @@ void FD_CLR(int fd, fd_set *set);
 
 int select(int nfds, fd_set *readfds, fd_set *writefds,
            fd_set *exceptfds, struct timeval *timeout);
-	//所有的指针参数均为入参、出参；timeout的值（表示还剩余多少时间）；
+	//所有的指针参数同时为入参、出参；timeout的值（表示还剩余多少时间）；
+	//nfds, 为三个set中值最高的fd，+1；
 	//返回：fd数量（其上的等待事件已准备好）；0超时；-1失败；
 ```
 
-
+注意：nfds最大为1024，用`bitset`来置位的，如果nfds>1024，那么返回值将是有问题的！！
+FD_SETSIZE fd的最大值。
 
 ### pselect
 
@@ -131,7 +133,7 @@ sigprocmask(SIG_SETMASK, &origmask, NULL);
 
 
 
-## Select VS Pool
+## Select VS Poll
 
 select(); 和 poll(); 函数实现差不多的功能，但是还是有如下的区别：
 

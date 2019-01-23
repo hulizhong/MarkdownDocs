@@ -95,7 +95,7 @@ int fun()
 	do {\
 		evhttp_free(mPromptSerHttp);\
 		event_base_free(mPromptSerBase);\
-	} while (false)
+	} while (0)
     
     //process.
     if (failed) {
@@ -105,6 +105,23 @@ int fun()
 ```
 
 
+
+其实`c++1`上是推荐`匿名函数（参见，lambda.）`来实现的；
+
+```cpp
+int fun()
+{ 
+    auto freeEvhttpWhenError = [&]() { //注意点：需要赋值号。
+        evhttp_free(mPromptSerHttp);
+        event_base_free(mPromptSerBase);
+    };  //注意点：它是一句话，所以需要结尾符号。
+    
+    //process.
+    if (failed) {
+        freeEvhttpWhenError();
+    }
+}
+```
 
 
 

@@ -240,8 +240,11 @@ map1.insert(std::make_pair<int,string>(4,"V5")); //其中的type1, type2是可�
 map1.insert(pair<int,string>(1,"Siqinsini"));
 map1.insert(map<int,string>::value_type(2,"Diyabi"));
 
-//根据key取得value，key不能修改
-string str = map1[3];
+try {
+    string str = map1.at(3);  //没有则会抛异常。
+    string str = map1[3];  //没有则会构造一个默认的value回来（默认构造函数，如int为0）。
+}
+catch (exception &e) {...}
 
 map1.erase(iter);    //删除迭代器数据
 map1.erase(3);       //根据key删除value
@@ -310,10 +313,25 @@ std::string value = mp.at("key");
 
 
 
+## std::string
 
-## 扩展：std::string
+有三类string
+
+```cpp
+std::basic_string<T>;  //模板
+std::string      std::basic_string<char>;  //实例化string.
+std::wstring     std::basic_string<wchar_t>;  //实例化wstring.
+std::u16string   std::basic_string<char16_t>; //实例化u16string.
+std::u32string   std::basic_string<char32_t>; //实例化u32string.
+```
+
+
+
+
+
 增、删、改、查
 https://www.cnblogs.com/yencain/articles/3110503.html
+
 ```cpp
 //构造函数
 string(const char *s); 

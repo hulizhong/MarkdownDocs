@@ -24,7 +24,10 @@ find ./ -name key.txt
 
 ### curl
 
+refer, https://gist.github.com/303182519/132568fd0e58cae57202 
+
 ```bash
+#----------------上传
 curl -X POST url [-d ""]   #需要转义data中"，而用'则可避免
 curl -X POST url [--data ""]
 
@@ -33,38 +36,24 @@ curl -X POST url -d @filename
 
 curl -X POST url -T filename  #相对直接--data来说：会有个100-continue，并不会判断文件内容类型；
 curl -X POST url -T "{file1,file2}"  #多个文件
-```
 
-multipart怎么传？rwhy.
+#----------------------------multipart，这个怎么传呢？
+curl  -F "keyName=@fileName;type=text/plain" url  multipart/form-data #数据上传
 
-```bash
-curl  -F "keyName=@fileName;type=text/plain" url  multipart/form-data数据上传
-```
-
-认证
-
-```bash
+#----------------------------认证
 curl -u username:password url
+curl -k https://url
+	#-k, --insecure      Allow connections to SSL sites without certs, 忽略https认证
 
-curl -k https://www.baidu.com
-	-k, --insecure      Allow connections to SSL sites without certs, 忽略https认证；
-```
-
-其它
-
-```bash
+#-----------------------------高级特性
 --limit-rate 1000B  #限速
-
--C #断点续传
-
--o newName, -O  #下载文件重命名
-
+-C - #断点续传
+-o newName  #下载文件重命名
+	-O  #下载文件名用默认的
 -x proxysever:proxyport  #代理
-
 -H 'key:value'
 	#加头, (Wrong: -H '"reqid":123',  Right: -H 'reqid:123')
 	#多个头分开加；
-
 -v #显示详细信息，包含连接建立过程，响应头。
 ```
 
@@ -215,8 +204,22 @@ openssl x509 -in input.crt -noout -text
 
 
 
+## package manager
 
-## apt
+linux下包管理系统大致分为如下：
+
+- debian系的，deb包，用`apt-get`安装，用`dpkg`进行包管理。
+- redhat系的，rpm包，用`yum`安装，用`rpm`进行包管理。
+
+
+
+### apt-get, dpkg
+
+```bash
+dpkg -l | grepruby  #查看deb包安装的。
+```
+
+
 
 debian 7.8用163的源，安装g++
 
@@ -230,6 +233,17 @@ E: Unable to correct problems, you have held broken packages.
 ```
 
 中途试图重装libc, 即apt-get install libc=xxx，导致系统崩溃，重新申请了台虚拟机，还是不要轻易动这些底层库！
+
+
+
+### yum, rpm
+
+```bash
+yum list installed | grep ruby  #查看yum安装的包。
+rpm -qa | grep ruby  #查看rpm包安装的。
+```
+
+
 
 
 

@@ -13,10 +13,10 @@
 Python2的 默认编码是ASCII，不能识别中文字符，需要显式指定字符编码；  
 Python3的 默认编码 为Unicode，可以识别中文字符。
 
-```bash
-name = u'\u6027\u80fd...'  这种格式的一般为unicode格式的
-name = '\xe6\x96\xb0...'  这种格式一般为utf8（python中utf8/utf-8一样）格式的
-name = '&#92;&#117;&#56;&#48;'  这种格式一般为ascii；
+```python
+name = u'\u6027\u80fd...'  #这种格式的一般为unicode格式的
+name = '\xe6\x96\xb0...'   #这种格式一般为utf8（python中utf8/utf-8一样）格式的
+name = '&#92;&#117;&#56;&#48;'  #这种格式一般为ascii；
 ```
 
 ### 编码探测
@@ -54,26 +54,26 @@ python2.x字符串格式有
 	print str 如果str中包含中文那么这个操作的错误的；
 
 
-	```python
-	import sys
-	reload(sys)
-	sys.setdefaultencoding('utf8')
-	```
+```python
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
+```
 
 - unicode
 
+  字节串.decode('原来的字符编码')  ==>   <font color=red>Unicode字符串</font>.encode('新的字符编码')   ==>  新的字节串
 
-	字节串.decode('原来的字符编码')  ==>   <font color=red>Unicode字符串</font>.encode('新的字符编码')   ==>  新的字节串
-	
-	python2.7中任何 type(字节串) 为str
-	
-	```python
-	#!/usr/bin/env python
-	# -*- coding:utf-8 -*-
-	utf_8_a = '我爱中国'
-	gbk_a = utf_8_a.decode('utf-8').encode('gbk')
-	print(gbk_a.decode('gbk'))
-	```
+  python2.7中任何 type(字节串) 为str
+
+
+```python
+#!/usr/bin/env python
+# -*- coding:utf-8 -*-
+utf_8_a = '我爱中国'
+gbk_a = utf_8_a.decode('utf-8').encode('gbk')
+print(gbk_a.decode('gbk'))
+```
 
 - <font color=red>问题</font>：如何通过python2.7的thrift客户端接口调用另外一个C++编写的thrift服务端的接口，且服务端内部只能处理utf8格式的数据？？
 	

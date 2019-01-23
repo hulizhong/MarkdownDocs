@@ -23,7 +23,29 @@ ssize_t sst;
 //如，ssize_t msgrcv(int msqid, void *msgp, size_t msgsz, long msgtyp, int msgflg);
 ```
 
+整数相关
+
+```cpp
+//inttypes.h
+typedef signed char             int8_t; 
+typedef short int               int16_t;
+typedef int                     int32_t;
+# if __WORDSIZE == 64
+typedef long int                int64_t;
+# else
+typedef long long int           int64_t;
+# endif
+
+typedef unsigned char           uint8_t;
+//...
+```
+
+
+
+
+
 ## 网络地址
+
 [地址转换函数可参考：](./socket.md#地址转换)
 sockaddr 
 ```cpp
@@ -35,12 +57,10 @@ struct sockaddr {
 };
 ```
 
-sockaddr\_in 
-in\_addr
+sockaddr\_in, in\_addr
 
 ```cpp
-include <arpa/inet.h> or <netinet/in.h>
-
+//include <arpa/inet.h> or <netinet/in.h>
 struct sockaddr_in {
     sa_family_t sin_family;
     in_port_t sin_port;  //网络字节序port；
@@ -59,6 +79,49 @@ mysock.sin_port = htons(800);
 mysock.sin_addr.s_addr = inet_addr("192.168.1.0");
 //mysock.sin_addr.s_addr = htonl(INADDR_ANY);
 ```
+
+sockaddr_in6, in6_addr
+
+```cpp
+struct sockaddr_in6 {
+ in_port_t sin6_port;        /* Transport layer port # */
+ uint32_t sin6_flowinfo;     /* IPv6 flow information */
+ struct in6_addr sin6_addr;  /* IPv6 address */
+ uint32_t sin6_scope_id;     /* IPv6 scope-id */
+};
+
+struct in6_addr{
+ union {
+     uint8_t __u6_addr8[16];
+#if defined __USE_MISC || defined __USE_GNU
+     uint16_t __u6_addr16[8];
+     uint32_t __u6_addr32[4];
+#endif
+ } __in6_u;
+};
+```
+
+
+
+ip匹配问题：v4可以换成整数进行，那么v6是不行的？ip段呢？---ip段可以比较ip整数范围！
+
+```cpp
+unsigned long inet_addr(const char FAR *cp); //1.1.1.1转成网络字节序。
+	//转不了255.255.255.255，需要单独处理。
+unsigned long inet_network(const char FAR *cp); //1.1.1.1转成主机字节序。
+	//转不了255.255.255.255，需要单独处理。
+
+int inet_aton(const char *cp, struct in_addr *inp);
+	//返回的是网络字节序，能处理255.255.255.255.
+```
+
+
+
+
+
+
+
+
 
 
 

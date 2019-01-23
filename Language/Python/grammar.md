@@ -245,8 +245,17 @@ def lstTest():
 lstTest()
 ```
 
-
 ### 整数
+
+```python
+i = 5
+i++ #python不能进行自加加、自减减
+i += 1 #这是可以的
+i = i + 1
+```
+
+
+
 ### 字符串
 集成的方法如下：  
 ```python
@@ -255,6 +264,9 @@ lstTest()
 ""     #特殊字符需转义；
 r|R""    #正则字符串
 u|U""    #unicode字符串
+
+#-----------------------------------------------------基本操作
+length = len(str)
 
 #-----------------------------------------------------大小写
 str.upper()
@@ -266,9 +278,10 @@ str.rfind(str, beg=0 end=len(string))
 str.index(str1)   #return str1's pos, otherwise raise exception.
 
 #-----------------------------------------------------截取
-str[1:3]
-str[1:]
-str[-1]
+str[0:3] #从第1位到第3位。 注意！！！（第1个索引要加1，第2个索引不加1，索引为负不加1）
+str[1:]  #从第2位开始到最后
+str[-1]  #倒数第1位
+str[-3:-1] #倒数第3位到倒数第1位。
 
 #-----------------------------------------------------合并：+、join()、拆分
 str = str1 + str2
@@ -276,8 +289,9 @@ str = '-';
 lst = [a, b, c];
 print str.join(lst)
 
-splitLst = str.split("splitStr", num=1) #num=1为分割的次数；
-
+splitLst = str.split("splitStr", 1)  #1为分割的次数，参数名叫啥呢？
+	# help(str.split)
+	# line.split(sep=",", maxsplit=1) TypeError: split() takes no keyword arguments
 
 #-----------------------------------------------------格式化
 # 法一用元组：
@@ -535,8 +549,10 @@ Print time.ctime()
 <font color=yellow>**Tips: **</font>类型转换
 
 ```python
-int(str)   #str -> int
+int(str)   #str -> int  long(),float()
 str(int)   #int -> str
+tuple(lst)  #序列lst转元组
+list(lst)  #序列lst转列表
 json.loads(str)   #str -> list
 ```
 

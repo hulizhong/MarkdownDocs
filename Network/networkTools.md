@@ -78,7 +78,7 @@ ip地址和网关地址可以通过 ipconfig来查看.
 	* -r in.pcap –w out.pcap –s 0 …filter..
 
 
-- 过滤器中的关键词
+- 过滤器中的关键词（**以下这些都不加参数连接符-**）
 	* 类型：host、net、port，默认为host；
 	* 传输方向：src、dst，默认为dst or src；
 	* 协议：ip、arp、tcp、udp；默认所有协议；

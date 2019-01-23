@@ -179,6 +179,11 @@ iter_split();
 find_all();
 ifind_all();
 split();
+
+string str1("hello abc-*-ABC-*-aBc goodbye");
+vector<string> SplitVec; 
+boost::split(SplitVec, str1, boost::is_any_of("-*"), boost::token_compress_on);
+	//token_compress_on，把连续多个分隔符当一个，默认没有打开。
 ```
 
 
@@ -189,4 +194,19 @@ split();
 join();
 join_if();
 ```
+
+
+
+### boost.string.algorithm VS std ？
+
+boost string算法 与 std库string算法有哪些区别？
+
+std::string algorithm. https://zh.cppreference.com/w/cpp/string/basic_string
+可以看出**std库只以成员函数来实现了一些基础的算法**，如查找、操作、。。
+
+而boost的string算法则强大的多！
+
+
+
+
 
