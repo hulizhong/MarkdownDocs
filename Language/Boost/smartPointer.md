@@ -132,11 +132,60 @@ lock()
 ## intrusive\_ptr
 比shared\_ptr更好的指针；但需要T类型自己提供引用记数机制；
 
+```cpp
+#include <boost/intrusive_ptr.hpp>
+//实现如下功能。
+//template <typename T> void intrusive_ptr_add_ref(T* t) {
+//  t->add_ref();
+//}
+//template <typename T> void intrusive_ptr_release(T* t) {
+//  if (t->release()<=0)
+//    delete t;
+//}
+
+class RefCount
+{
+public:
+    RefCount() : mCount(0) {}
+    virtual ~RefCount() {}
+    friend void intrusive_ptr_add_ref(RefCount *rc) {
+        ++rc->mCount;
+    }
+    friend void intrusive_ptr_release(RefCount *rc) {
+        if (--rc->mCount == 0) {
+            delete rc;
+        }
+    }
+private:
+    mutable boost::atomic_int mCount;
+};
+```
+
+
+
+**intrusive_ptr VS shared_ptr**
+第一，你需要提供引用计数的机制。
+第二，能<font color=red>把`this`当成智能指针，而不增加引用计数</font>。-----shared_ptr会造成多次free同一内存，导致crash.
+
 
 
 ## scoped\_ptr
 当离开作用域就会自动释放T类型的对象；
 不会传递所有权；
+
+
+
+**std::unique_ptr VS boost::scoped_ptr**
+
+| ptr name              | Copyable | Movable |
+| --------------------- | -------- | ------- |
+| std::unique_ptr       | N        | Y       |
+| const std::unique_ptr | N        | N       |
+| boost::scoped_ptr     | N        | N       |
+
+
+
+
 
 
 ## shared\_array

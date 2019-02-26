@@ -16,16 +16,28 @@ gcc, g++相关。
 
 
 
-## 指令
+## 指令集
+
+### 编译阶段
 
 Gcc编译过程主要的4个阶段：
 
 1. 预处理阶段，完成宏定义和include文件展开等工作；（gcc -E xx.c -o xx.i）
-2. 编译阶段，根据编译参数进行不同程度的优化，编译成汇编代码(gcc -S xx.c xx.s/xx.S)
-3. 汇编阶段，用汇编器把汇编代码进一步生成目标代码(gcc -c xx.c -o xx.o)
-4. 链接阶段，用连接器把生成的目标代码和系统或用户提供的库连接起来，生成可执行文件(cc -o xx xx.c)
+2. 编译阶段，根据编译参数进行不同程度的优化，编译成`汇编代码`(gcc -S xx.c xx.s/xx.s)
+3. 汇编阶段，用汇编器把`汇编代码`进一步生成`目标代码`(gcc -c xx.c -o xx.o)
+4. 链接阶段，用`连接器`把生成的目标代码和系统、用户提供的库连接起来，生成可执行文件(cc -o xx xx.c)
+   1. 静态库：把库文件的代码加载到目标文件中，生成的可执行文件大、运行时不依赖环境。
+   2. 动态库：不会把.............................................，生成的可执行文件小、运行时依赖库。
+      1. -Wl,-rpath,/path1/libxx.so
+      2. LD\_LIBRARY\_PATH
+      3. /etc/ld.so.conf, /etc/ld.so.conf.d/
+      4. 默认/lib/, /usr/lib/
 
 
+
+### 指令
+
+调试、优化：
 
 ```bash
 #gcc -ggdb3 -O0 xx.c
@@ -40,7 +52,7 @@ Gcc编译过程主要的4个阶段：
 
 
 
-## 库
+## 静态、动态库
 
 库相关。
 
@@ -79,7 +91,7 @@ g++ use.cpp libdemo.a
   	- 可以相对路径，亦可绝对路径；
   - -static -l所链接的库为静态库；（更改隐含规则去找.a后缀的库，而非.so）
   	- g++ main.cpp libxx.a也可直接这样用，而不是-l模式；
-- 链接（链接器ld）即运行。
+- 链接（链接器ld）即运行，时依赖优先级。
   1. -Wl,-rpath,/path1/libxx.so 要连接库的路径（rpath前也有,号）
      1. 运行期间生效，编译期间无效；
      2. 必须绝对路径；
@@ -132,8 +144,14 @@ ldd a.out
 
 ## 头文件
 
+## elf文件
 
-## 查看elf工具
+linux下可执行文件的格式，运行起来的进程空间参考：（Language\GLibC\process.md）
+
+
+
+### 查看工具
+
 编译失败，用nm查看链接的库里有没有start\_thread\_noexcept这个符号表
 ```cpp
 eventTst.cpp:(.text._ZN5boost6thread12start_threadEv[_ZN5boost6thread12start_threadEv]+0x15): undefined reference to `boost::thread::start_thread_noexcept()'

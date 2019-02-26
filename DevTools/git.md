@@ -224,6 +224,20 @@ it push origin :refs/tags/tagName
 
 
 
+### 提交日志修改
+
+提交到远程的（push）是不能修改的；
+
+- 修改最后一次commit comment.
+  - `git commit --amend`
+- 修改非最后一次commit comment.
+  - `git rebase -i HEAD~3`
+  - 选择待修改那行的`pick`改成`edit`
+  - `git commit --amend`
+  - `git rebase --continue`
+
+
+
 ## Git理论
 
 ### HEAD版本

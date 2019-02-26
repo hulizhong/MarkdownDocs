@@ -1,19 +1,19 @@
-[toc]
+[TOC]
 
 ## ReadMe
-std::function 可调用对象的包装器。
+std::function 配合 std::bind 实现了 `可调用对象`的包装器。
 
 - 实质是类模板：一种通用、多态的函数封装
 - 可对c++中现有的可调用实体的安全包裹；（如函数指针这种是类型不安全的）
 	- 函数指针
 		- 普通函数
-		- 类非静态成员函数
-		- 类静态成员函数，需要借助std::bind来构造对象；
+		- 类非静态成员函数，需要借助std::bind来构造对象
+		- 类静态成员函数；
 	- lambda表达式
 	- 仿函数
 - 功能
 	- 延迟调用；
-	- 实现函数回调；
+	- 特别适合作为回调使用；
 - 注意点
 	- fcuntion对象不能对比相等与否；（只能用于判空NULL/nullptr）
 	- 头文件 functional
@@ -62,6 +62,7 @@ public:
 
 CTest t;
 Functional obj = std::bind(&CTest::Func, &t, std::placeholders::_1);  
+	//std::placeholders::_1 即第1个参数变量的占位符号。（与传值、引用没关系）
 int res = obj(3);  
 cout << "member function : " << res << endl;  
 
@@ -104,8 +105,8 @@ int res = obj(2);
 ## std::bind
 它是一个函数模板，如同一个函数适配器；
 把一个原本接收N个参数的函数fn，通过绑定一些参数，返回一个接收M个参数的函数ret；
-> 绑定的参数将以值传递的方式传递给具体的函数。
-> 占位符号将会以引用的方式传递。
+> 绑定的参数将以`值传递`的方式传递给具体的函数。
+> 占位符号将会以`引用`的方式传递。
 
 函数ret可以直接赋值给std::function；
 

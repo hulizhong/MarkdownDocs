@@ -17,8 +17,8 @@ boost中文件系统相关操作；
 ```
 
 ```cpp
-//一般用简写的fs代替；
-namespace fs = boost::filesystem;
+//一般用简写的bfs代替；
+namespace bfs = boost::filesystem;
 ```
 
 
@@ -28,8 +28,8 @@ path的成员方法
 #include <boost/filesystem/path.hpp>
 
 //------------构造函数
-boost::filesystem::basic_path<std::string>  
-boost::filesystem::basic_path<std::wstring>
+bfs::basic_path<std::string>  
+bfs::basic_path<std::wstring>
 
 //--------------------------方法
 path("/root/temp/a.out");
@@ -53,7 +53,7 @@ dirPath /= "dir2";   // dir1/dir2 or dir1\dir2
 ## 文件操作
 写文件
 ```cpp
-boost::filesystem::ofstream file(path);
+bfs::ofstream file(path);
 if (file.is_open()) {
 	file << data;
 	file.close();
@@ -62,18 +62,33 @@ if (file.is_open()) {
 
 读文件
 ```cpp
-boost::filesystem::ifstream file(path);
+bfs::ifstream file(path);
 ```
 
 
+
+api list. https://www.boost.org/doc/libs/1_53_0/libs/filesystem/doc/reference.html#copy_option
+
+```cpp
+void copy_file(const path& from, const path& to, copy_option option);
+	//目标存在会抛出异常。
+	//copy_file(source_path, destination_path, copy_option::overwrite_if_exists);
+```
+
+
+
+
+
 ## 目录操作
+
 方法
 ```cpp
-boost::filesystem::is_directory(path);
-boost::filesystem::create_directories(path);
+bfs::is_directory(path);
+bfs::create_directories(path);
 ```
 
 ### Directory Traversal 
 ```cpp
 ;
 ```
+

@@ -1,8 +1,12 @@
-[toc]
+[TOC]
 
 ## ReadMe
 c11线程相关
 https://thispointer.com/c11-multithreading-tutorial-series/
+
+
+
+## Compile
 
 Compilers Required:  
 > Linux: gcc 4.8.1 (Complete Concurrency support)
@@ -32,7 +36,10 @@ root@c11# g++ thd.cpp  -std=c++11 -lpthread  #为毛还要加个-lpthread
 root@c11# ./a.out 
 ```
 
+
+
 ## Create Threads
+
 std::thread thObj(CALLBACK); 一个std::thread对象代表一个线程；
 CALLBACK可如下：
 > Function Pointer
@@ -43,7 +50,7 @@ CALLBACK可如下：
 ```cpp
 void threadFun() {
 	std::thread::id id;
-	id = std::this_thread::get_id(); //当前thread的id；
+	id = std::this_thread::get_id(); //std::this_thread只适用于当前线程。
 		//是不是只能在thread fun中调用；
 }
 
@@ -53,17 +60,21 @@ void threadFun() {
 }
 ```
 
-### 线程传参
-默认只需要把传入线程执行体的参数，作为std::thread的构造参数即可；
+
+
+### watchout
+
+默认只需要把传入线程执行体的参数（<font color=red>突破boost::thread的有限个参数</font>），作为std::thread的构造参数即可；
 这些参数默认会被拷贝到新线程；
 
 Don’t pass addresses of variables from local stack to thread’s callback function.
 Because it might be possible that local variable in Thread 1 goes out of scope but Thread 2 is still trying to access it through it’s address.
 In such scenario accessing invalid address can cause unexpected behaviour.
+
 ```cpp
 {
 	int v;
-	std::thread th(cb, &v);
+	std::thread th(cb, &v);  //不要传递局部变量的指针；
 }
 ```
 
@@ -72,7 +83,7 @@ Because it might be possible that some thread deletes that memory before new thr
 ```cpp
 {
 	int *v = new int(3);
-	std::thread th(cb, &v);
+	std::thread th(cb, &v);  //堆中的地址亦不可传，小心被其它线程delete.
 	delete v;
 }
 ```
@@ -81,20 +92,23 @@ Because it might be possible that some thread deletes that memory before new thr
 ```cpp
 {
 	int v;
-	std::thread th(cb, std::ref(v));
+	std::thread th(cb, std::ref(v));  //引用传参的方法，默认是按值传递（即拷贝）。
 }
 ```
 
 如果线程执行体是个类成员函数，那么
 std::thread的第一参数是类成员函数的地址，第二参数是类对象的地址；
+
 ```cpp
 class T {};
 T t;
-std::thread th(&T::cb, &t);
+std::thread th(&T::cb, &t);  //需要传送对应对象的地址。
 ```
 
 
+
 ## Joining and Detaching Threads
+
 join thread
 ```cpp
 std::thread th(funcPtr); 
@@ -107,7 +121,7 @@ std::thread th(funPtr);
 th.detach(); //从此刻开始，th对象并未关联到线程；
 ```
 
-### 注意点
+### watchout
 Never call join() or detach() on std::thread object with no associated executing thread.
 ```cpp
 std::thread th(funcPtr); 
@@ -156,7 +170,9 @@ public:
 ```
 
 
+
 ## Data Sharing and Race Conditions
+
 ### race condition
 竞争条件：多个线程或进程并发读、写同一共享数据且执行结果与访问的特定顺序有关。
 ```cpp
@@ -174,12 +190,13 @@ void cb(int v)
 ```
 |th1|th2|
 |---|---|
-|load v to register = 0|
+|load v to register = 0||
 || load v to register = 0|
-|add register = 1|
-||add register = 1
-|update v with register = 1|
-||update v with register = 1
+|add register = 1||
+||add register = 1|
+|update v with register = 1||
+||update v with register = 1|
+
 
 
 ### mutex, fix race condition
@@ -199,40 +216,80 @@ std::thread th2(cb);
 ```
 
 但当th1最后忘了unlock()，并退出了。这时怎么办？
-这样的执行序列，当再次lock()这个mutex之后有可能带来异常；应该用lock guard来避免这种场景；
+这样的执行序列，当再次lock()这个mutex之后有可能带来异常；应该用`lock guard`来避免这种场景；
 lock guard是类模板，实现了mutex的RAII，在构造时进行lock()，在析构时进行unlock()；
+
 ```cpp
 std::mutex mt;
 void cb()
 {
-	std::lock_guard<std::mutex> lg(mt);
-	//...
+	std::lock_guard<std::mutex> lg(mt);  //构造lg时mt.lock()
+	//... 析构lg时mt.unlock()
 }
 ```
 
+
+
+### auto lock & unlock
+
+C++11中引入了std::unique_lock与std::lock_guard两种数据结构。通过对lock和unlock进行一次薄的封装，实现自动lock, unlock的功能。----<font color=red>区域锁</font>！
+
+
+
+**std::lock_guard**
+
+```cpp
+std::mutex mt;
+{
+    std::lock_guard<std::mutex> lk(mt); //auto call mt.lock()
+} //auto call mt.unlock() when ~lk.
+```
+
+
+
+**std::unique_lock**
+同于std::lock_guard都能实现自动加锁与解锁功能，但是std::unique_lock要比std::lock_guard更灵活，但是更灵活的代价是<font color=red>占用空间相对更大一点</font>且<font color=red>相对更慢一点</font>。
+
+
+
+**lock_guard vs unique_lock**
+
+- 都是std::mutex的RAII设计。
+- unique提供更丰富的功能，lock_guard只提供了构造、析构两个函数；
+  - lock, try_lock, try_lock_for, try_lock_until, unlock
+  - swap, release
+  - mutex, owns_lock, operator bool
+    - operator bool测试关联的mutex是否是lock状态的。
+- 与std::condition_variable搭配，只能是unique_lock.
+
+
+
+
+
 ## Event Handling
-查看如下demo，并指出其缺点；
+
+查看如下demo，并指出其缺点；---如何让它更能节省cpu周期、更好的性能。
 ```cpp
 bool dataReady = false;
 std::mutex mt;
 
 void loadData()
 {
-	std::this_thread::sleep_for(std::chrono::milliseconds(100)); //read data.
+	std::this_thread::sleep_for(std::chrono::milliseconds(100)); //load need 100ms.
 	std::lock_guard<std::mutex> lg(mt);
 	dataReady = true;
 }
 void processData()
 {
-	//process other task.
+	//process other task need 80ms.
 	std::this_thread::sleep_for(std::chrono::milliseconds(80));
 
 	//wait the data ready.
 	mt.lock();
-	while (!dataReady) {  //缺点：仅仅为了检查标志，浪费cpu cycles.
+	while (!dataReady) { //缺点*：仅仅为了检查标志（状态），浪费cpu cycles.
 		mt.unlock();
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-		mt.lock();  //缺点：会使loadData线程变慢（因为它也需要获得该锁去更改dataReady状态）；
+		mt.lock(); //缺点*：会使loadData线程变慢（因为它也需要获得该锁去更改dataReady状态）；
 	}
 	mt.unlock();
 	//process data, cause data was ready.
@@ -242,11 +299,14 @@ void processData()
 std::thread th1(loadData);
 std::thread th2(processData);
 ```
-So obviously we need a better mechanism to achieve this, It would have save many CPU cycles and gave better performance.
+So obviously we need a better mechanism机制 to achieve this, It would have save many CPU cycles and gave better performance.
+
+
 
 ### Condition Variables
 Condition Variable is a kind of Event used for signaling between two or more threads.
 One or more thread can wait on it to get signaled, while an another thread can signal this.
+
 ```cpp
 void wait( std::unique_lock<std::mutex>& lock );
 	//释放关联的锁、阻塞当前线程、把线程放到当前信号的等待队列中（这个过程是原子操作）；等待被唤醒、虚假唤醒；
@@ -262,8 +322,8 @@ cond.notify_all()   //唤醒此信号量的所有等待线程；
 wait的变种
 ```cpp
 template< class Predicate >
-void wait( std::unique\_lock<std::mutex>& lock, Predicate pred );
-	#第二种形式在应对虚假唤醒时，不需要再用while来判断了；
+void wait( std::unique\_lock<std::mutex>& lock, Predicate pred ); //带断言的版本。
+	//该版本在应对虚假唤醒时，不需要再用while来判断了；
 ```
 
 demo
@@ -276,9 +336,9 @@ std::mutex mt;
 std::condition_variable cv;
 
 {
-	std::this_thread::sleep_for(std::chrono::milliseconds(100)); //read data.
+	std::this_thread::sleep_for(std::chrono::milliseconds(100)); //load need 100ms.
 	std::lock_guard<std::mutex> lg(mt);
-	dataReady = true;
+	dataReady = true;  //lg只需要守护`状态变更`这个过程吗？`数据准备`过程呢？ ---是的，要不生成过程也被同步了。
 	cv.notify_one();
 }
 
@@ -289,7 +349,7 @@ std::condition_variable cv;
 	//wait the data ready.
 	std::unique_lock<std::mutex> ul(mt);
 #if 0
-	while (!dataReady) {//防止虚假唤醒，所以要检测条件；
+	while (!dataReady) {//重点*. 防止虚假唤醒，所以要检测条件；
 		cv.wait(ul); //wait搭配unique_lock使用，而非lock_guard；
 	}
 #else
@@ -420,21 +480,31 @@ int main()
 https://www.cnblogs.com/dengzz/p/5686866.html
 这些类都禁用了拷贝构造函数，原因是原子读和原子写是2个独立原子操作，无法保证2个独立的操作加在一起仍然保证原子性。
 
-atomic\_flag
+### std::atomic\_flag
+
 ```cpp
 std::atomic_flag af = ATOMIC_FLAG_INIT;
 	//std::atomic_flag可用于多线程之间的同步操作，类似于linux中的信号量。使用atomic_flag可实现mutex.
 af.test_and_set()
 	//会检查变量的值是否为false，如果为false则把值改为true。
-	//返回true，如果atomic_flag对象被设置；返回false，如果atomic_flag对象未被设置。
+	//return.
+    	//true，如果atomic_flag对象被设置；
+    	//false，如果atomic_flag对象未被设置。
 af.clear()
 	//清除atomic_flag对象
 ```
 
-atomic
+### std::atomic
+
+原子数据类型
+从功能上看，不会发生数据竞争，能直接用在多线程中而不必我们用户对其进行添加互斥资源锁的类型。
+从实现上，可以理解为这些原子类型内部自己加了锁。
+
 ```cpp
 #include <atomic>
 std::atomic<Type> v;
+	//std::atomic_bool
+	//std::atomic_int
 v.store(); //写
 v.load();  //读
 v.exchange();  //交换值
