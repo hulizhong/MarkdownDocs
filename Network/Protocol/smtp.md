@@ -53,9 +53,9 @@ smtp指令集如下：
 
 再来看看send mail的抓包 
 
-![这是一张图片](D:/BigDatabase/MarkdownDocs/Network/Protocol/img/smtp-pcapSendEmail1.png)    
+![这是一张图片](img/smtp-pcapSendEmail1.png)    
 
-![这是一张图片](D:/BigDatabase/MarkdownDocs/Network/Protocol/img/smtp-pcapSendEmail2.png)  
+![这是一张图片](img/smtp-pcapSendEmail2.png)  
 
 
 

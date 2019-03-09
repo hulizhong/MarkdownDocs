@@ -2,9 +2,9 @@
 
 ## ReadMe
 讲解boost thread同步的一些知识；
-外带boost lock机制；
+外带boost lock机制；-------**其实表现出来的这些mutex, lock之类的都是各平台基础库上封装而来的。（Linux下是pthread）**。
 
-对于mutex和lock，要明确一点，真正起到互斥作用的mutex，而lock只是协助mutex令我们在使用时更方便。
+对于mutex和lock，要明确一点，真正起到互斥作用的mutex，而lock只是协助我们更方便的使用mutex。
 
 ## Mutex
 互斥量各类较多，如下：
@@ -29,10 +29,12 @@ mt.unlock();
 ```
 
 ### shared\_mutex
-共享互斥量；
+共享互斥量，提供如下功能；
 ```cpp
-mt.shared_lock();
-mt.shared_unlock();
+mt.lock_shared();  //及其它一些变种。
+mt.unlock_shared();
+mt.lock();  //及其它一些变种。
+mt.unlock();
 ```
 
 可实现读写锁
@@ -78,8 +80,9 @@ boost实现了各种lock来帮助mutex的使用；
 ```
 
 ### lock\_guard
-其中构造它的互斥量可以是任意类型；
-在其内部构造和析构函数分别自动调用 其存储对象的.lock(), .unlock()方法；
+**范围锁**，其中构造它的互斥量可以是任意类型；
+其构造、析构内分别自动调用 其存储对象的`.lock(); .unlock()`方法；
+
 ```cpp
 boost::mutex mt;
 
@@ -90,9 +93,10 @@ boost::mutex mt;
 ```
 
 ### unique\_lock
-独占锁；
-其中构造它的互斥量可以是任意类型；
-unique\_lock与lock\_guard原理相同，但是提供了更多功能：
+**独占锁**，其中构造它的<font color=gree>互斥量可以是任意类型</font>；unlock
+其析构内自动调用 其存储对象的<font color=gree>`unlock()`</font>方法；构造内<font color=gree>`unlock_and_lock_shared, lock, ..`</font>;
+`unique_lock`与`lock_guard`原理相同，但是提供了更多功能：
+
 > 可手动释放锁, ul.unlock()
 > 配合boost::condition使用；（只能用此）
 
@@ -105,16 +109,22 @@ boost::mutex mt;
 
 ul.owns_lock(); //检查是否可获得互斥体
 ul.lock(); //会一直等待，直到获得一个互斥体。
-ul.try_lock() //则不会等待，但如果它只会在互斥体可用的时候才能获得，否则返回 false
-ul.timed_lock() //等待一定的时间以获得互斥体
+ul.try_lock(); //则不会等待，但如果它只会在互斥体可用的时候才能获得，否则返回 false
+ul.timed_lock(); //等待一定的时间以获得互斥体
+
+lfv.swap(rv);   //可以交换锁、锁的状态。？？？ ----这个神奇了。rabin.
+	//因为没有make_unique_lock之类的函数，只能先构造个临时的，再进行交换？？
 ```
 
 ### shared\_lock
-共享锁；
-其中构造它的互斥类只能是共享类互斥量；
+**共享锁**，其中构造它的互斥类<font color=gree>只能是共享类互斥量</font>；
+其析构内自动调用 其存储对象的`.unlock_shared()`方法；
 
 
 ### upgrade\_lock
+
+**升级锁**，对shared_lock的扩展使用，可以升级共享权限为独占权限。 ---这个牛逼，怎么实现的呢？
+升级的时候，如果没有其它线程与之共享，那么立即会升级成功。此后必须使用`unlock()`来释放独占锁。
 
 
 

@@ -20,6 +20,9 @@ ssize_t sst;
 	//	typedef  long size_t;  8字节
 	//一般用于表示被执行读写操作的数据块大小；
 
+off_t ot;
+	//long int, 有正负之分，用于偏移量；
+
 //如，ssize_t msgrcv(int msqid, void *msgp, size_t msgsz, long msgtyp, int msgflg);
 ```
 

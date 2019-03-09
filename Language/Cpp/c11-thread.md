@@ -236,7 +236,7 @@ C++11中引入了std::unique_lock与std::lock_guard两种数据结构。通过�
 
 
 
-**std::lock_guard**
+**T, std::lock_guard**
 
 ```cpp
 std::mutex mt;
@@ -247,12 +247,12 @@ std::mutex mt;
 
 
 
-**std::unique_lock**
+**T, std::unique_lock**
 同于std::lock_guard都能实现自动加锁与解锁功能，但是std::unique_lock要比std::lock_guard更灵活，但是更灵活的代价是<font color=red>占用空间相对更大一点</font>且<font color=red>相对更慢一点</font>。
 
 
 
-**lock_guard vs unique_lock**
+**Q, lock_guard vs unique_lock**
 
 - 都是std::mutex的RAII设计。
 - unique提供更丰富的功能，lock_guard只提供了构造、析构两个函数；
@@ -517,3 +517,18 @@ bool v.compare_exchange_strong(except, T);
 	//不允许伪失败；
 ```
 
+
+
+## Notions
+
+### mutex & lock
+
+#### 锁定策略
+
+为 `lock_guard, scoped_lock, unique_lock, shared_lock` **构造时**指定锁定策略的空结构体标签类型如下：
+
+```cpp
+std::defer_lock_t;  //不获得互斥的所有权。
+std::try_to_lock_t; //尝试获得互斥的所有权而不阻塞。
+std::adopt_lock_t;  //假设调用方线程已拥有互斥的所有权。
+```

@@ -4,42 +4,12 @@
 
 容器类自动申请和释放内存，我们无需new和delete操作。
 
-
-
-顺序容器
-vector 一段连续的内存地址，基于数组的实现。
-list  非连续的内存，基于链表实现。
-deque 与vector类似，但是对于首元素提供删除和插入的双向支持。
-
-
-
-关联容器（就是有key-value形式的，其中set的key,value一样）
-map：key-value形式的。
-​	元素默认升序
-multimap：key值可以相同。
-set：key,value一样
-​	元素默认升序
-multiset：key值可以相同。
-hash_set, hash_map, hash_multiset, hash_multimap
-​	有hash前缀的：底层实现为hashtable，否则底层是为红黑树实现的。
-​	区别在于：红黑树提供的默认是排好序的，而hashtable提供的则不是。
-
-
-
-其它杂项
-stack
-queue
-valarray
-bitset
-
-
-
 容器大比拼
 
 |名称 |内部数据结构 |操作元素的方式 |插入删除操作迭代器是否失效 |
 |----|-----------|------------|----------------------|
 |vector |连续存储的数组形式（一端开口） |下标运算符、迭代器  |会|
-|deque |连续或分段连续存储数组（两端开口） |下标运算符、迭代器 |插入迭代器失效；删头尾指向被删除节点的迭代器失效，删除中间元素所有迭代器失效|
+|deque |连续或分段连续存储数组（两端开口） |下标运算符、迭代器 |插入迭代器失效；<br />删头尾指向被删除节点的迭代器失效，删除中间元素所有迭代器失效|
 |list |双向环状链表 |迭代器 |删除指向被删除的迭代器失效|
 |set |红黑树 |迭代器 |删除指向被删除的迭代器失效|
 |multiset |红黑树 |迭代器 |删除指向被删除的迭代器失效|
@@ -48,55 +18,166 @@ bitset
 
 
 
-## vector
+## category
 
-增加和获取元素效率很高  
-插入和删除的效率很低
+分类概要信息如下
 
-> Random access - constant O(1)    
-> Insertion or removal of elements at the end - amortized constant O(1)   
-> Insertion or removal of elements - linear in distance to the end of the vector O(n)
+- 顺序容器，<font color=red>提供能按顺序访问的数据结构</font>。
+  - array，静态数组。（<font color=gree>变长一维数组，连续存放的内存块，有保留内存，堆中分配内存</font>）
+  - vector，动态数组。
+  - deque，双端队列。（<font color=gree>在堆上分配内存，一个堆保存几个元素，而堆之间使用指针连接</font>）
+  - forward_list，单链表。
+  - list，双链表。（<font color=gree>内存空间上可能是不连续的，无保留内存，堆中分配内存</font>）
+- 关联容器，<font color=red>提供快速查找*$O(log_2N)$*数据结构</font>。
+  - set，集合，key排序。（<font color=gree>使用平衡二叉树存储</font>）
+  - map，key-value映射集，按key排序。（<font color=gree>使用平衡二叉树存储</font>）
+  - multiset。
+  - multimap。
+- 无序关联容器（按key生成散列），<font color=red>提供快速查找（均摊*O(1)*，最坏*O(n)*）数据结构</font>。
+  - unordered_set，就是以前的hash_set.
+  - unordered_map `#include <unordered_map>`，就是以前的hash_map. `#include <ext/hash_map>`
+  - unordered_multiset
+  - unordered_multimap
+- 容器适配器，<font color=red>提供顺序容器的不同接口</font>。
+  - stack，栈LIFO。底层容器为deque（其它顺序容器也可）。
+  - queue，队列FIFO。底层容器为deque（其它顺序容器也可）。
+  - priority_queue，优先级队列。底层容器为vector（其它顺序容器也可）。
 
 
 
-### 增、删、改、查
+### 迭代器、元素引用失效
 
-定义
+- 顺序容器
+  - array，不能增加、删除。
+  - vector，迭代器在内存重新分配时将失效（它所指向的元素在该操作的前后不再相同）。
+    - 当把超过capacity()-size()个元素插入vector中时，内存会重新分配，所有的迭代器都将失效；否则，指向当前元素以后的任何元素的迭代器都将失效。
+    - 当删除元素时，指向被删除元素以后的任何元素的迭代器都将失效。。
+  - deque
+    - 增加任何元素都将使deque的迭代器失效。
+    - 在deque的中间删除元素将使迭代器失效。在deque的头或尾删除元素时，只有指向该元素的迭代器失效。
+  - list, forward_list.
+    - 增加任何元素都不会使迭代器失效。
+    - 删除元素时，除了指向当前被删除元素的迭代器外，其它迭代器都不会失效。
+- 关联容器
+  - set、multiset、map、multimap
+    - 如果迭代器所指向的元素被删除，则该迭代器失效。其它任何增加、删除元素的操作都不会使迭代器失效。
+  - ...
+- 无序关联容器
+  - unordered_set
+  - unordered_map
+  - unordered_multiset
+  - unordered_multimap
+- 容器适配器
+  - stack，不能遍历整个stack。
+  - queue，不能遍历整个queue。
+  - priority_queue，只能访问第一个元素，不能遍历整个priority_queue。
+
+
+
+### 查找、增删效率
+
+分类概要信息如下
+
+- <font color=red>按顺序访问型</font>：顺序容器
+  - array
+  - vector，增加和获取元素效率很高，插入和删除的效率很低。
+    - 随机访问——常数 *O(1)*
+    - 在**末尾**插入、移除元素——均摊常数 *O(1)*
+    - 插入、移除元素——与到 vector 结尾的距离成线性 *O(n)*
+  - deque，增加和获取元素效率较高，插入和删除的效率较高？---跟vector差不多rabin?
+    - 随机访问——常数 *O(1)*
+    - 在**结尾、起始**插入或移除元素——常数 *O(1)*
+    - 插入或移除元素——线性 *O(n)*
+  - forward_list
+  - list，增加和获取元素效率很低，插入和删除的效率很高 。
+    - 查找*O(n)*
+    - 插入、删除为*O(1)*
+- <font color=red>查找型</font>：关联容器，红黑树实现（<font color=gree>插入、删除、查找都严格在$\log_2 N$时间内完成，效率非常高</font>）。
+  - set
+  - map
+  - multiset
+  - multimap
+- <font color=red>查找型</font>：无序关联容器，hash实现（<font color=gree>相对RBT有更好的查找性能，但取决于哈希函数和哈希表的负载情况；但最好的情况是*O(1)*，最坏是*O(N)*</font>）。
+  - unordered_set
+  - unordered_map
+  - unordered_multiset
+  - unordered_multimap
+- 容器适配器
+  - stack
+  - queue
+  - priority_queue
+
+
+
+**Q, 什么时候选顺序容器？什么时候选关联容器？**
+顺序容器一般提供顺序访问功能，关联容器一般提供查找功能。
+
+**Q, 那么从效率上来讲，如何选择容器呢？**
+
+如果你<font color=red>需要高效的随机存取，而不关心插入和删除的效率</font>，使用vector.
+如果你<font color=red>需要大量的插入和删除，而不关心随即存取</font>，则应使用list.
+如果你<font color=red>需要随即存取，而且关心两端数据的插入和删除</font>，则应使用deque.
+
+
+
+
+
+
+
+### thread safe
+
+
+
+## Q&A
+
+**Q, vector.remove() vs vector.erase() ?**
+remove没有真正的删除元素（而是将这些元素移到了容器的尾部），而且size()没有变化。
+erase()真正的删除了指定元素。
+----------list.remove()同erase()一样释放了资源的？
+
+
+
+
+
+## std::vector
+
+
+
 ```cpp
+//-------------------------------------------------特征
+push_back();
+pop_back();
+at();  //越界检查，报异常。
+operator[];
+
+//------------------------------------------------init
 vector<int> vec1;    //默认初始化，vec1为空
 vector<int> vec2(vec1);  //使用vec1初始化vec2
 vector<int> vec3(vec1.begin(),vec1.end());//使用vec1初始化vec2
 vector<int> vec4(10);    //10个值为0的元素
 vector<int> vec5(10,4);  //10个值为4的元素
-```
 
-增、删、改、查
-```cpp
 vector v1, v2;
 
 insert()
 v1.insert(v1.end(),5,3);    //从vec1.back位置插入5个值为3的元素
 v2.assign(v1.begin(), v1.end())  //根据v1给v2赋值
 
-
-
 v[0];  //取得第1个元素；
-v.at(0);  //取得第1个元素；
+v.at(0);  //取得第1个元素，会检查跃界与否。
 v.front();  //取得第1个元素；
 v.push_back() //在Vector最后添加一个元素（参数为要插入的值）
 v.back(); //取得最后1个元素；
 v.pop_back(); //删除末尾元素
 
-iterator erase( iterator loc );                    //要删除元素的迭代器
+iterator erase( iterator loc );                   //要删除元素的迭代器
 iterator erase( iterator start, iterator end);    //要删除的第一个元素的迭代器，要删除的第二个元素的迭代器
-clear() //清空所有元素
-
-empty() //判断Vector是否为空（返回true时为空）
-size()  //返回元素个数；
-```
-
-遍历
-```cpp
+clear(); //清空所有元素
+empty(); //判断Vector是否为空（返回true时为空）
+size();  //返回元素个数；
+    
+ 
+//---------------------------------------------------foreach
 //c11
 for (auto val : valList) {
 	cout << val << endl; //这样迭代出来的var是vector中的元素，而非迭代器
@@ -113,6 +194,7 @@ while (iter != a.end()) {
 }
 ```
 
+
 ### 问题点
 vector使用超出了其空间
 ```bash
@@ -123,76 +205,23 @@ critical handler: signal 6 is triggered.
 
 
 
-## queue
+## std::list
 
-the functions in queue template class, as follow.
+
 
 ```cpp
-queue<int> q;
-q.push(4); //push to item at the end of queue.
-q.front(); //return the first item, but not remove it.
-q.back();  //return the lastest item, but not remove it.
-q.pop();   //remove the first item, but not return.
-```
+//--------------特征
+insert();
+erase();
 
-<font color=red>如果queue内没有元素，那么front()，back(),pop()的执行都会导致未定义的行为，所以在执行这三个操作是，可以通过size()和empty()判断容器是否为空</font>；
-
-
-
-
-
-## deque
-
-增加和获取元素效率较高  
-插入和删除的效率较高 ----看来这是有问题的，请看下面官网上的时间复杂度描述（这样看也只是vector的改良版本）。  
-
-> Random access - constant O(1)   
-> Insertion or removal of elements at the end or beginning - constant O(1)   
-> Insertion or removal of elements - linear O(n)  
-
-
-
-### 增、删、改、查
-
-定义
-```cpp
-std::deque dq;
-```
-
-增、删、改、查
-```cpp
-//与vector类似，支持随机访问和快速插入和删除
-//与vector不同，deque还支持从开始端插入数据：push_front()
-push_front()
-```
-
-遍历
-```cpp
-//no data
-```
-
-## list
-
-增加和获取元素效率很低  
-插入和删除的效率很高 
-
-> 双向链表查找O(n)； 插入、删除为O(1)
-
-
-
-### 增、删、改、查
-
-定义和初始化
-```cpp
+//--------------------初始化.
 list<int> lst1;          //创建空list
 list<int> lst2(3);       //创建含有三个元素的list
 list<int> lst3(3,2);     //创建含有三个元素为2的list
 list<int> lst4(lst2);    //使用lst2初始化lst4
 list<int> lst5(lst2.begin(),lst2.end());  //同lst4
-```
 
-增、删、改、查
-```cpp
+//----------------------
 lst1.assign(lst2.begin(),lst2.end());  //分配值,3个值为0的元素
 lst1.push_back(10);                //末尾添加值
 lst1.pop_back();                   //删除末尾值
@@ -214,25 +243,71 @@ lst1.remove(2);                        //相同的元素全部删除
 lst1.reverse();          //反转
 lst1.sort();             //排序
 lst1.unique();                         //删除相邻重复元素
-```
 
-遍历
-```cpp
+//-----------------------遍历
 for(list<int>::const_iterator iter = lst1.begin();iter != lst1.end();iter++) {
    cout<<*iter;
 }
 ```
 
 
-## map
-### 增、删、改、查
-定义
+
+## std::deque
+
+
+
 ```cpp
-map<int,string> map1;  //空map
+//-------------------特征
+operator[];
+at();
+push_back();
+pop_back();
+push_front();
+pop_front();
+
+
 ```
 
-增、删、改、查
+
+
+## std::array
+
 ```cpp
+#include <array>
+std::array<int, 4> a = {1, 2, 3, 4};
+```
+
+
+
+## queue
+
+the functions in queue template class, as follow.
+
+```cpp
+//--------------------------------------------特征
+
+
+//--------------------------------------------
+queue<int> q;
+q.push(4); //push to item at the end of queue.
+q.front(); //return the first item, but not remove it.
+q.back();  //return the lastest item, but not remove it.
+q.pop();   //remove the first item, but not return.
+```
+
+<font color=red>如果queue内没有元素，那么front()，back(),pop()的执行都会导致未定义的行为，所以在执行这三个操作是，可以通过size()和empty()判断容器是否为空</font>；
+
+
+
+## std::map
+
+
+
+```cpp
+//--------------------定义
+map<int,string> map1;  //空map
+
+//-------------------------
 //添加元素
 map1[3] = "Saniya";
 map1.insert(std::make_pair<int,string>(4,"V5")); //其中的type1, type2是可以不写的，让其自动推演出来；
@@ -255,10 +330,9 @@ map1.empty(); //判断空
 
 map<int,string>::iterator it = map1.find(0); //查找元素0
 map1.count(0); //元素0的个数
-```
 
-遍历
-```cpp
+
+//----------------遍历
 for(map<int,string>::iterator iter = map1.begin(); iter!=map1.end(); iter++) {
    int keyk = iter->first; //取得key
    string valuev = iter->second; //取得value
@@ -274,6 +348,8 @@ for (auto &it : map) {
 }
 ```
 
+
+
 ### 问题点
 ```cpp
 const map<std::string, std::string> mp;
@@ -281,35 +357,9 @@ std::string value = mp["key"];  //const map不能用数组法[]去获取value.
 std::string value = mp.at("key");
 ```
 
+
+
 ## set集合
-它是一个有序的容器，里面的元素都是排序好的（默认为升序）支持插入、删除、查找等操作，就像一个集合一样，所有的操作都是严格在$\log_2 N$时间内完成，效率非常高。
-
-> set可以在时间复杂度为O(logN)情况下插入、删除和查找数据（红黑树的特性）。    
-> hash_set操作的时间复杂度则比较复杂，这取决于哈希函数和哈希表的负载情况。stl中最好的情况是O(1)，最坏是O(N)（其它几个hash_XX也一样）。    
-
-### 增、删、改、查
-定义
-```cpp
-//no data
-```
-
-增、删、改、查
-```cpp
-//no data
-```
-
-遍历
-```cpp
-//no data
-```
-
-
-## 经验
-如何选择容器呢？
-
-> 如果你需要高效的随即存取，而不在乎插入和删除的效率，使用vector   
-> 如果你需要大量的插入和删除，而不关心随即存取，则应使用list   
-> 如果你需要随即存取，而且关心两端数据的插入和删除，则应使用deque。
 
 
 
@@ -391,3 +441,4 @@ int main(int argc, char* argv[])
     return 0;
 }
 ```
+

@@ -4,7 +4,11 @@
 
 ## ReadMe
 
-线程对象boost::thread
+boost thread相关记录。
+
+### boost thread outline
+
+线程对象boost::thread、线程
 > 不可复制，但可转移；
 > 对象析构了，线程还存在，只是为detached状态；
 >
@@ -70,11 +74,11 @@ int main(int argc, char* argv[])
 	- 类内创建
 		- cb是否为静态成员函数
 			- 静态：不绑定this
-			- 非静态：需要类名声明cb, 绑定this
+			- 非静态：需要类名前缀cb, 绑定this
 	- 类外创建
 		- cb是否为静态成员函数
-			- 静态：需要类名声明cb, 不绑定对象
-			- 非静态：需要类名声明cb, 绑定对象
+			- 静态：需要类名前缀cb, 不绑定对象
+			- 非静态：需要类名前缀cb, 绑定对象
 
 
 类内创建

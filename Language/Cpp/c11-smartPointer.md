@@ -51,14 +51,38 @@ int *pp = p.get(); //获得裸指针。
 
 
 
+**Q, shared_ptr VS make_shared ? 尽量使用make_shared<>, make_unique<>.**
+shared_ptr是申请两次内存（数据、控制块），make_shared只申请了一次内存（数据 + 控制块）。
+表现在当`std::shared_ptr`作为函数参数时的`异常安全`，如下：
+
+```cpp
+void f(std::shared_ptr<Lhs> &lhs, std::shared_ptr<Rhs> &rhs) {...}
+f(std::shared_ptr<Lhs>(new Lhs()), std::shared_ptr<Rhs>(new Rhs())); //error.
+	//因为C++允许参数在计算的时候打乱顺序，因此一个可能的顺序如下:
+		//1.new Lhs(), 2.new Rhs(), 3.std::shared_ptr, 4.std::shared_ptr
+	//当2失败时，1申请的内存没法释放。
+f(std::make_shared<Lhs>(), std::make_shared<Rhs>());  //ok.
+```
+
+
+
+
+
 ### unique_ptr
 
 ```cpp
 //unique_ptr唯一拥有其所指对象。（禁止拷贝语义、只有移动语义）
 std::unique_ptr<int> uptr(new int(10));
 std::unique_ptr<int> uptr2 = std::move(uptr); //转移所有权。
+	//如果函数参数为std::unique_ptr，那么只能用std::move进行转移。
 uptr2.release(); //释放所有权。
+
+std::make_unique<int>(3); //c++14支持
 ```
+
+
+
+
 
 
 
@@ -78,6 +102,24 @@ if (!wp.expired()) {
 else {
     std::shared_ptr<int> sh_ptr2 = wp.lock(); //获得一个存储空的shared_ptr对象。
 }
+```
+
+
+
+## smart_ptr cast
+
+c11定义了如下三个smart_ptr间相互转换的函数。
+<font color=gree>转换成功之后，原对象的引用计数会**+1**</font>。
+
+```cpp
+template< class T, class U > 
+std::shared_ptr<T> static_pointer_cast( const std::shared_ptr<U>& r ) noexcept;
+
+template< class T, class U > 
+std::shared_ptr<T> dynamic_pointer_cast( const std::shared_ptr<U>& r ) noexcept;
+
+template< class T, class U > 
+std::shared_ptr<T> const_pointer_cast( const std::shared_ptr<U>& r ) noexcept;
 ```
 
 

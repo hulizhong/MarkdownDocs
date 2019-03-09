@@ -23,6 +23,7 @@ gcc, g++相关。
 Gcc编译过程主要的4个阶段：
 
 1. 预处理阶段，完成宏定义和include文件展开等工作；（gcc -E xx.c -o xx.i）
+   1. 处理的指令有：`#include, #define, #ifdef, #ifndef, #if, #endif, #undef, #pragma`...
 2. 编译阶段，根据编译参数进行不同程度的优化，编译成`汇编代码`(gcc -S xx.c xx.s/xx.s)
 3. 汇编阶段，用汇编器把`汇编代码`进一步生成`目标代码`(gcc -c xx.c -o xx.o)
 4. 链接阶段，用`连接器`把生成的目标代码和系统、用户提供的库连接起来，生成可执行文件(cc -o xx xx.c)

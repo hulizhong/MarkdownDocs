@@ -413,6 +413,9 @@ Foo *f = new Foo;
 ### Destructor
 
 There can be only one destructor per class. It takes no argument and returns nothing.
+<font color=gree>为了安全，尽可能的不要抛出异常。如果非抛不可，那么自己异常自己吃掉</font>！
+  原因1，如果析构函数抛出异常，则异常点之后的程序不会执行，如果析构函数在异常点之后执行了某些必要的动作比如释放某些资源，则这些动作不会执行，会造成诸如资源泄漏的问题。
+  原因2，通常异常发生时，c++的机制会调用已经构造对象的析构函数来释放资源，此时若析构函数本身也抛出异常，则前一个异常尚未处理，又有新的异常，会造成程序崩溃的问题。  
 
 ```cpp
 class Foo
@@ -945,6 +948,7 @@ template class classname<typename>;  //显式实例化类模板。
 模板特化、具体化、偏特化：针对所支持的泛型中的某一特殊类型进行不一样的处理，as follow.
 
 ```cpp
+//--------------------------------------------------class template specialization.
 template <typename T>
 class Foo
 {
@@ -956,8 +960,8 @@ public:
     };
 };
 
-template <>
-class Foo<float>
+template <>         //空声明
+class Foo<float>    //类名后，缀特化类型<type>
 {
     float _value;
 public:
@@ -969,6 +973,14 @@ public:
 
 Foo<int> f1(5);
 Foo<float> f2(5.0);  //will print "Specialized constructor called"
+
+
+//-----------------------------------------------function template specialization.
+template<>                    //空声明
+int fun<float>(int a, int b)  //函数名后，缀特化类型<<type>
+{
+    //...
+}
 ```
 
 
@@ -981,29 +993,35 @@ Foo<float> f2(5.0);  //will print "Specialized constructor called"
 | ------------------------------------------------------------ | -------------- | ------------------------------------------------------------ |
 | Sequence containers：拥有由单一类型元素组成的一个有序集合。  | vector.向量    |                                                              |
 |                                                              | deque.双端队列 | 提供了与 vector 相同的行为，但是对于首元素的有效插入和删除提供了特殊的支持。 |
-|                                                              | list.列表      |                                                              |
+|                                                              | list.链表      |                                                              |
 | Associative containers：支持查询一个元素是否存在，并且可以有效地获取元素。 | set            | 包含一个单一键值，有效支持关于元素是否存在的查询。           |
 |                                                              | multiset       |                                                              |
-|                                                              | map            | 键值对。                                                     |
+|                                                              | map            | 键值对（字典）。                                             |
 |                                                              | multimap       |                                                              |
 |                                                              | bitset         |                                                              |
 | Container adaptors.容器适配器                                | stack栈        | 后进先出                                                     |
 |                                                              | queue队列      | 先进先出                                                     |
 |                                                              | priority_queue | 优先级队列入队放在比它优先级低的前面。                       |
 
-**顺序容器怎么选择**？
-选择的准则主要是关注插入特性以及对元素的后续访问要求。
-vector, 连续内存，访问O(1)，但不在末尾插入、删除效率低。
-deque, 连续内存，可在首部快速插入、删除O(1)。
-list, 非连接内存，插入效率高，访问靠遍历，元素有额外的向前向后指针空间开销。
 
 
+更多容器信息[参考这里](stl-container.md)
+
+
+
+**Q, 容器的元素有什么特征？**
+可默认构造；+ 可拷贝构造、拷贝赋值；+ 可析构；
+关联容器，要求元素具有可比较性；
+如此，`std::shared_ptr, std::unique_ptr`是可以作为容器元素的，但是`std::auto_ptr`是不行的。
 
 
 
 ### Iterators
 
 can iterate over a container. 常被用于泛型算法中。
+迭代器是一种检查容器内元素并遍历元素的数据类型。vs 指针？
+  类似于指针，提供了对对象的间接访问。但迭代器功能更丰富。
+  迭代器提供了对对象的访问方法，+ <font color=gree>定义了容器的范围（begin(), end()）</font>。
 
 ```cpp
 std::map<std::string,int>::iterator iter;
@@ -1016,6 +1034,25 @@ vector< type >::reverse_iterator r_iter =  vec0.rbegin();  //反向
 inserter();  //插入迭代器
 
 ```
+
+
+
+**迭代器类型：**
+
+| 类型           | 支持的操作                                  | 权限         |
+| -------------- | ------------------------------------------- | ------------ |
+| 输入迭代器     | p++, *p是右值, =, ==, !=                    | 可读、不可写 |
+| 输出迭代器     | p++, *p是左值, =                            | 可写、不可读 |
+| 前向迭代器     | 输入 + 输出迭代器                           | 可读、可写   |
+| 双向迭代器     | p++, p--                                    | 可读、可写   |
+| 随机访问迭代器 | p++, +=, -=, +, -, [], <位置对比, <=, >, >= | 可读、可写   |
+
+
+
+**Q, 容器支持的迭代器类型？**
+随机：vector, deque.
+双向：list, set, multiset, map, multimap.
+stack, queue, priority_queue，<font color=gree>不支持迭代器操作</font>。
 
 
 
@@ -1081,7 +1118,7 @@ Algorithms from the STL offer fast, robust, tested and maintained code for a lot
 
 排序算法不能用于：list、关联容器上。
 
-
+更多stl算法信息[参考这里](stl-algorithm.md)
 
 
 
@@ -1090,4 +1127,24 @@ https://blog.csdn.net/csdn_chai/article/details/78041050
 https://blog.csdn.net/csdn_chai/article/details/77600135
 
 http://c.biancheng.net/cplus/80/
+
+
+
+## The End
+
+### undefined & unspecified behavior 
+
+**Undefined behavior (UB)** means that the standard guarantees nothing about how the program should behave.  ---未定义。
+  •解引用空指针或野指针。
+  •访问未初始化内存，比如超出数组的边界或读取未初始化的本地变量。
+  •删除相同的内存两次，或者更一般地删除一个野生指针。
+  •算术错误，比如除以0。
+
+**Unspecified未规定 (or implementation-defined) behavior** means that the standard requires the behavior to be well-defined, but leaves the definition up to the compiler implementation. ---定义了未实现，留给编译器。
+
+
+
+
+
+
 

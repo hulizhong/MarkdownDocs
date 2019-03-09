@@ -176,6 +176,8 @@ private:
 
 
 **std::unique_ptr VS boost::scoped_ptr**
+`unique_ptr`独占一个对象。它是不可复制的，但支持所有权转让。它是已废弃的auto_ptr的替代品而引入的。
+`scoped_ptr`既不可复制也不可移动。当您希望确保指针在超出作用域时被删除时，它是首选的选择。
 
 | ptr name              | Copyable | Movable |
 | --------------------- | -------- | ------- |
@@ -233,16 +235,16 @@ private:
 当我们对智能指针进行类层次上的上下行转换时，则需要如下:
 dynamic cast
 ```cpp
-boost::dynamic_pointer_cast
+boost::dynamic_pointer_cast<T>();
 boost::shared_ptr<DeriveClass> ptrDerive = boost::dynamic_pointer_cast<DeriveClass>(ptrBase); 
-	只是dynamic_cast在进行下行转换的时候（即基类到派生类）具有类型检查功能
+	//只是dynamic_cast在进行下行转换的时候（即基类到派生类）具有类型检查功能
 ```
 
 static cast
 const cast
 ```cpp
-boost::static_pointer_cast
-boost::const_pointer_cast
+boost::static_pointer_cast<>();
+boost::const_pointer_cast<>();
 ```
 
 reinterpret cast重解释转换
