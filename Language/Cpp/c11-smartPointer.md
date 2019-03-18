@@ -22,7 +22,7 @@ c11智能指针。
 
 - 原理
   - 说法一：接受一个申请好的内存地址，构造一个保存在栈上的智能指针对象，当程序退出栈的作用域范围后，由于栈上的变量自动被销毁，智能指针内部保存的内存也就被释放掉了（除非将智能指针保存起来）；
-  - 说法二：利用RAII（Resource Acquisition Is Initialization资源获取即初始化）对普通的指针进行封装，使得smart pointer实质上是一个对象，但行为表现却是一个指针；
+  - 说法二：利用RAII（Resource Acquisition Is Initialization资源获取即初始化）对普通的指针进行封装，使得<font color=gree>smart pointer实质上是一个对象，但行为表现却是一个指针</font>；
 - 作用
   - 防止忘记调用delete释放内存；
   - 多次释放同一个指针引起的crash；

@@ -76,8 +76,8 @@ Notice. 判断的变量不需要使用`${var}`格式，而是直接使用`var`.
 - 在CMAKE\_MODULE\_PATH定义的目录中添加
 	- Findxxyy.cmake
 - 在Findxxyy.cmake中实现
-	- 头文件查找，并设置变量_INCLUDE_DIRS；
-	- 库查找，并设置变量_LIBRARIES；
+	- 头文件查找，并设置`变量_INCLUDE_DIRS`；
+	- 库查找，并设置`变量_LIBRARIES`；
 - 在顶层CMakeLists.txt
 	- 判断xxyy_FOUND是找到了包；
 	- 如果找到（也可以在子工程里面进行include, link）
@@ -185,50 +185,51 @@ Todo. https://blog.csdn.net/z_h_s/article/details/50699905
 
 指令如下：
 
-| key                              | subkey       | value                                           |
-| -------------------------------- | ------------ | ----------------------------------------------- |
-| project(XX)                      |              | 项目名称，${XX_SOURCE_DIR}则为项目根目录。      |
-| cmake_mini**m**um_required(..)   |              | cmake最低版本设置。(VERSION 2.8 FATAL_ERROR)    |
-| include(xx)                      |              | 引入cmake模块xx.                                |
-|                                  |              |                                                 |
-| add_subdirectory(dir)            |              | 包含子目录dir中的CmakeLists.txt.                |
-| aux_source_directory(dir var)    |              | 发现dir下面所有源码文件、并将文件列表赋值给var. |
-| add_executable(obj codefilelist) |              | 生成二进制目标。                                |
-| add_library(obj codefilelist)    |              | 生成库目标。                                    |
-|                                  |              |                                                 |
-| include_directories(xx)          |              | -I参数                                          |
-| link_directories(xx)             |              | -L参数                                          |
-| target_link_libraries(xx)        |              | -l参数                                          |
-|                                  |              |                                                 |
-| add_definitions(-DXX)            |              | 向c/c++编译器添加-DXX定义。                     |
-| cmake_c_flags                    |              | 预置变量：c编译器选项设置；                     |
-| cmake_cxx_flags                  |              | 预置变量：c++编译器选项设置；                   |
-|                                  |              |                                                 |
-| file(subkey ..)                  |              | 文件操作指令                                    |
-| install(subkey ..)               |              |                                                 |
-| find_xx(..)                      |              | find_系列指令                                   |
-|                                  | find_file    |                                                 |
-|                                  | find_library |                                                 |
-|                                  | find_path    |                                                 |
-|                                  | find_program |                                                 |
-|                                  | find_package |                                                 |
-|                                  |              |                                                 |
-|                                  |              |                                                 |
-|                                  |              |                                                 |
-|                                  |              |                                                 |
-|                                  |              |                                                 |
-|                                  |              |                                                 |
-|                                  |              |                                                 |
-|                                  |              |                                                 |
-|                                  |              |                                                 |
-|                                  |              |                                                 |
-|                                  |              |                                                 |
-|                                  |              |                                                 |
-|                                  |              |                                                 |
-|                                  |              |                                                 |
-|                                  |              |                                                 |
-|                                  |              |                                                 |
-|                                  |              |                                                 |
+| key                              | subkey       | value                                                        |
+| -------------------------------- | ------------ | ------------------------------------------------------------ |
+| project(XX)                      |              | 项目名称，${XX_SOURCE_DIR}则为项目根目录。                   |
+| cmake_mini**m**um_required(..)   |              | cmake最低版本设置。(VERSION 2.8 FATAL_ERROR)                 |
+| include(xx)                      |              | 引入cmake模块xx.                                             |
+|                                  |              |                                                              |
+| add_subdirectory(dir)            |              | 包含子目录dir中的CmakeLists.txt.                             |
+| aux_source_directory(dir var)    |              | 发现dir下面所有源码文件、并将文件列表赋值给var.              |
+| add_executable(obj codefilelist) |              | 生成二进制目标。                                             |
+| add_library(obj codefilelist)    |              | 生成库目标。                                                 |
+|                                  |              |                                                              |
+| include_directories(xx)          |              | -I参数                                                       |
+| link_directories(xx)             |              | -L参数                                                       |
+| target_link_libraries(obj a b)   |              | 为obj指定-l库名，可以放在任何地址。                          |
+| link_libraries(a b c)            |              | 为后续add_executable/add_library目标指定-l库，只能放在前面。 |
+|                                  |              |                                                              |
+| add_definitions(-DXX)            |              | 向c/c++编译器添加-DXX定义。                                  |
+| cmake_c_flags                    |              | 预置变量：c编译器选项设置；                                  |
+| cmake_cxx_flags                  |              | 预置变量：c++编译器选项设置；                                |
+|                                  |              |                                                              |
+| file(subkey ..)                  |              | 文件操作指令                                                 |
+| install(subkey ..)               |              |                                                              |
+| find_xx(..)                      |              | find_系列指令                                                |
+|                                  | find_file    |                                                              |
+|                                  | find_library |                                                              |
+|                                  | find_path    |                                                              |
+|                                  | find_program |                                                              |
+|                                  | find_package |                                                              |
+|                                  |              |                                                              |
+|                                  |              |                                                              |
+|                                  |              |                                                              |
+|                                  |              |                                                              |
+|                                  |              |                                                              |
+|                                  |              |                                                              |
+|                                  |              |                                                              |
+|                                  |              |                                                              |
+|                                  |              |                                                              |
+|                                  |              |                                                              |
+|                                  |              |                                                              |
+|                                  |              |                                                              |
+|                                  |              |                                                              |
+|                                  |              |                                                              |
+|                                  |              |                                                              |
+|                                  |              |                                                              |
+|                                  |              |                                                              |
 
 
 
