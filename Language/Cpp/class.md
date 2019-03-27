@@ -209,6 +209,7 @@ Demo *obj = Demo::getInstance();
 ### static
 
 static属性的变量、方法均属于类，而非对象；但这些static属性、方法却也属于对象（故可以对象调用static方法、对象可以访问static属性）；
+能被继承，但是<font color=gree>与virtual相违背（编译不能通过，没有this指针）</font>；
 
 ```cpp
 class Base{

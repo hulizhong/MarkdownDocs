@@ -33,6 +33,28 @@ message("Will pring val = ${val}")
 
 
 
+### 文件管理
+
+```cmake
+add_executable(obj f1.cpp f2.cpp)
+	#最简单的方法，就是这样后缀。
+
+aux_source_directory([Path] [Variable])
+	#获取一个目录下的的所有源文件 然后储存在变量Variable中
+	
+FILE(GLOB var ./include/*.h)
+	#GLOB 获取./include/目录下的*.h 储存在变量var中
+FILE(GLOB_RECURSE var ./source/*.cpp)
+	#GLOB_RECURSE 递归获取./include/目录和子目录下的*.cpp 储存在变量var中
+
+```
+
+备注：file的glob, glob_recurse选项；
+GLOB选项将会为所有匹配查询表达式的文件生成一个文件list，并将该list存储进变量variable里。
+GLOB_RECURSE选项将会生成一个类似于通常的GLOB选项的list，只是它会寻访所有那些匹配目录的子路径并同时匹配查询表达式的文件。作为符号链接的子路径只有在给定FOLLOW_SYMLINKS选项或者cmake策略CMP0009被设置为NEW时，才会被寻访到。
+
+
+
 --------
 
 **if**
@@ -325,3 +347,48 @@ if (WIN32 OR APPLE)
 else()
 endif()
 ```
+
+
+
+## With Visual Studio
+
+**Q. cmake生成`projectname.sln` ？**这个sln文件就是visual studio的工程文件，可以用vs来跑。
+CMakeLists.txt要用`VS2012 x86 Native Tools Command Prompt`来跑，这样才能跑出来工程的sln。
+   step 1. mkdir build; cd build;
+   step 2 with nmake.      cmake .. -G "NMake Makefiles";  nmake;
+   step 2 with msbuild.    cmake ..; msbuild xx.sln;
+
+
+
+### msbuild
+
+MSBuild 是 Microsoft 和 Visual Studio 的生成平台。
+msbuild的项目文件是xml定义的。也可以以参数的形式给到msbuild。
+
+```bash
+#--------------------------------sln方法
+msbuild projectname.sln
+
+#------------------------------------vcxproj方法
+msbuild ALL_BUILD.vcxproj /p:Configuration=Release /p:Platform=x64 /p:MultiProcessorCompilation=true /p:PlatformToolset=v140_xp
+
+msbuild ALL_BUILD.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:MultiProcessorCompilation=true /p:PlatformToolset=v140_xp
+```
+
+参数
+
+- /p, /property 后接属性；
+- /t, /target 生成目标；
+
+属性值
+
+- Configuration
+- Platform
+- MultiprocessorCompilation
+- PlatformToolset
+- ...
+
+
+
+### visual studio usage
+

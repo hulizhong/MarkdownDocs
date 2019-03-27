@@ -20,6 +20,40 @@ stl算法库，包含了如下：
 
 
 
+## 查找
+
+### find
+
+在一段范围内查找特定值。
+
+
+
+### find_if
+
+是find的一个谓词判断版本，它利用<font color=gree>返回布尔值的谓词判断pred</font>，检查迭代器区间[first, last)上的每一个元素，如果迭代器iter满足pred(*iter) == true，表示找到元素并返回迭代器值iter；未找到元素，则返回last。
+
+```cpp
+find_if(begin(), end(), [&](const type &y)->bool{return x > y;});
+	//第三个元素为一个一元判定器。可以用lambda, 也可用std::bind.
+
+```
+
+
+
+### find_first_of
+
+第一段范围内查找与第二段范围中任意元素匹配的元素，然后返回一个迭代器，指向第一个匹配的元素。如果找不到匹配元素，则返回第一个范围的end迭代器。
+
+
+
+### adjacent_find
+
+用于<font color=gree>查找相等或满足条件的邻近元素对</font>，其有两种函数原型：
+一种在迭代器区间[first , last)上查找两个连续的元素相等时，返回元素对中第一个元素的迭代器位置。
+一种是使用<font color=gree>二元谓词判断binary_pred</font>，查找迭代器区间 [first , last)上满足binary_pred条件的邻近元素对，未找到则返回last。
+
+
+
 ## in cppreference
 
 | 不修改序列的操作                                             |                                                              |

@@ -1,3 +1,5 @@
+[TOC]
+
 ## ReadMe
 
 进程只有在编译时附带`debug`信息才能用gdb进行调试，如何查看`elf`文件具有debug信息，如下：
@@ -212,6 +214,11 @@ Mode for locking scheduler during execution is "off".
 
 
 
+### start exe with param
+
+打开cmd窗口；
+进入WinDbg目录，运行WinDbg.exe exeName param1 param2
+
 
 
 ### attach to pid
@@ -237,17 +244,17 @@ cs=001b  ss=0023  ds=0023  es=0023  fs=003b  gs=0000             efl=00010207
 *** ERROR: Symbol file could not be found.  Defaulted to export symbols for C:\...\bin\VCRUNTIME140.dll - 
 VCRUNTIME140!memcpy+0x4e:
 66bfcf5e f3a4            rep movs byte ptr es:[edi],byte ptr [esi]
-0:003> kv
+0:003> kv #or kPn
 ..
 ```
 
 此时就可以进行堆栈进行分析了
 
 ```bash
-file >> symbol file path. #设置pdb路径，最好跟exe在同一目录；
-.reload /f xx.exe  #重新加载exe，就会加载上pdb中的信息；
-lm  #查看进程加载的模块，看看pdb有没有正确被加载；
-!analyze -v   #分析出问题堆栈。（！！不加载pdb文件，有可能显示出来是错误的堆栈！！）
+file >> symbol file path.  #设置pdb路径，最好跟exe在同一目录；
+.reload /f xx.exe          #重新加载exe，就会加载上pdb中的信息；
+lm                         #查看进程加载的模块，看看pdb有没有正确被加载；
+!analyze -v                #分析出问题堆栈。（！！不加载pdb文件，有可能显示出来是错误的堆栈！！）
 
 #-------------------------举例
 0:067> !analyze -v 

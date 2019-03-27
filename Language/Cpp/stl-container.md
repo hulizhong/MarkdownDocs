@@ -18,6 +18,15 @@
 
 
 
+### 几个坑
+
+**T.方法**
+`back(), front(), pop_back(), pop_front()`; 这几个接口在空容器上操作是未定义的。
+
+
+
+
+
 ## category
 
 分类概要信息如下
@@ -39,9 +48,9 @@
   - unordered_multiset
   - unordered_multimap
 - 容器适配器，<font color=red>提供顺序容器的不同接口</font>。
-  - stack，栈LIFO。底层容器为deque（其它顺序容器也可）。
-  - queue，队列FIFO。底层容器为deque（其它顺序容器也可）。
-  - priority_queue，优先级队列。底层容器为vector（其它顺序容器也可）。
+  - stack，栈LIFO。底层容器默认为deque（可指定成其它顺序容器也可）。
+  - queue，队列FIFO。底层容器默认为deque（可指定成其它顺序容器也可）。
+  - priority_queue，优先级队列。底层容器默认为vector（可指定成其它顺序容器也可）。
 
 
 
@@ -141,7 +150,7 @@ erase()真正的删除了指定元素。
 
 ## std::vector
 
-
+**向量、动态数组**：有序集、支持随机访问。
 
 ```cpp
 //-------------------------------------------------特征
@@ -207,7 +216,7 @@ critical handler: signal 6 is triggered.
 
 ## std::list
 
-
+**双向链表**：。。。
 
 ```cpp
 //--------------特征
@@ -254,7 +263,7 @@ for(list<int>::const_iterator iter = lst1.begin();iter != lst1.end();iter++) {
 
 ## std::deque
 
-
+**双端队列**：。。。
 
 ```cpp
 //-------------------特征
@@ -279,23 +288,7 @@ std::array<int, 4> a = {1, 2, 3, 4};
 
 
 
-## queue
 
-the functions in queue template class, as follow.
-
-```cpp
-//--------------------------------------------特征
-
-
-//--------------------------------------------
-queue<int> q;
-q.push(4); //push to item at the end of queue.
-q.front(); //return the first item, but not remove it.
-q.back();  //return the lastest item, but not remove it.
-q.pop();   //remove the first item, but not return.
-```
-
-<font color=red>如果queue内没有元素，那么front()，back(),pop()的执行都会导致未定义的行为，所以在执行这三个操作是，可以通过size()和empty()判断容器是否为空</font>；
 
 
 
@@ -360,6 +353,48 @@ std::string value = mp.at("key");
 
 
 ## set集合
+
+
+
+## std::stack
+
+**栈，LIFO**：。。。
+
+
+
+## std::queue
+
+**队列，FIFO**：。。。。
+
+the functions in queue template class, as follow.
+
+```cpp
+#include <queue>
+
+//--------------------------------------------特征
+
+
+//--------------------------------------------
+queue<int> q;
+q.push(4); //push to item at the end of queue.
+q.front(); //return the first item, but not remove it.
+q.back();  //return the lastest item, but not remove it.
+q.pop();   //remove the first item, but not return.
+```
+
+<font color=red>小心：queue内没有元素，那么front()，back(), pop()的执行都会导致未定义的行为，所以在执行这三个操作是，可以通过size()和empty()判断容器是否为空</font>；
+
+
+
+## std::priority_queue
+
+**优先队列、二叉堆**：首元素最大或者最小，特征如下：
+元素内有个<font color=gree>key，优先级排序就是靠这个key</font>判断；如果元素为自定义类型，那么需要重载比较符<font color=gree>< =</font>。
+只能从访问头部，<font color=gree>不支持随机访问</font>。
+
+https://blog.csdn.net/m0_37925202/article/details/81916600
+
+
 
 
 

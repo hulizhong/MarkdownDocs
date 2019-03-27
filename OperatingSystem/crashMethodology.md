@@ -34,7 +34,8 @@ Bus Error: 10
 
 ### Dump File
 
-crash一般会有dump文件产生，然后配置编译时候产生的pdb文件，结合来看carsh stack.
+crash一般会有dump文件产生，然后配置编译时候产生的<font color=gree>pdb文件</font>，结合来看carsh stack.
+注：这个pdb文件就是一些debug信息，**debug版本能生成，release版也能生成**！
 
 
 
@@ -47,10 +48,10 @@ Debug with Native Only
 
 ### WinDbg
 
-可以分析dump文件；
-也可以attach到进程，调试运行程序，直到生成dump；
-​	step. attach.
-​	step. g
+Method 1. 可以分析dump文件；
+Method 2. 也可以attach到进程，调试运行程序，直到生成dump；
+​	step 2.1: file >> attach
+​	step 2.2: g
 
 
 
