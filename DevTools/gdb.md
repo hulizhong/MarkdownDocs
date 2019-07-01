@@ -21,6 +21,13 @@ ptype 显示一个数据结构（如一个结构或C++类）的定义；
 
 
 
+gdb attach pid
+
+gdb
+attach pid
+
+
+
 ## 指令集
 
 ### 常规操作

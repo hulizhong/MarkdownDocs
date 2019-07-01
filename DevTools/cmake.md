@@ -46,7 +46,8 @@ FILE(GLOB var ./include/*.h)
 	#GLOB 获取./include/目录下的*.h 储存在变量var中
 FILE(GLOB_RECURSE var ./source/*.cpp)
 	#GLOB_RECURSE 递归获取./include/目录和子目录下的*.cpp 储存在变量var中
-
+list(remove_item var it it2 it3)
+	#删除var列表中的it, it2, it3...
 ```
 
 备注：file的glob, glob_recurse选项；
@@ -219,6 +220,7 @@ Todo. https://blog.csdn.net/z_h_s/article/details/50699905
 | add_library(obj codefilelist)    |              | 生成库目标。                                                 |
 |                                  |              |                                                              |
 | include_directories(xx)          |              | -I参数                                                       |
+| target_include_directories()     |              |                                                              |
 | link_directories(xx)             |              | -L参数                                                       |
 | target_link_libraries(obj a b)   |              | 为obj指定-l库名，可以放在任何地址。                          |
 | link_libraries(a b c)            |              | 为后续add_executable/add_library目标指定-l库，只能放在前面。 |
@@ -236,8 +238,8 @@ Todo. https://blog.csdn.net/z_h_s/article/details/50699905
 |                                  | find_program |                                                              |
 |                                  | find_package |                                                              |
 |                                  |              |                                                              |
-|                                  |              |                                                              |
-|                                  |              |                                                              |
+| list(op list item ...)           | append       | 向list中追加item.                                            |
+|                                  | remove_item  | 从list中删除item.                                            |
 |                                  |              |                                                              |
 |                                  |              |                                                              |
 |                                  |              |                                                              |
@@ -392,3 +394,19 @@ msbuild ALL_BUILD.vcxproj /p:Configuration=Release /p:Platform=Win32 /p:MultiPro
 
 ### visual studio usage
 
+
+
+**T. windows SoftwareDevelopmentKits.**
+
+microsoft windows SDK是其前身Platform SDK, .net framework SDK的集成者；
+platfrom sdk，是为win2000, xp, winserver2003开发应用用的；
+.net framework sdk，是为.net framework 1.0/2.0开发应用有的；
+windows sdk，是为xp及以后，.net framework 3.0及以后用的；
+
+**Q. **`C:\Program Files (x86)\Windows Kits`  vs `C:\Program Files (x86)\Microsoft SDKs` 有什么区别？？ 
+
+
+
+
+
+**Q. 集成在其中的win sdk版本是多少？怎么看？安装位置在哪？可以扩展成其它版本的win sdk吗？**

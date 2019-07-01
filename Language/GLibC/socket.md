@@ -239,7 +239,7 @@ int shutdown(int sockfd, int how);
 会给对端发送一个FIN包，如果底层sendbuffer中尚有数据未发送，那么会尽力发送完这些数据并在最后一个报文中加上FIN标志，同时关闭angle算法（减少网络中小报文）。【如果sendbuffer中没有数据，那么直接FIN包】
 
 `shutdown(fd, shut_rd)`关闭本端读端
-不会向对端发送任何消息，只是限制本地API对fd的read()直接返回EOS。（这个过程依赖OS的实现）
+**不会向对端发送任何消息，只是限制本地API对fd的read()直接返回EOS**。（这个过程依赖OS的实现）
 Unix会确认它、并且丢弃它；
 Linux会确认它、并且缓冲它，最终会给对端发rst来停止对端的运行；
 Win会发送一个RST，此时对端会报"Connection Rest By Peer".
@@ -252,7 +252,7 @@ Win会发送一个RST，此时对端会报"Connection Rest By Peer".
 
 **close VS shutodown**
 
-shutdown可以灵活指定关闭哪端（读端、写端、读写端）；close只能是写端？
+shutdown可以灵活指定关闭哪端（读端、写端、读写端）；close只能是写端？-----**两端都关闭等效于shutdown(fd, RDWR) !!!**
 
 shutown会重置fd的引用数为0（如之前dup出来的fd），然后关闭对应的端；而close只是fd的引用数-1，当为0时才会进行相应的操作；
 

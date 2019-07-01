@@ -30,7 +30,39 @@ boost 1.58的智能指针源码目录结构如下：
 ```
 
 
+
+### outline
+
+- scoped\_ptr
+  - 不共享所有权、不转移所有权、不管理数组对象；
+  - 可以置换所有权；
+- shared\_ptr
+  - 共享所有权； 
+  - 解决不了循环引用问题，所以有了弱引用；
+- weak_ptr
+  - 弱引用
+  - boost::weak_ptr必须从一个boost::share\_ptr或另一个boost::weak_ptr转换而来；
+    - 这也说明，进行该对象的内存管理的是那个强引用的boost::share_ptr。
+    - boost::weak_ptr只是提供了对管理对象的一个访问手段。
+
+**T. 什么是强引用、弱引用**？
+
+> 主要看是否参与对象内存的管理；
+
+- 强引用
+  - 会改变引用计数；
+  - 参与对象内存的管理；
+    - 只要（强）引用存在，对象就不能被销毁；
+- 弱引用
+  - 不会改变引用计数；
+  - 不参与对象内存的管理；
+  - 在功能上类似于普通指针，但是弱引用能检测到所管理的对象是否已经被释放，从而避免访问非法内存。
+    - 当被引用的对象消失时，弱引用会自动设置为nil；
+
+
+
 ## shared\_ptr
+
 自带引用计数器，用以表示类型T的对象引用次数；
 如果count==0那么该对象已无人使用，需要释放对象空间了；
 
@@ -38,7 +70,7 @@ boost 1.58的智能指针源码目录结构如下：
 [基础用法](#共享指针基础用法)
 [易出问题的点](#共享指针难点)
 
-### Basic Usage
+### basic usage
 构造
 ```cpp
 class Person {
@@ -88,7 +120,7 @@ if (intPtr)
 
 
 
-### Key Points
+### key points
 
 错误点：一个裸指针创建多个智能指针
 ```cpp
@@ -115,7 +147,7 @@ Abort trap: 6
 
 是shared\_ptr的观察者对象，而不进行引用（即赋值之后，引用计数不会+1）；
 
-### Member Function
+### member function
 ```cpp
 //可以观测资源的引用计数
 use_count()
@@ -199,41 +231,12 @@ private:
 和scoped\_ptr类似，用来处理数组；
 
 
-## SmartPointer Summing-Up
-- scoped\_ptr
-	- 不共享所有权、不转移所有权、不管理数组对象；
-	- 可以置换所有权；
-
-- shared\_ptr
-	- 共享所有权； 
-	- 解决不了循环引用问题，所以有了弱引用；
-
-- weak_ptr
-	- 弱引用
-	- boost::weak_ptr必须从一个boost::share\_ptr或另一个boost::weak_ptr转换而来；
-		- 这也说明，进行该对象的内存管理的是那个强引用的boost::share_ptr。
-		- boost::weak_ptr只是提供了对管理对象的一个访问手段。
-
-什么是强引用、弱引用？
-> 主要看是否参与对象内存的管理；
-
-
-- 强引用
-	- 会改变引用计数；
-	- 参与对象内存的管理；
-		- 只要（强）引用存在，对象就不能被销毁；
-- 弱引用
-	- 不会改变引用计数；
-	- 不参与对象内存的管理；
-	- 在功能上类似于普通指针，但是弱引用能检测到所管理的对象是否已经被释放，从而避免访问非法内存。
-		- 当被引用的对象消失时，弱引用会自动设置为nil；
-
-
 
 ## SmartPointer Cast
 如同我们用dynamic\_cast对“裸”指针进行类层次上的上下行转换时一样；
 当我们对智能指针进行类层次上的上下行转换时，则需要如下:
 dynamic cast
+
 ```cpp
 boost::dynamic_pointer_cast<T>();
 boost::shared_ptr<DeriveClass> ptrDerive = boost::dynamic_pointer_cast<DeriveClass>(ptrBase); 

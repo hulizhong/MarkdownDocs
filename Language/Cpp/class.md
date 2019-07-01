@@ -2,78 +2,78 @@
 
 ## 友元
 允许一个类将对其非公有成员的访问权（protect, private）授予指定的函数或者类。
-友元声明可以出现在类中的任何地方，而不受（public, protect, private）限制。
+友元声明可以出现在类中的任何地方，而<font color=gree>不受（public, protect, private）限制</font>。
 
 ### 各种友元
 - 友元函数
 
-	```cpp
-	class A
-	{
-	public:
-		friend void set_show(int x, A &a);  //该函数是友元函数的声明
-	private:
-		int data;
-	};
-
-	/*
-	友元函数：必须要有个类对象的引用。
-	*/
-	void set_show(int x, A &a)
-	{
-		a.data = x;
-		cout << a.data << endl;
-	}
-	```
+  ```cpp
+  class A
+  {
+  public:
+  	friend void set_show(int x, A &a);  //该函数是友元函数的声明
+  private:
+  	int data;
+  };
+  
+  /*
+  友元函数：!!必须要有个类对象的引用!!。
+  */
+  void set_show(int x, A &a)
+  {
+  	a.data = x;
+  	cout << a.data << endl;
+  }
+  ```
 
 - 友元类（友元类C的所有函数都可以访问A中的protect, private）
 
-	```cpp
-	class A
-	{
-	public:
-		friend class C;  //这是友元类的声明
-	private:
-		int data;
-	};
+  ```cpp
+  class A
+  {
+  public:
+  	friend class C;  //这是友元类的声明
+  private:
+  	int data;
+  };
+  
+  class C  //友元类定义，为了访问类A中的成员
+  {
+  public:
+  	//一样的，必须要有个被访问类的对象引用。
+  	void set_show(int x, A &a) { a.data = x; cout<<a.data<<endl;}
+  };
+  ```
 
-	class C  //友元类定义，为了访问类A中的成员
-	{
-	public:
-		//一样的，必须要有个被访问类的对象引用。
-		void set_show(int x, A &a) { a.data = x; cout<<a.data<<endl;}
-	};
-	```
+- 友元类成员函数
 
-- 友元成员函数
-
-	```cpp
-	//当用到友元成员函数时，需注意友元声明与友元定义之间的互相依赖。这是类A的声明
-	class A;
-
-	class B
-	{
-	public:
-		void set_show(int x, A &a);    //该函数是类A的友元函数
-	};
-
-	class A
-	{
-	public:
-		friend void B::set_show(int x, A &a);   //该函数是友元成员函数的声明
-
-	private:
-		int data;
-		void show() { cout << data << endl; }
-	};
-
-	//只有在定义类A后才能定义该函数，毕竟，它被设为友元是为了访问类A的成员
-	void B::set_show(int x, A &a)
-	{
-		a.data = x;
-		cout << a.data << endl;
-	}
-	```
+  ```cpp
+  //当用到友元成员函数时，需注意友元声明与友元定义之间的互相依赖。这是类A的声明
+  class A;
+  
+  class B
+  {
+  public:
+  	void set_show(int x, A &a);    //该函数是类A的友元函数
+  };
+  
+  class A
+  {
+  public:
+  	friend void B::set_show(int x, A &a);   //该函数是友元成员函数的声明
+  
+  private:
+  	int data;
+  	void show() { cout << data << endl; }
+  };
+  
+  //只有在定义类A后才能定义该函数，毕竟，它被设为友元是为了访问类A的成员
+  void B::set_show(int x, A &a)
+  {
+  	a.data = x;
+  	cout << a.data << endl;
+  }
+  ```
 
 ### 友元的优劣
 - 优点
@@ -85,7 +85,7 @@
 ## 各种特殊的类
 ### 内部类
 内部类与外部类没有任何关系；
-内部类受外部类public/protected/private约束；
+内部类<font color=gree>受外部类public/protected/private约束</font>；
 
 有内部类的概念是因为：
 > 内部类主要是为了避免命名冲突；（内部类定义为public）

@@ -238,6 +238,23 @@ E: Unable to correct problems, you have held broken packages.
 
 
 
+apt-get update
+
+> http://mirrors.163.com/debian/dists/ 目录下有哪些版本，源就只支持这些版本的更新了！！
+>
+> /var/lib/dpkg/ 是apt-get update的更新库环境？？？
+>
+> /etc/apt/sources.list
+
+
+
+download xx.tar.gz ; install
+
+> --prefix=/usr/local   默认都是安装在/usr/local下的，/usr/loca/[bin/include/lib]/
+> apt-get 默认安装在/usr/下的，/usr/[bin/include/lib]/
+
+
+
 ### yum, rpm
 
 ```bash
@@ -269,7 +286,7 @@ diff
 - -a 把所有文件当txt文件处理。
 - -r 递归处理文件。
 
-`diff -Nuar srcDir destDir > add.patch` 生成patch文件，如下格式：
+<font color=red size=4>`diff -Nuar srcDir destDir > add.patch`</font> 生成patch文件，如下格式：
 
 ```bash
 diff -Nuar hehe/xx.cpp hehenew/xx.cpp  #注意：前后关系 + 目录级别关系
@@ -280,9 +297,13 @@ diff -Nuar hehe/xx.cpp hehenew/xx.cpp  #注意：前后关系 + 目录级别关�
 
 patch
 
+<font color=gree size=4>`patch -p0 < add.patch`</font> 生成patch文件，如下格式：
+
 - -R反向操作。
 - -pNum 从哪一级目录查找目标文件(夹)，-p0从当前目录查找。
   - <font color=blue>这个目录级别是指patch中的文件的目录结构！！！</font>
+  - 如果 -p0，那就表示从当前目录寻找old文件/文件夹，并对它们进行patch操作。
+  - 如果是 -p1，那么忽略patch结构中的第1层目录；以此类推。
 - -d dir 在处理之前跳转到该目录下。
 
 ```bash

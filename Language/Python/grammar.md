@@ -268,11 +268,11 @@ u|U""    #unicode字符串
 #-----------------------------------------------------基本操作
 length = len(str)
 
-#-----------------------------------------------------大小写
+#----------大小写
 str.upper()
 str.lower()
 
-#-----------------------------------------------------查找
+#-------------查找
 str.find(str1)  #return str1's pos, otherwise -1.
 str.rfind(str, beg=0 end=len(string))
 str.index(str1)   #return str1's pos, otherwise raise exception.
@@ -283,7 +283,12 @@ str[1:]  #从第2位开始到最后
 str[-1]  #倒数第1位
 str[-3:-1] #倒数第3位到倒数第1位。
 
-#-----------------------------------------------------合并：+、join()、拆分
+str.startswith("sk")`
+str = str.lstrip();       #删除左边的空格
+str = str.rstrip();
+str = str.strip('\t\ ');  #删除两边的\t，空格；
+
+#------------------合并：+、join()、拆分
 str = str1 + str2
 str = '-';
 lst = [a, b, c];
@@ -299,8 +304,9 @@ strFormat = "I'm format string with %-10s %d %.2f" % (format1, format2, format3)
 # 法二用字典：
 print("I'm %(name)s. I'm %(age)d year old" % {'name':'Vamei', 'age':99})
 
-str = u"1234"; str.isdecimal()  #检测unicode字符串是否只包含十进制字符；
-str.isdigit()  #检测字符串是否只由数字组成。
+str = u"1234";
+str.isdecimal()  #检测unicode字符串是否只包含十进制字符；
+str.isdigit()    #检测字符串是否只由数字组成。
 ```
 
 ### 列表list []
@@ -418,12 +424,40 @@ for key,value in a.items():
 **注意**：复制是个坑哦
 
 ```python
-
 dict1 = dict        #别名  
 dict2 = dict.copy()   #克隆，即另一个拷贝。但这也只是个浅拷贝。  
 ```
 
 ### 时间、日期
+
+
+
+## 异常
+
+```python
+# BaseException 所有异常的基类
+# Exception 常规错误的基类
+
+# ----------------format 0.
+try:
+    pass
+except (IndexError,KeyError) as e:
+    print(e)
+
+# ---------------------- format 1.
+try:
+    pass
+except Exception as e:
+    print(e)
+except BaseException as e:
+    print(e)
+else:
+	print("no exception case.")
+finnally:
+    print("has & no exception case.")
+```
+
+
 
 
 

@@ -39,6 +39,34 @@ Json::StyledWriter sw;  //实现类，有格式写入string.
 std::string Json::Value::toStyledString();
 ```
 
+
+
+数据类型
+
+```cpp
+enum ValueType {
+    nullValue;  //null
+    	//isNull().
+    intValue;
+    uintValue;
+    realValue;  //double
+    	//isDouble()
+    stringValue;
+    	//isString(), isIntegral(), isNumeric().
+    booleanValue;
+    arrayValue;  //array value (ordered list).
+    	//isArray().
+    objectValue; //object value (name/value pairs).
+    	//isObject().
+};
+
+Json::Value v1;  // null
+Json::Value arr(Json::arrayValue);  // []
+Json::Value obj(Json::objectValue); // {}
+```
+
+
+
 一些具体的api.
 
 ```cpp

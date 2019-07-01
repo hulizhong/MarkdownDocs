@@ -2,40 +2,110 @@
 
 ## ReadMe
 
+python下file的处理；
+python下文件系统的处理；（路径、。。）
+
+
+
+问题点：
+
+- [x] readlines(1000)文件不够1000行，但怎么一次性读取不完呢？
+- [ ] 。。。
+
+
+
 
 
 ## 文件处理
 
-### 按行读取
+`read()、readline()、readlines()`均可接受一个变量用以限制每次读取的数据量，但通常不使用。
+
+
+
+### read
+
+read()读取整个文件，将文件内容放到一个字符串变量中。
+但是：<font color=red>如果文件非常大，尤其是大于内存时，无法使用read()方法</font>。
 
 ```python
-file = open("sample.txt")
+file = open('readme.txt', 'r')
+try:
+    text = file.read()
+finally:
+    file.close()
+```
+
+
+
+### readline, readlines
+
+readline()方法每次读取一行；返回的是一个字符串对象，保持当前行的内存。
+但是：<font color=red>比readlines慢得多</font>。
+
+```python
+file = open("sample.txt", 'r')
 
 # Version------------------基础版本
-while 1:
-    line = file.readline() #得到的line本身包含一个换行符号, line=line.strip('\n')
-    if not line:
-        break
-    print line
+try:
+    while True:
+    	line = file.readline() #得到的line本身包含一个换行符号, line=line.strip('\n')
+    	if not line:
+        	break
+finally:
+    file.close()
 
-# Version-----------------带缓存版本的（效率是以上的3倍！）
-while 1:
-    lines = file.readlines(100000)
-    if not lines:
-        break
-    for line in lines:
-        pass # do something
+#f.readlines(1000)  #有内容不够1000行，但没一次读完，怎么回事？？？---rabin.
+#f.readlines()      #这样就能读取完
     
 # Version--------------python2.2以后
 for line in file:
     pass # do something
 ```
 
+readlines()一次性读取整个文件，自动将文件内容分析成一个行的列表。
+
+```python
+file = open("sample.txt", 'r')
+try:
+	lines = file.readlines()
+finally:
+    file.close()
+```
 
 
 
+### write, writelines
 
-## 目录遍历
+```python
+file.write(str)  #参数：str
+file.writelines([str])  #参数为：str、str序列
+```
+
+
+
+## 路径、文件名处理
+
+### API
+
+```python
+import os
+
+os.path.basename("/home/rabin/1.log") #1.log
+os.path.dirname("/home/rabin/1.log")  #/home/rabin
+os.path.split()   #把文件名和路径拆分到元组中
+os.path.exists()
+os.path.isdir()
+os.path.isfile()
+
+os.listdir()
+	#可以列出路径下所有文件和目录名，但是不包括当前目录., 上级目录.. 以及子目录下的文件.
+os.rename(oldfile, newfile);
+```
+
+
+
+### 目录遍历
+
 os.walk
 ```python
 import os
@@ -45,17 +115,7 @@ for (dir, dirs, files) in os.walk(""):
 	#files 路径下的所有非目录文件名，是一列表
 ```
 
-os.listdir()
-os.path.isdir()
-os.path.isfile()
-```python
-import os
-os.listdir()
-	#可以列出路径下所有文件和目录名，但是不包括当前目录., 上级目录.. 以及子目录下的文件.
-os.path.isfile()
-os.path.isdir()
-	#判断当前路径是否为文件或目录
-```
+
 
 ## csv处理
 使用csv标准库进行处理。

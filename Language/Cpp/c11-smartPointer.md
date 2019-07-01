@@ -108,7 +108,7 @@ else {
 
 ## smart_ptr cast
 
-c11定义了如下三个smart_ptr间相互转换的函数。
+c11定义了如下三个smart_ptr间相互转换的函数。  ---------<font color=gree>貌似只能是shared_ptr！！</font>
 <font color=gree>转换成功之后，原对象的引用计数会**+1**</font>。
 
 ```cpp

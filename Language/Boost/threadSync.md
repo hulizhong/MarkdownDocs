@@ -6,8 +6,35 @@
 
 对于mutex和lock，要明确一点，真正起到互斥作用的mutex，而lock只是协助我们更方便的使用mutex。
 
+
+
+### outline
+
+| 大类     | 子类 | 类型                   | 说明                                                      |
+| -------- | ---- | ---------------------- | --------------------------------------------------------- |
+| 互斥类   | 独占 | mutex                  |                                                           |
+|          |      | timed_mutex            |                                                           |
+|          | 递归 | recursive_mutex        | 同一线程可递归加                                          |
+|          |      | recursive_timed_mutex  |                                                           |
+|          | 共享 | shared_mutex           | 能提供多写单写的功能                                      |
+|          |      |                        |                                                           |
+|          |      |                        |                                                           |
+| 锁       | 独占 | unique_lock            | 内部mutex可任意；                                         |
+|          |      | lock_guard             | 同于unique_lock，但功能更丰富，如提前unlock, 加超时时间。 |
+|          | 共享 | shared_lock            | 只能是shared_mutex.                                       |
+|          |      | upgrade_lock           |                                                           |
+|          |      |                        |                                                           |
+| 条件变量 |      | condition_variable     | 要求传入的lock是boost::unique_lock\<boost::mutex>         |
+|          |      | condition_variable_any | 接受任意的锁、互斥量                                      |
+
+**备注：**还有try_mutex, recursive_try_mutex是为了于以前版本兼容，其实是等于mutex, recursive_mutex的。
+
+
+
+
+
 ## Mutex
-互斥量各类较多，如下：
+**互斥量**各类较多，如下：
 [mutex](#mutex)
 [shared\_mutex](#shared_mutex)
 [timed\_mutex](#timed_mutex)
@@ -116,7 +143,22 @@ lfv.swap(rv);   //可以交换锁、锁的状态。？？？ ----这个神奇了
 	//因为没有make_unique_lock之类的函数，只能先构造个临时的，再进行交换？？
 ```
 
+#### scoped_lock
+
+`boost::mutex::scoped_lock` is a `typedef` for `boost::unique_lock<boost::mutex>`, not `lock_guard`. `scoped_lock` is not available in C++0x.
+
+```cpp
+//boost/thread/pthread/mutex.hpp
+#if defined BOOST_THREAD_PROVIDES_NESTED_LOCKS
+        typedef unique_lock<mutex> scoped_lock;
+        typedef detail::try_lock_wrapper<mutex> scoped_try_lock;
+#endif
+```
+
+
+
 ### shared\_lock
+
 **共享锁**，其中构造它的互斥类<font color=gree>只能是共享类互斥量</font>；
 其析构内自动调用 其存储对象的`.unlock_shared()`方法；
 
@@ -129,6 +171,9 @@ lfv.swap(rv);   //可以交换锁、锁的状态。？？？ ----这个神奇了
 
 
 ## Condition Variable
+
+### condition_variable
+
 消费者
 ```cpp
 boost::condition_variable cond;
@@ -165,7 +210,18 @@ void prepare_data_for_processing()
 }
 ```
 
+
+
+### condition_variable_any
+
+
+
+
+
+
+
 ## call\_once
+
 ```cpp
 #include <iostream>
 #include <boost/thread.hpp>

@@ -12,7 +12,7 @@ icap协议相关；
 
 ## icap protocol
 
-ICAP (Internet Content Adaptation Protocol) 本质上是在HTTP message上执行RPC远程过程调用的一种轻量级的协议。即ICAP Client可以把http message（request, response, request+response）传给ICAP Server,  然后ICAP Server对内容进行某种变换或者其他处理(“匹配”)。
+ICAP (Internet Content Adaptation Protocol) <font color=gree>是tcp之上的一种应由协议</font>，本质上是在http/ftp message上执行RPC(远程过程调用)的一种轻量级的协议。即ICAP Client可以把http message（request, response, request+response）传给ICAP Server,  然后ICAP Server对内容进行某种变换或者其他处理(“匹配”)。
 
 rfc doc. https://tools.ietf.org/html/rfc3507#section-4.8
 

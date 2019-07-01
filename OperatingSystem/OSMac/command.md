@@ -8,6 +8,27 @@ mac特有指令相关记录。
 
 
 
+sw_vers 查看mac os x 版本
+
+*Xcode* 是运行在操作系统Mac OS X上的集成开发工具（IDE）
+xcodebuild －version 查看xcode版本
+xcode-select: error: tool 'xcodebuild' requires Xcode, but active developer directory '/Library/Developer/CommandLineTools' is a command line tools instance 未安装xcode.
+
+ios vs mac
+苹果的Mac OS是传统的[计算机操作系统](https://www.baidu.com/s?wd=%E8%AE%A1%E7%AE%97%E6%9C%BA%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F&tn=SE_PcZhidaonwhc_ngpagmjz&rsv_dl=gh_pc_zhidao)属于Unix。
+iOS是从MacOS衍生出来的专门未为移动设备(iphone)推出的操作系统。
+
+
+
+clang
+LLVM项目的一个子项目，基于LLVM架构的C/C++/Objective-C编译器前端
+
+
+
+登录初始化配置文件：~/.bash_profile
+
+
+
 ## 用户相关
 
 ```bash

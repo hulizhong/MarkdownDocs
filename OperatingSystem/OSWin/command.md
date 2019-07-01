@@ -113,6 +113,8 @@ tasklist /fi "pid eq 4"
 	#/fi 指定筛选器
 	#/m 显示每个进程加载的所有模块
 	#/m moduleName 列出调用指定的DLL模块的所有进程
+
+tasklist /a | findstr xx
 ```
 
 
@@ -122,8 +124,8 @@ tasklist /fi "pid eq 4"
 杀进程
 
 ```bash
-taskkill /im xx.exe
-taskkill /pid 13116
+taskkill /f /im xx.exe
+taskkill /f /pid 13116
 ```
 
 
@@ -172,6 +174,15 @@ xx -uninstall
 ```
 
 
+
+### Others
+
+#### path
+
+```bash
+echo %path%
+set path=%path%;xx;yy;
+```
 
 
 
