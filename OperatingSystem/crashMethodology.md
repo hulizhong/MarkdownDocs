@@ -12,7 +12,19 @@ How to resolve the app crash on Linux, Mac, Win platform.
 
 ## Linux Platform
 
-
+以下信号都能默认动作：产生core文件、终止exe运行：
+abrt, 异步终止（abort）
+bus, 硬件故障。
+emt, 硬件故障。
+fpe, 算术异常
+ill, 非法硬件指令
+iot, 硬件故障
+quit, 终端退出符
+segv, 无效存储访问
+sys, 无效调用
+trap, 硬件故障
+xcpu, 超过cpu限制（setrlimit）
+xfsz, 超过文件长度限制（setrlimit）
 
 
 
@@ -72,6 +84,13 @@ Core Dump/Segmentation fault is a specific kind of error caused by accessing mem
 
 
 
+T.如何解决？
+	M1.直接在生产环境gdb，看堆栈。`gdb -args exe exeArgs; run;`
+	M2.生成core文件，拿到开发环境debug。
+
+T.如何针对每次堆栈不一的segmentation？
+
+
 
 
 ### Buffer Overflow
@@ -105,6 +124,17 @@ int *ptr = (int *)malloc(sizeof(int)*10000000));
 
 If we allocate memory and we do not free that memory space after use it may result in memory leakage. 
 
+T.如何定位？--当然是用工具了。
+	win. umdh  （单个时间点的bt是没有名称、只有内存地址的）。
+	linux. Valgrind
+	注意事项：
+		注意<font color=red>伪泄漏的情况</font>，一般如果请求是一样的话，泄漏点在每个请求处理的流程中都会触发，所以泄漏次数与client请求次数能对上号的基本上就是有问题的。
+		注意<font color=red>异步任务</font>，有些空间是需要等待异步任务完成才能释放的，而非简单的按作用域。
+
+T.如何测试？----长短时间结合。
+	step1, 观察短时间的效应；（如用多少线程，每线程发送多少请求到server端，看server端的内存情况。）
+	step2, 观察长时间的效应；（如client一直发请求，看server在1h内、4h内的内存情况。)
+
 
 
 ### Stack overflow
@@ -128,4 +158,27 @@ int fun(int i)
 ```
 
 
+
+## CPU高占用
+
+是不是只能从堆栈来看cpu卡在哪里？
+	win. dump文件。（任务管理器》选中进程》创建转储文件）
+	linux. core文件。（）
+对比两次call stack？
+
+T.cpu占用高的几个点：
+	查看call stack是否有循环、特别是死循环； -----等待信号量是不消耗cpu的；
+	有流量的场景处理流量耗cpu的地方；
+
+
+
+## 工具篇
+
+
+
+### umdh
+
+
+
+### valgrind
 

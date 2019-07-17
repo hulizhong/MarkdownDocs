@@ -12,8 +12,20 @@
 
 ## String Algorithm
 
+`boost/algorithm/string.hpp`文件包含如下：
+
 ```cpp
-#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/std_containers_traits.hpp>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/find.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string/replace.hpp>
+#include <boost/algorithm/string/erase.hpp>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/find_iterator.hpp>
 ```
 
 
@@ -173,9 +185,11 @@ iter_split();
 
 
 
-### split
+### split, join
 
 ```cpp
+#include <boost/algorithm/string.hpp> //已包含了各子目录如，string/join.hpp
+
 find_all();
 ifind_all();
 split();
@@ -184,16 +198,13 @@ string str1("hello abc-*-ABC-*-aBc goodbye");
 vector<string> SplitVec; 
 boost::split(SplitVec, str1, boost::is_any_of("-*"), boost::token_compress_on);
 	//token_compress_on，把连续多个分隔符当一个，默认没有打开。
-```
 
-
-
-### join
-
-```cpp
-join();
+#include <boost/algorithm/string/join.hpp>
+boost::algorithm::join(list, ",");
 join_if();
 ```
+
+
 
 
 

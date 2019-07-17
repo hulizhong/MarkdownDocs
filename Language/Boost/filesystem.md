@@ -34,10 +34,11 @@ bfs::basic_path<std::wstring>
 //--------------------------方法
 path("/root/temp/a.out");
 path.string(); //path to string.
-path.filename(); //a.out
+path.filename();  //a.out
+path.extension(); //.out
 path /= std::string; //追加目录
-path.has_parent_path()  //返回是否具有父目录；
-path.parent_path()  //返回/a/b
+path.has_parent_path();  //返回是否具有父目录；
+path.parent_path();  //返回/a/b
 ```
 
 拼接目录、文件名

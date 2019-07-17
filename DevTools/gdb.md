@@ -5,8 +5,17 @@
 进程只有在编译时附带`debug`信息才能用gdb进行调试，如何查看`elf`文件具有debug信息，如下：
 
 ```bash
-readelf -S a.out | grep debug  #注意是大写S
-readelf --debug-dump a.out 
+#静态库、动态库都是可以gdb的；
+
+#readelf -S libfun.so | grep debug  #注意是大写S，如果有信息输出则是带debug信息；
+#readelf -S libfun.a | grep debug
+#readelf -S mainwitha | grep debug
+#readelf -S mainwithso | grep debug
+
+#readelf --debug-dump mainwithso | grep debug #如有信息输出则是带debug信息；
+#readelf --debug-dump mainwitha | grep debug
+#readelf --debug-dump libfun.so | grep debug
+#readelf --debug-dump libfun.a | grep debug
 ```
 
 

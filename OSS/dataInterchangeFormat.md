@@ -58,6 +58,10 @@ enum ValueType {
     	//isArray().
     objectValue; //object value (name/value pairs).
     	//isObject().
+    longValue;
+    	//asInt64().
+    ulongValue;
+    	//asUInt64().
 };
 
 Json::Value v1;  // null
