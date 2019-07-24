@@ -297,33 +297,33 @@ std::array<int, 4> a = {1, 2, 3, 4};
 
 
 ```cpp
-//--------------------定义
+// --------------------定义
 map<int,string> map1;  //空map
 
-//-------------------------
-//添加元素
+//------------------------- 添加
 map1[3] = "Saniya";
-map1.insert(std::make_pair<int,string>(4,"V5")); //其中的type1, type2是可以不写的，让其自动推演出来；
-	//一般不需要指定<int, string>，让其自己推导；
-map1.insert(pair<int,string>(1,"Siqinsini"));
+map1.insert(std::make_pair<int,string>(4,"V5")); 
+	//std::make_pair的模板参数type1, type2是可以不写的，让其自动推演出来；
+map1.insert(std::pair<int,string>(1,"Siqinsini"));
+	//std::pair的模板参数需要特化；
 map1.insert(map<int,string>::value_type(2,"Diyabi"));
 
+// ----------------------- 获取
 try {
-    string str = map1.at(3);  //没有则会抛异常。
-    string str = map1[3];  //没有则会构造一个默认的value回来（默认构造函数，如int为0）。
+    string str = map1.at(3); //没有则会抛异常。
+    string str = map1[3];    //没有则会构造一个默认的value回来（默认构造函数，如int为0）。
 }
 catch (exception &e) {...}
+map1.count(0); //元素0的个数
+map<int,string>::iterator it = map1.find(0); //查找元素0
 
+// ---------------- 删除
 map1.erase(iter);    //删除迭代器数据
 map1.erase(3);       //根据key删除value
 map1.clear();        //清空所有元素
 
 map1.size(); //元素个数
 map1.empty(); //判断空
-
-map<int,string>::iterator it = map1.find(0); //查找元素0
-map1.count(0); //元素0的个数
-
 
 //----------------遍历
 for(map<int,string>::iterator iter = map1.begin(); iter!=map1.end(); iter++) {

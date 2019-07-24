@@ -27,7 +27,8 @@ for
 rem https://www.cnblogs.com/yang-hao/p/6003923.html
 ```
 ```bash
-@echo off
+@echo off/on
+
 for %%i in (*.docx) do (
 	echo %%i
 )

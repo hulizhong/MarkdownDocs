@@ -116,7 +116,7 @@ lengthn=${#array_name[n]}
 if
 
 ```bash
-if [ $a -eq $b ]
+if [ $a -eq $b ]  # -ne/eq
 then
 	echo $a "==" $b
 elif [ $a -gt $b ]; then  #要将分支控制的助词如then, do提前一句，那么需要在前一句话后加分号;再加此助词。
@@ -159,9 +159,15 @@ done
 ### 死循环
 
 ```bash
-while(true)  
-while [ true/1/false ]  
+#while [ true/1/false ]
+#while(true) 
 for ((;;))
+do
+	if [ $? -ne 0 ]; then  #上一条命令执行错误；
+		break [n]  # 跳出第n层循环，默认n为1；
+		contine    # 跳过后面处理，继续本层循环；
+	fi
+done
 ```
 
 

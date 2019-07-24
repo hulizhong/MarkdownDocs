@@ -3,6 +3,11 @@
 ## ReadMe
 perl的regex；
 
+正则是通用的，目前风格有两种：
+
+> POSIX风格正则表达式：Regular Expression
+> Perl风格正则表达式：Perl-Compatible Regular Expression，即pcre.
+
 
 
 问题：`通配符wildcard`  VS `正则regular`？`模式表达式` VS `正则表达式regular expression`？
@@ -19,7 +24,7 @@ perl的regex；
 >  模式表达式是那些包含一个或多个通配符的字。
 
 
- 
+
 
 
 
@@ -27,6 +32,8 @@ perl的regex；
 **匹配、替换、转换**：Perl的正则表达式的三种形式，分别是匹配，替换和转化:
 
 ```perl
+my $rgx = qr/string/imosx;  #正则字符串、有可能进行正则预编译加速后续的匹配速度；
+
 while ($txt =~ m/$rgx/g) { #匹配
 	# =~表示匹配， 
 	# !~表示不匹配
@@ -161,8 +168,10 @@ $
 (?<=pattern)
 	#反向(look behind)肯定预查，与正向肯定预查类似，只是方向相反。
 	#例如，"(?<=xp|7)Windows"能匹配"7"中的"Windows"，但不能匹配"10Windows"中的"Windows"。
+	#perl 5.30之前，只适用于固定宽度的向后查找；
 (?<!pattern)   #---------其中的反斜杠为转义用，不在表达式范围内；
 	#反向否定预查，与正向否定预查类似，只是方向相反。
+	#perl 5.30之前，只适用于固定宽度的向后查找；
 (?#comment)
 	#注释
 ```
@@ -192,9 +201,10 @@ $
 
 x|y	#匹配 x 或 y。
 [xyz]   #字符集合。匹配所包含的任意一个字符。
-[^xyz]  #负值字符集合。匹配未包含的任意字符。
 [a-z]	#字符范围。匹配指定范围内的任意字符。
-[^a-z]	#负值字符范围。匹配任何不在指定范围内的任意字符。
+[^xyz]  #负值（取反）字符集合。匹配未包含的任意字符。
+[^a-z]	#负值（取反）字符范围。匹配任何不在指定范围内的任意字符。
+[-\^\\] #匹配-^\这些字符。
 
 \xn  #匹配 n，其中 n 为十六进制转义值。
 \num #匹配 num，其中 num 是一个正整数。
@@ -342,4 +352,32 @@ if ($txt =~ m/$regb/g) {
 
 `my $re = qr/regex_statement/i;`  这样才行。 --------注意！
 `if ($txt =~ m/$re/i)` 这样不行！-------------rwhy？？
+
+
+
+**T. 向后（正、负）断言/预查**
+
+5.30之前的perl，只支持固定长度的pattern；
+
+```perl
+my $txt = "18501960037welcome to runoob site.";
+my $reg = qr/(?<=\D|^)(1[34578]\d{9})(?=\D|$)/i;
+while ($txt =~ /$reg/g){
+   print "matched $& \n";
+}
+
+# 5.30
+Variable length lookbehind is experimental in regex; marked by <-- HERE in m/(?<=\D|^)(1[34578]\d{9})(?=\D|$) <-- HERE / at prog.pl line 2.
+
+# 5.18
+Variable length lookbehind not implemented in regex m/(?<=\D|^)(1[34578]\d{9})(?=\D|$)/ at prog.pl line 2.
+```
+
+但是在5.10之后提供了一种特殊的机制`\K`；
+
+```perl
+my $reg = qr/(\K\D|^)(1[34578]\d{9})(?=\D|$)/;
+```
+
+
 
