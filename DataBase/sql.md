@@ -6,23 +6,51 @@ Refer: http://www.w3school.com.cn/sql/
 
 
 
-## 增
-INSERT INTO 表名称 VALUES (值1, 值2,....)
+## Insert
+插入数据大概有以下类型：
 
-SELECT INTO 语句从一个表中选取数据，然后把数据插入另一个表中。
+```sql
+insert into tbname values (v1, v2);
+
+//select into 
+	//从一个表中选取数据，然后把数据插入另一个表中。
+
+replace into tbname (f1, f2) values (v1, v2);
+	//tbname中必须有primary key，并包含在f1, f2中。
+	//先删除再插入，而非替换，所以上面除了f1, f2字段其它的字段为空、默认值。
+```
 
 
 
-## 删
-DELETE FROM 表名称 WHERE 列名称 = 值
+## Delete
+只能删单条记录、或者整个表。
+
+```sql
+delete from tbname where f1 = v1;
+```
 
 
-## 改
-UPDATE 表名称 SET 列名称 = 新值 WHERE 列名称 = 某值
 
 
-## 查
-SELECT 列名称 FROM 表名称
+## Update
+可更新多个字段。
+
+```sql
+update tbname set f1 = v1 where f2 = v2;
+```
+
+
+
+
+## Select
+查询
+
+```sql
+select * from tbname;
+select f1, f2 from tbname;
+```
+
+
 
 
 ### 查询约束

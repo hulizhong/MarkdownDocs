@@ -12,6 +12,8 @@
 
 ## String Algorithm
 
+https://www.boost.org/doc/libs/1_55_0/doc/html/string_algo/quickref.html
+
 `boost/algorithm/string.hpp`文件包含如下：
 
 ```cpp
@@ -26,6 +28,9 @@
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/find_iterator.hpp>
+
+// 注意：不需要链接boost的任何库，即可使用！！！
+boost::algorithm::fun_name();
 ```
 
 
@@ -33,8 +38,8 @@
 ### case conversion
 
 ```cpp
-boost::algorithm::to_upper();
-to_lower_copy();
+boost::algorithm::to_lower(str);       //str会被改变
+std::string newstr = boost::algorithm::to_lower_copy(str);  //str不会被改变
 to_upper();
 to_upper_copy();
 ```
@@ -165,7 +170,7 @@ replace_nth();
 ireplace_nth_copy();
 ireplace_nth();
 replace_all_copy();
-replace_all();
+boost::algorithm::replace_all(str, "src", "dst"); //替换str中的所有src为dst。
 ireplace_all_copy();
 ireplace_all();
 replace_head_copy();
@@ -198,10 +203,17 @@ string str1("hello abc-*-ABC-*-aBc goodbye");
 vector<string> SplitVec; 
 boost::split(SplitVec, str1, boost::is_any_of("-*"), boost::token_compress_on);
 	//token_compress_on，把连续多个分隔符当一个，默认没有打开。
+	//注意str1为空的情况，会使splitVec.size() == 1.
 
 #include <boost/algorithm/string/join.hpp>
 boost::algorithm::join(list, ",");
 join_if();
+```
+
+**注意**：`split_str`为空的情况下，`vec`也会得到一个元素（`vec[0]`为空）。
+
+```cpp
+boost::algorithm::split(vec, split_str, boost::is_any_of(","), boost::token_compress_on);
 ```
 
 

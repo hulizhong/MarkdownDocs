@@ -159,7 +159,7 @@ done
 ### 死循环
 
 ```bash
-#while [ true/1/false ]
+#while [ true/1/false ]  用方括号一定要两边有间隔！！
 #while(true) 
 for ((;;))
 do

@@ -37,9 +37,11 @@ attach pid
 
 
 
-## 指令集
+## Linux.GDB
 
-### 常规操作
+### 指令集
+
+**T.常规操作**
 
 ```bash
 #------------参数
@@ -57,7 +59,7 @@ show directories
 
 ```
 
-### 宏扩展
+**T.宏扩展**
 
 ```bash
 (gdb) macro expand MACRO(0)
@@ -65,7 +67,7 @@ show directories
 #但要在-ggdb3的级别上才行；
 ```
 
-### 窗口
+**T.窗口**
 
 ```bash
 #显示汇编窗口
@@ -99,7 +101,7 @@ Focus set to SRC window.
 (gdb) fs n
 ```
 
-### 信号
+**T.信号**
 
 ```bash
 handle SIGPIPE nostop noprint ignore
@@ -107,25 +109,7 @@ handle SIGPIPE nostop noprint ignore
 
 
 
-### 神操作
-
-**如何gdb死锁程序**
-
-分析死锁问题是比较简单的，因为当发生死锁时，进程会僵住，
-这时我们只需要杀死进程，让系统产生一个 core dump 文件，
-然后再对这个 core dump 文件进行分析即可。
-
-```bash
-kill -s SIGSEGV pid
-gdb a.out core.dump.file
-thread apply all bt
-```
-
-
-
-
-
-## 多线程
+### 多线程
 
 当你debug多线程app时，
 > 当前线程如果停住，那么其它线程都会停住（即所有线程都停住）；
@@ -137,7 +121,7 @@ thread apply all bt
 
 
 
-### 不停模式
+**T.不停模式**
 
 all-stop模式
 
@@ -164,7 +148,7 @@ set non-stop on
 
 gdb启动了不停模式，其实就是说，除了断点有关的线程会被停下来， 其他线程会执行执行。在网络程序调试的时候比较有用！ 
 
-### 线程锁
+**T.线程锁**
 
 gdb的scheduler-locking（在某些操作系统中，你可以通过锁住OS的调度行为）看如下
 ```bash
@@ -186,7 +170,7 @@ Mode for locking scheduler during execution is "off".
 
 
 
-### 其它的设置
+**T.其它的设置**
 
 ```bash
 #查看当前运行的线程
@@ -212,7 +196,9 @@ Mode for locking scheduler during execution is "off".
 (gdb) break frik.c:13 thread 2 if bartab > lim
 ```
 
-## 多进程
+
+
+### 多进程
 
 ```bash
 待续
@@ -222,11 +208,61 @@ Mode for locking scheduler during execution is "off".
 
 
 
-## WinDbg
+### 经典场景
+
+**T.如何gdb死锁程序**
+
+分析死锁问题是比较简单的，因为当发生死锁时，进程会僵住，
+这时我们只需要杀死进程，让系统产生一个 core dump 文件，
+然后再对这个 core dump 文件进行分析即可。
+
+```bash
+kill -s SIGSEGV pid
+gdb a.out core.dump.file
+thread apply all bt
+```
+
+
+
+
+
+## Win.WinDbg
+
+可以解析如下经典问题：
+
+- crash问题；（查看堆栈 + 变量的值（可attach到进程亦可生成dump文件））
+- 死锁问题；（打开所有堆栈即可，知道卡在哪里！（可attach到进程亦可生成dump文件））
+- dll库加载的路径；（attach到进程，用`lmf`指令查看模块）
+- 。。。
 
 
 
 ### usage
+
+**T.显示堆栈**。
+
+```bash
+[~Thread] k[b|p|P|v] [c] [n] [f] [L] [M] [FrameCount]
+[~Thread] k[b|p|P|v] [c] [n] [f] [L] [M] = BasePtr [FrameCount]
+[~Thread] k[b|p|P|v] [c] [n] [f] [L] [M] = BasePtr StackPtr InstructionPtr
+[~Thread] kd [WordCount]
+	#Thread线程ID，默认为当前线程，*为所有线程。
+	#b 显示每个函数的前3个参数。
+	#p 显示每个函数的所有参数。参数列表包括每个参数的类型、名称、值。
+	#P 类似p。不同之处在于，每个参数显示在单独的行上面。
+	#n 显示调用堆栈中每帧的序号（一般称栈帧，如栈帧3）。
+	#FrameCount 指定显示调用堆栈的帧数，即调用堆栈的深度。默认为16进制格式。默认帧数为0x14=20
+~*kPn
+```
+
+**T.切换调用帧**
+
+```bash
+.frame [/c] [/r] [FrameNumber]
+	#/r 显示执行该帧时寄存器的值。
+```
+
+
 
 
 
@@ -282,11 +318,15 @@ Last event: 5d30.5e78: Exit process 0:5d30, code 80  这个应该是没问题的
 
 ### analysis dump file
 
+生成dmp文件：任务管理器》右键生成dump文件；（或者crash会生成dump文件）
+windbg加载dmp文件：file > open crash dump.
 
 
 
 
-## lldb
+
+
+## OSX.lldb
 
 http://lldb.llvm.org/tutorial.html
 http://www.cocoachina.com/ios/20150819/11558.html

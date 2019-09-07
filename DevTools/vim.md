@@ -20,6 +20,7 @@ vim一共有4个模式：
 ```bash
 :set ignorecase  #搜索大小写不敏感
 :set hls #搜索高亮
+	set hlsearch
 :set nu  #显示行号
 
 #自动缩进

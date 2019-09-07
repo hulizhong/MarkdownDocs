@@ -38,10 +38,11 @@ message("Will pring val = ${val}")
 ```cmake
 add_executable(obj f1.cpp f2.cpp)
 	#最简单的方法，就是这样后缀。
-
 aux_source_directory([Path] [Variable])
 	#获取一个目录下的的所有源文件 然后储存在变量Variable中
-	
+add_dependencies(<target> [<target-dependency>]...)
+	#target要依赖target-dependency；即dependency先执行；
+
 FILE(GLOB var ./include/*.h)
 	#GLOB 获取./include/目录下的*.h 储存在变量var中
 FILE(GLOB_RECURSE var ./source/*.cpp)
@@ -222,7 +223,7 @@ Todo. https://blog.csdn.net/z_h_s/article/details/50699905
 | include_directories(xx)          |              | -I参数                                                       |
 | target_include_directories()     |              |                                                              |
 | link_directories(xx)             |              | -L参数                                                       |
-| target_link_libraries(obj a b)   |              | 为obj指定-l库名，可以放在任何地址。                          |
+| target_link_libraries(obj a b)   |              | 为obj指定-l库名，可以放在任何地址。<br /><font color=red>win. a.lib Not liba.lib</font><br />Linux. liba.so or liba.a |
 | link_libraries(a b c)            |              | 为后续add_executable/add_library目标指定-l库，只能放在前面。 |
 |                                  |              |                                                              |
 | add_definitions(-DXX)            |              | 向c/c++编译器添加-DXX定义。                                  |

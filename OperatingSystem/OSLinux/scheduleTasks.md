@@ -60,12 +60,12 @@ n1-n2  n1到n2这段期间
 ```bash
 cron[17138]: Please install an MTA on this system if you want to use sendmail!  
 CRON[17187]: (root) MAIL (mailed 688 bytes of output but got status 0x00ff from MTA#012)  
-
 ```
 
 rabin todo. 好像是有办法，但得需要在宿主机上装个MTA软件；（但是装个发送邮件的客户端不行吗？为何要装server.）
 
-
-
+```bash
+MAILTO=""  #最开始加个这个就行了，crontab脚本中。
+```
 
 

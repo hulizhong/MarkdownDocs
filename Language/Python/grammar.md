@@ -18,11 +18,15 @@ Python是一种解释型、面向对象、动态数据类型的高级程序设�
 
 文档查询
 
-```python
+```bash
+#-----------------法一
 $ python 
 $ import xx
 $ help(xx)
 $ help(xx.fun)
+
+#-----------------法二
+pydoc xx
 ```
 
 
@@ -252,6 +256,9 @@ i = 5
 i++ #python不能进行自加加、自减减
 i += 1 #这是可以的
 i = i + 1
+
+rate = 0.2567
+rateStr = '%5.2f' % (rate)  #不够5位则总体占5位，小数点后保留2位。
 ```
 
 
@@ -311,30 +318,28 @@ str.isdigit()    #检测字符串是否只由数字组成。
 
 ### 列表list []
 
-```python
-lst = [1, 2, 3, 4, 5]    #定义
-```
+列表是有序的。
 
-方法
 ```python
+lst = [1, 3, 2, 4]
+	#定义用[].
+
 cmp(lst1, lst2)
-len()
+len(lst)
 max/min(lst)
-list(tuple)
-	#tuple to list
-range(from, to, 步阶)
-	#产生一个递增的list
+list(tuple)   #tuple to list
+range(from, to, 步阶)   #产生一个递增的list
 
-append(obj)
-extend(seq)
-count(obj)
-index(obj)
+lst.append(obj)
+lst.extend(seq)
+lst.count(obj)
+lst.index(obj)
 	#注意：lst.index()方法会抛出异常，建议用count()。
-insert(index, obj)
-remove(obj)
-pop(obj=lst[-1])
-sort([func])
-reverse()
+lst.insert(index, obj)
+lst.remove(obj)
+lst.pop(obj=lst[-1])
+lst.sort([func])
+lst.reverse()
 
 #-----------------------------------------------------遍历
 for v in t:
@@ -379,6 +384,8 @@ print t3  #(3,)
 ```
 
 ### 字典 {}
+
+<font color=gree>字典默认是无序的</font>（即添加进去的元素，不按你添加的顺序排序）；
 
 ```python
 dict = {key1 : value1, key2 : value2}
@@ -470,6 +477,10 @@ finnally:
 没有用public，private等关键词来标志；
 > __ 前缀为私有标志
 > self.\_\_A() 可以调用 self.\_\_B()吗？    ---可以的
+
+Q.**如何查看一个对象支持哪些属性？？**
+
+> dir(obj)
 
 
 ### 构造函数

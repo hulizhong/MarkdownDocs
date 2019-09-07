@@ -40,20 +40,76 @@
 PKI提供了一个通过信任第三方来认证的方案，相关主题如下：
 
 - 数字证书：包含个体相关信息。
-  - x.509标准。
-  - 包含个体的公钥信息。
-  - 格式
-    - der编码的二进制格式。
-    - base64编码的pem格式，为ascii格式。
-    - 加密信息模式标准PKCS#7，二进制格式。
+  
 - 证书申请（CSR）：为了签发证书，产生CSR并提交给CA。
+  
   - 包含申请者的识别信息、公钥。
+  
 - 证书认证机构（CA）：签发证书的机构。
   - 产生证书、并对证书进行签名（对证书信息hash，并生成的hash用ca的私钥加密），把加密摘要附加到证书中。
   - CA是分级的，根CA,各下级CA，所以就会有了证书链的存在。
+  
 - 证书认证
+
 - 证书作废清单（CRL）
+  
   - 由CA发布，包含了一个冻结、作废证书的序列号的清单。
+
+
+
+**T.数字证书的标准、格式**
+
+数字证书都遵守X.509标准，版本有如下：
+
+- x.509v1, 1988
+- x.509v2, 1933
+- x.509v3, 1997
+- x.509v4, 2000
+
+数字证书的内容，如下：
+
+- x509的版本号；
+- 证书的序列号；（证书的唯一标识）
+- 签名算法标识符；（认证机构对数字证书签名时所使用的数字签名算法的标识）
+- 数字证书发放者；（发行数字证书的认证机构的名称）
+- 有效期；
+- 主体名称；
+- 主体的公钥信息；（主体的公钥值、该 公钥使用时所使用的算法标识）
+- 数字证书发放者的唯一标识符；（可选项，当实体具有相同名称时，使认证机构的名称具有唯一性）
+- 主体的唯一标志符；（可选项，当实体名称相同时，使主体的名称唯一性）
+
+数字证书的格式，如下：
+
+ - pem(Privacy Enhanced Mail). 用base64编码的der证书，可以包含多个证书。
+
+    	- 旨在为电子邮件提供消息机密性和完整性。
+
+ - cer, .crt .der. 一般为二进制格式。
+
+ - p7b, .p7c PKCS#7. 是一容器标准，可装证书、及证书加密的数据。
+
+ - p12 -PKCS#12，通常包含公钥、私钥，<font color=gree>受密码保护</font>。
+
+ - pfx(Personal Information Exchange)，通常包含公钥、私钥，<font color=gree>受密码保护</font>。
+
+    	- 这种格式更适合用于创建用于对应用程序、网站进行身份验证的证书。
+
+    如下指令可实现以上格式之间的转换
+
+    ```bash
+    openssl x509 –in C:\OpenSSL\Certificate.cer –out C:\OpenSSL\Certificate.pem
+    	# cer -> pem
+    openssl pkcs12 -export -out C:\OpenSSL\Certificate.pfx -inkey C:\OpenSSL\RSAKeys.key -in certificate.pem
+    	# pem -> pfx
+    openssl pkcs12 -export -out C:\OpenSSL\Certificate.p12 -inkey C:\OpenSSL\RSAKeys.key -in certificate.pem
+    	# pem -> p12
+    openssl pkcs12 -export -out C:\OpenSSL\Certificate.pem -inkey C:\OpenSSL\RSAKeys.key -in certificate.p12
+    	# p12 -> pem
+    ```
+
+    
+
+如图x509标准证书![这是一张图片](img/x509_certificate.png)
 
 
 
@@ -308,17 +364,11 @@ https://en.wikipedia.org/wiki/Transport_Layer_Security
 
 
 
-### 问题
+### 问题集
 
-Case 1. 系统时间错误引起的证书不能用，注意这种情况！
+#### Could not validate certificate: current time
 
-> Could not validate certificate: current time .
-
-
-
-
-
-
+系统时间错误引起的证书不能用，注意这种情况！
 
 SNI（Server Name Indication）是为了解决一个服务器使用多个域名和证书的SSL/TLS扩展。定义在RFC 4366。是一项用于改善SSL/TLS的技术，在SSLv3/TLSv1中被启用。它允许客户端在发起SSL握手请求时（具体说来，是客户端发出SSL请求中的ClientHello阶段），就提交请求的Host信息，使得服务器能够切换到正确的域并返回相应的证书。一句话简述它的工作原理就是，在连接到服务器建立SSL链接之前先发送要访问站点的域名（Hostname），这样服务器根据这个域名返回一个合适的证书。目前，大多数操作系统和浏览器都已经很好地支持SNI扩展，OpenSSL 0.9.8已经内置这一功能，据说新版的nginx也支持SNI。  --rtodo
 
@@ -326,5 +376,19 @@ ssl在 Web 服务(HTTPS)相关的扩展，如 SNI, NPN, ALPN。  --rtodo
 
 
 
+#### SSL peer certificate or SSH remote key was not OK
 
+client验证server证书时，采用了最严格的检验方法（cn的内容是否与连接对端一致）。
+在这种场景下server证书中的CN使用了IP，并且client连接server的网络中间途经其它设备（如iptable的DNAT，因为与client直连的并非server，但拿到的证书是server的证书），那么就会报这个错误！
+
+```cpp
+//libcurl中有如下开关
+CURLOPT_SSL_VERIFYPEER
+	//true 检验对方证书。
+CURLOPT_SSL_VERIFYHOST
+	//0 为不检查名称。
+	//1 是检查服务器SSL证书中是否存在一个公用名(common name)。
+		//公用名CN一般来讲就是填写你将要申请SSL证书的域名 (domain)或子域名(sub domain)。
+	//2，会检查公用名是否存在，并且是否与提供的主机名匹配
+```
 

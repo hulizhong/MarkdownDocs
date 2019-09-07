@@ -34,7 +34,7 @@ http://blog.csdn.net/chamtianjiao/article/details/6268746
 
 
 
-## apache config.
+## Apache Config.
 
 ### MPM
 
@@ -111,6 +111,79 @@ event mpm
 
 
 
+### dir access
+
+```json
+<Directory /> #站点目录访问权限配置（此处为根访问权限）
+	Options Indexes FollowSymLinks    #允许索引、跟踪符号链接
+	AllowOverride None  #通常利用Apache的rewrite模块对URL进行重写，rewrite规则会写在 .htaccess 文件里。
+	Order allow,deny    #访问规则。
+	Allow from all
+<Directory "/var/www/html"> 
+```
+
+apache2.2之`allow, deny`
+
+```json
+Order, Allow, Deny #前后顺序，先allow,后看deny.（如果有冲突，那么最后一条生效）
+Allow from all     #允许所有
+Deny from all      #拒绝所有
+```
+
+apache2.4之`require`
+
+``` json
+Require all granted #允许所有
+Require all denied  #拒绝所有
+Require env env-var [env-var] ... #允许匹配环境变量中任意一个
+Require method http-method [http-method] ... #允许特定的HTTP方法（GET/POST/HEAD/OPTIONS）
+Require expr expression #允许，表达式为true
+Require user userid [ userid ] ... #允许特定用户
+Require group group-name [group-name] ... #允许特定用户组
+Require valid-user # #允许，有效用户
+Require [not] ip 192.100 192.168.100 192.168.100.5 #允许特定IP或IP段，多个IP或IP段间使用空格分隔
+
+# 关键字前加not表示取反。
+```
+
+
+
+### auth(basic) with WSGI
+
+Refer.https://modwsgi.readthedocs.io/en/develop/user-guides/access-control-mechanisms.html
+basic auth with wsgi config as follow.
+
+```xml
+<Directory /xx/yy>
+	Options FollowSymLinks
+	Satisfy Any            #不可少
+	AuthType Basic         #不可少
+	AuthName "Basic Auth"  #不可少
+	Require valid-user     #不可少
+	AuthBasicProvider wsgi
+	WSGIAuthUserScript /path/auth.py  #提供一个check_password()
+	<IfVersion < 2.4>
+		order deny, allow
+		deny from all     #不可少
+	</IfVersion>
+</Directory>
+```
+
+logs as follow.
+
+```bash
+#curl -X POST -H "authorization:basic ....base64str..." url
+#curl -X POST -H "authorization:....base64str..." url
+	apache2.error.log: client used wrong authentication scheme: /url/path
+
+#check_password(environ, user, password) #返回False
+	apache2.error.log: user <username> authentication failure for "/url/path": Password Mismatch
+#check_password(environ, user, password) #返回True
+	apache2.error.log: loading wsgi script '/path/auth.py'
+```
+
+
+
 
 
 ## LinuxApacheMysqlPhp
@@ -143,28 +216,7 @@ client访问网页报错：403 Forbidden: client denied by server configuration
 [authz_core:error] [pid 777] [client 106.121.15.124:40040] AH01630: client denied by server configuration: /var/webdata/hello.php
 ```
 
-apache2.2到2.4网站访问控制发生了改变。
-apache2.2
-
-> Order, Allow, Deny
-
-apache2.4
-
-> Require
-
-```sh
-Require all granted #允许所有
-Require all denied #拒绝所有
-Require env env-var [env-var] ... #允许匹配环境变量中任意一个
-Require method http-method [http-method] ... #允许特定的HTTP方法（GET/POST/HEAD/OPTIONS）
-Require expr expression #允许，表达式为true
-Require user userid [ userid ] ... #允许特定用户
-Require group group-name [group-name] ... #允许特定用户组
-Require valid-user # #允许，有效用户
-Require [not] ip 192.100 192.168.100 192.168.100.5 #允许特定IP或IP段，多个IP或IP段间使用空格分隔
-
-# 关键字前加not表示取反。
-```
+apache2.2到2.4网站访问控制发生了改变。----由`Order`更改为`Require`;
 
 
 
@@ -210,4 +262,8 @@ mysql>select host, user from user;
 Server Application Programming Interface（服务器应用编程接口）。PHP通过SAPI提供了一组接口，供应用和PHP内核之间进行数据交互。 
 
 > PHP提供很多种形式的接口，包括apache、apache2filter、apache2handler、caudium、cgi 、cgi-fcgi、cli、...
+
+
+
+## Others
 

@@ -146,7 +146,9 @@ git checkout newBranch
 git reset commitID  
 	#但这样只能更改本地的分支、而不能更改远程的分支；
 	#需要删除远程老分支、并将本地新分支推上去；
-git reset --hard commitID 强制回滚
+git reset --hard commitID
+	#强制回滚
+git reset --hard HEAD
 ```
 
 ### 分支合并
@@ -168,6 +170,8 @@ git pull
 #切换到下游分支A、并rebase上游分支B
 git checkout A
 git rebase B           #rebase B到本地分支上来；（B作为上游）
+	#....resolve conflict, and 'git add conflict_file'  //don't commit.
+	#git rebase --continue
 git push origin A:A
 git push -f origin A:A  #如果远程A在这次rebase之前没有合到B上，那么需要强推
 
@@ -218,7 +222,7 @@ git push origin –tags
 
 git tag -d tagName
 	#删除本地tag
-it push origin :refs/tags/tagName
+git push origin :refs/tags/tagName
 	#删除远程tagName
 ```
 
