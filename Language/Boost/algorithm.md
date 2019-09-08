@@ -37,6 +37,8 @@ boost::algorithm::fun_name();
 
 ### case conversion
 
+大小写转换函数如下：
+
 ```cpp
 boost::algorithm::to_lower(str);       //str会被改变
 std::string newstr = boost::algorithm::to_lower_copy(str);  //str不会被改变
@@ -47,6 +49,8 @@ to_upper_copy();
 
 
 ### predicates
+
+判断/谓词函数如下：
 
 ```cpp
 boost::algorithm::starts_with();
@@ -65,6 +69,8 @@ ilexicographical_compare();
 
 
 ### classification
+
+分类函数如下：
 
 ```cpp
 boost::algorithm::is_classified();
@@ -86,6 +92,8 @@ is_from_range();
 
 
 ### trimming
+
+修剪函数如下：
 
 ```cpp
 trim_left();   //去掉字符串左边的空格；
@@ -115,6 +123,8 @@ trim_fill_copy_if();
 
 
 ### find algorithms
+
+查找函数如下：
 
 ```cpp
 find();
@@ -152,13 +162,15 @@ range_finder();
 
 
 
-### replace
+### replace, erase
+
+替换函数如下：
 
 ```cpp
 replace_range_copy();
 replace_range();
 replace_first_copy();
-replace_first();
+void replace_first(str, search, replace);  //从头找到第1个词组，并进行替换；
 ireplace_first_copy();
 ireplace_first();
 replace_last_copy();
@@ -177,11 +189,15 @@ replace_head_copy();
 replace_head();
 replace_tail_copy();
 replace_tail();
+
+void erase_first(str, search);
 ```
 
 
 
 ### find iterator
+
+查找迭代如下：
 
 ```cpp
 iter_find();
@@ -191,6 +207,8 @@ iter_split();
 
 
 ### split, join
+
+拆分、合并如下：
 
 ```cpp
 #include <boost/algorithm/string.hpp> //已包含了各子目录如，string/join.hpp

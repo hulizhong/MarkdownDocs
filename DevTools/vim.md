@@ -22,21 +22,38 @@ vim一共有4个模式：
 :set hls #搜索高亮
 	set hlsearch
 :set nu  #显示行号
+```
 
-#自动缩进
+**T.缩进相关**
+
+```bash
 set autoindent
 set cindent
+	#自动缩进
 
-#Tab键的宽度
-set tabstop=4
-#统一缩进为4
+set expandtab #用空格代替制表符
+set smarttab  #在行和段开始处使用制表符
+set tabstop=4 #Tab键的宽度
 set softtabstop=4  #在 insert 模式下，一个 tab 键按下后，展示成几个空格。
 set shiftwidth=4   #选中行后左移<右移>的空格数.
-#用空格代替制表符
-set expandtab
-#在行和段开始处使用制表符
-set smarttab
+	#统一缩进为4
 
+:%ret! 4
+	#ret(replace tab)文件中的每个tab用4个space替代。
+```
+
+**T.乱码相关**
+
+```bash
+:set encoding
+:set encoding=utf-8
+	#查看、设置vim的编码
+:set fileencoding
+:set fileencoding=utf-8
+	#查看、设置文件的编码
+:set fileformat
+:set fileformat=unix
+	#查看、设置文件格式：
 ```
 
 
@@ -62,6 +79,19 @@ vim -d a b 等效于vimdiff a b
 
 :e #重载文件
 ```
+
+
+
+**T.窗口相关**
+
+```bash
+:vs  #当前窗口竖分
+:vs filename
+:sp  #当前窗口横分
+:sp filename
+```
+
+
 
 
 

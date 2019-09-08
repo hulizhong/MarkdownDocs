@@ -153,8 +153,9 @@ git reset --hard HEAD
 
 ### 分支合并
 分支的合并有两种方法：
-rebase法，是将当前修改续在上游分支的尾部
+**T.rebase法，是将当前修改续在上游分支的尾部**
 一般用法为把master rebase到个人分支；
+
 ```bash
 git rebase 上游分支 [下游分支（如果当前分支作为下游分支，则可省略）]
 
@@ -182,7 +183,7 @@ git pull --rebase
 	#git fetch; git rebase fetch_head
 ```
 
-merge法，貌似是按照时间节点合并进去；
+**T.merge法，貌似是按照时间节点合并进去；**
 一般用法为把个人分支merge到master上来；（切不可把个人分支rebase到master上）
 
 ```bash
@@ -191,7 +192,27 @@ git merge B     #把B合到A上来
 git push origin A:A  #提交远程A
 ```
 
+**T.合并多个commit为一个commit**
+
+```bash
+git log  #想把commit id为123合并到456中
+	123
+	456
+	789
+git rebase -i 789
+	pick 456 ...   #pick会执行commit
+	squash 123 ... #squash这个commit合并到前一个commit中
+	#修改完后，保存退出;
+#添加合并后的commit comment. 保存并退出
+git log
+	456  #123已经被合并到这里来了
+	789
+```
+
+
+
 ### tag
+
 tag一般用于发布，分为轻量标签（指向提交对象的引用）、附注标签（为仓库中的一个独立对象，并不是引用），推荐使用附注标签；
 ```bash
 git tag
