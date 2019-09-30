@@ -244,7 +244,8 @@ state = Base::UNINITIALIZED;  //使用带上类名，当作域作用符吧。
 
 
 ## 类与类的关系
-### 继承
+
+### 继承 is-a
 
 virtual
 
@@ -257,7 +258,58 @@ public:
 void Base::v_print() {..}  //类外，前缀不能再加 virtual
 ```
 
+#### 实现
+
+在C++中，接口通过的纯虚函数来实现，C++的多态就是通过虚函数来实现的。
+
+### 关联
+
+两个类的一般性关系，包含强、弱关联。
+
+#### 组合 contains-a
+
+两个类之间的强关联，即类A是类B的<font color=red>对象成员</font>。
+
+```cpp
+class A;
+class B
+{
+private:
+    A obj;
+};
+//生命周期一样，构造、析构顺序：+A,+B,~B,~A.
+```
 
 
-### 组合
+
+#### 聚合 has-a
+
+两个类之间的弱关联，即类A是类B的<font color=red>指针成员</font>。
+
+```cpp
+class A;
+class B
+{
+private:
+    A *ptr;
+};
+//生命周期可以不一样。
+```
+
+
+
+### 依赖 use-a
+
+一个对象的<font color=red>某种行为依赖于另一个类</font>。
+
+```cpp
+class A;
+class B
+{
+public:
+    bool fun(A a);  //形式：值；
+    bool fun(A *a); //形式：指针；
+    bool fun(A &a); //形式：引用；
+};
+```
 

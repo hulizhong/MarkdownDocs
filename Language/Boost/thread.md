@@ -159,13 +159,18 @@ int main(int argc, char* argv[])
 线程的使用；
 
 ### API
-睡眠
+睡眠（ <font color=red>主线程中不能用this_thread.sleep()</font>）
 ```cpp
+#include <boost/thread/thread.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp> 
+
 boost::this_thread::sleep(boost::posix_time::seconds(5));
 boost::this_thread::sleep(boost::posix_time::milliseconds(100));
+	//this_thread.sleep不能用于主线程。
 
 boost::thread::sleep(boost::get_system_time() + boost::posix_time::seconds(1));
+boost::thread::sleep(boost::posix_time::seconds(2));
+	//主线程中用sleep.
 
 #include <boost/chrono.hpp>
 boost::this_thread::sleep_for(boost::chrono::milliseconds(100));

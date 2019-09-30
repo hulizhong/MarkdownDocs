@@ -17,8 +17,8 @@ boost中文件系统相关操作；https://www.boost.org/doc/libs/1_53_0/libs/fi
 ```
 
 ```cpp
-//一般用简写的bfs代替；
-namespace bfs = boost::filesystem;
+#include <boost/filesystem.hpp>     // g++ src -lboost_filesystem
+namespace bfs = boost::filesystem;  //一般用简写的bfs代替；
 
 try {
     //多数函数存在两个变体：在失败时:
@@ -33,9 +33,34 @@ catch (boost::filesystem::filesystem_error &e) {
 }
 ```
 
-
 ## path wpath
-path的成员方法（**相当于一些字符串的操作，未涉及到文件的操作**）。
+
+`path, wpath`表示路径的信息，并提供了处理路径的方法。
+
+**T.构造路径的选择。**
+
+注意点：
+
+- path的构造字符串，不会进行任何校验。
+- 构造字符串同时支持可移植路径（用`/`分隔）、平台相关路径。
+
+```cpp
+typedef boost::filesystem::basic_path<std::string> boost::filesystem::path;
+typedef boost::filesystem::basic_path<std::wstring> boost::filesystem::wpath;
+
+boost::filesystem::path p("dir1/dir2/filename.doc");   //可移植路径；
+boost::filesystem::path p("dir1\\dir2\\filename.doc"); //平台相关路径；
+	//不具有可移植性，'\\'为windows专用，不能在posix兼容的系统上正常work.但仅能在win平台上work.
+		//p.filename() 在windows-OS会得到 'filename.doc'
+		//p.filename() 在POSIX兼容的OS会得到 'dir1\dir2\filename.doc'
+```
+
+
+
+**T.path的成员方法**
+
+如下：
+
 ```cpp
 #include <boost/filesystem/path.hpp>
 
@@ -66,12 +91,35 @@ p.parent_path();     //get /root/temp
 
 拼接目录、文件名
 ```cpp
-std::string dirPath("dir1");
-dirPath.append("dir2");  //而且跨平台呢？win, linux下目录分隔符是不一样的；
+// .append(string), /= 是等效的，但不等于+=.
+bfs::path p("dir1");
 
-std::filesystem::path dirPath("dir1");
-dirPath /= "dir2";   // dir1/dir2 or dir1\dir2
+p.append("dir2");  // dir1/dir2
+p /= "dir2";   // dir1/dir2
+
+p.concat("dir2");  //dir1dir2
+p += "dir2";  // dir1dir2
 ```
+
+
+
+### native vs generic path
+
+`Native pathname format` VS `Generic pathname format`.
+
+> 通用path只能用`/`做分隔符。
+> 本地path与通用path相似，只是目录分隔符可以是`/`, `\`斜杠。（注意反斜杠有着转义的意思，所以需要俩）
+
+
+
+```cpp
+// ------------------------ win下native.（注意很多返回只是个观察者，并不能改变原有的path.）
+std::wstring = p.native();  // /root/temp/file.pdf
+	//win平台下只是用，wstring来装，但目录结构并不是win特有的。
+bfs::path pp = p.make_preferred(); // \root\temp\file.pdf
+	//path& make_preferred(); 操作pp会更改原变量p.
+```
+
 
 
 ## 文件操作
@@ -142,12 +190,14 @@ boost::filesystem::fstream fstream(fpath, std::ios_base::out);
 方法
 ```cpp
 bool is_directory(const path& p);
-bool create_directory(const path& p);    
-bool create_directories(const path& p);  //创建多级不存在的目录
+bool create_directory(const path& p);    //不可创建多级不存在的目录（异常）
+bool create_directories(const path& p);  //可创建多级不存在的目录
 
 bool remove(const path& p);  //删除文件p
-uintmax_t remove_all(const path& p); //递归删除p
+uintmax_t remove_all(const path& p); //递归删除p，返回删除文件的数量
 
+boost::rename(const Path1& from_p, const Path2& to_p);      //重命名
+boost::copy_file(const Path1& from_fp, const Path2& to_fp); //拷贝文件
 void copy_directory(const path& from, const path& to);
 ```
 

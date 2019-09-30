@@ -96,6 +96,10 @@ is_from_range();
 修剪函数如下：
 
 ```cpp
+boost::trim(str);  //str两端的空白符会被取消。str改变。
+str2 = boost::trim_copy(str);   //删除字符串首部尾部空格，并返回新的字符串，str不改变。
+trim_if();
+trim_copy_if(); 
 trim_left();   //去掉字符串左边的空格；
 trim_left_if()();
 trim_left_copy()();
@@ -104,13 +108,9 @@ trim_right();  //去掉字符串右边的空格；
 trim_right_if();
 trim_right_copy();
 trim_right_copy_if();
-trim();  //去掉字符串的空格；
-trim_if();
-trim_copy();
-trim_copy_if();
 
 //--------------------trim_all.
-trim_all();
+trim_all();  //删除str首部空格，如果中间有多个空格，只保留第一个，str改变。
 trim_all_if();
 trim_all_copy();
 trim_all_copy_if();
@@ -215,26 +215,17 @@ iter_split();
 
 find_all();
 ifind_all();
-split();
 
 string str1("hello abc-*-ABC-*-aBc goodbye");
-vector<string> SplitVec; 
-boost::split(SplitVec, str1, boost::is_any_of("-*"), boost::token_compress_on);
+vector<string> vec; 
+boost::split(vec, str1, boost::is_any_of("-*"), boost::token_compress_on);
 	//token_compress_on，把连续多个分隔符当一个，默认没有打开。
-	//注意str1为空的情况，会使splitVec.size() == 1.
+	//注意：str1为空的情况，会使vec.size()==1，但vec[0]为空。
 
 #include <boost/algorithm/string/join.hpp>
 boost::algorithm::join(list, ",");
 join_if();
 ```
-
-**注意**：`split_str`为空的情况下，`vec`也会得到一个元素（`vec[0]`为空）。
-
-```cpp
-boost::algorithm::split(vec, split_str, boost::is_any_of(","), boost::token_compress_on);
-```
-
-
 
 
 
@@ -248,6 +239,18 @@ std::string algorithm. https://zh.cppreference.com/w/cpp/string/basic_string
 而boost的string算法则强大的多！
 
 
+
+
+
+## Others
+
+### string format
+
+```cpp
+#include <boost/format.hpp>
+std::string str = boost::str(boost::format("%1%.%2%.%3%") %var1 %var2 %var3);
+	//只能通过boost::str来转成std::string.
+```
 
 
 

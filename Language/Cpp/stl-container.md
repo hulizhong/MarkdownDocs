@@ -184,7 +184,12 @@ iterator erase( iterator start, iterator end);    //要删除的第一个元素�
 clear(); //清空所有元素
 empty(); //判断Vector是否为空（返回true时为空）
 size();  //返回元素个数；
-    
+
+//没有查找函数：
+#include <algorithm>
+if ( std::find(vec.begin(), vec.end(), item) != vec.end() ) {
+    //can find it.
+}
  
 //---------------------------------------------------foreach
 //c11

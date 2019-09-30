@@ -91,6 +91,64 @@ const string str_uuid = boost::uuids::to_string(a_uuid);
 	//uuid转string.
 ```
 
+
+
+## program_options
+
+程序参数解析类，主要有以下三个插件：
+
+> options_description，选项描述器，定义可以接收哪些参数。
+> parse_command_line，选项分析器，分析用户输出的参数。
+> variables_map，选项存储器，将分析好的参数存储在其中。
+
+boost::program_options::value 不能用？std::wstring
+
+```cpp
+#include <boost/program_options.hpp>
+	//typedef basic_option<char> option;
+	//typedef basic_option<wchar_t> woption;
+namespace po = boost::program_options;
+
+po::options_description desc;
+po::variables_map vm;
+
+// Step, 添加选项
+desc.add_options()
+    ("from", po::value<std::string>(&from)->required(), "from data")
+    ("count", po::value<unsigned int>(&count)->default_value(count), "count data");
+
+// Step, 解析参数、存储在vm中
+po::store(po::parse_command_line(argc, argv, desc), vm);
+
+// Step, 让vm更新所有的外部变量
+po::notify(vm);
+
+// Step, 使用；
+if(vm.count("count")) {
+    std::string xx = vm["count"].as<string>();
+    std::string xx = vm["count"].asString();
+}
+```
+
+
+
+## lexical_cast
+
+lexical cast为数值之间的转换提供了一揽子方案
+可以顶替`std::`的[诸多函数](c11.md#标准库扩展#数字、字符串转换)；
+
+```cpp
+#include <boost/lexical_cast.hpp>
+string s = "123";  
+try {
+    int a = boost::lexical_cast<int>(s); 
+    //如果转换发生了意外，会抛出一个bad_lexical_cast异常；
+}
+catch(boost::bad_lexical_cast& e) {
+    //...
+}
+```
+
 ## 特殊功能类
 
 收录一些功能类，我们只需要继承这些类就能实现特定功能，如下：

@@ -1,5 +1,18 @@
 [TOC]
 
+
+
+## ReadMe
+
+
+
+- 原则
+    - 模块内部用，`wstring`.
+    - 模块间调用用，`string format utf-8`.
+    - ...
+
+
+
 ## UTF-8
 
 UTF-8是一种变长编码，对于一个Unicode的字符被编码成1至4个字节，其中绝大部分的中文用3个字节编码；少数中文用到了4个字节编码。
@@ -13,7 +26,9 @@ UTF-8是一种变长编码，对于一个Unicode的字符被编码成1至4个字
 
 
 
-## Linux中的语言设置
+## Linux
+
+### Linux中的语言设置
 
 rabin, todo.
 
@@ -78,3 +93,48 @@ char* getenv(const char* name);
 10、度量衡表达方式 (LC_MEASUREMENT) 
 11、默认纸张尺寸大小(LC_PAPER) 
 12、对locale自身包含信息的概述(LC_IDENTIFICATION)。
+
+
+
+
+
+## Windows
+
+简体中文默认使用`GBK`，它是`gb2312`的扩展；
+台湾的繁体中文使用`big5`；（这些繁体跟`gbk`中繁体不是一个编码系统）
+
+```bash
+chcp 65001 #更改cmd窗口为utf-8编码（如果窗口不能正常显示汉字，那么需要将字体修改为True Type字体"Lucida Console"）
+chcp 936  #gbk
+chcp 437  #美国英语
+```
+
+
+
+
+
+## Mac
+
+
+
+## boost.locale.conv
+
+used for `Character Set Conversions`, support `char, wchar_t`, experimental support c++0x `char16_t, char32_t`.
+
+```cpp
+//接收一个转码失败时的策略：skip（忽略该字符，尽最大努力转码），stop（停止、并抛出异常），默认为skip.
+boost::locale::conv::to_utf();
+boost::locale::conv::from_utf();
+boost::locale::conv::utf_to_utf();
+
+char;
+wchar_t;
+boost::locale::generator::locale_cache_enabled(true);
+```
+
+https://www.boost.org/doc/libs/1_53_0/libs/locale/doc/html/group__codepage.html
+
+
+
+
+

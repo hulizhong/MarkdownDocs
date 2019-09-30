@@ -179,3 +179,14 @@ int sqlite3_get_table(
 
 
 
+## 编码相关
+
+建库、建表指定不了编码（一般编译为默认使用utf8，除非启用`SQLITE_ENABLE_ICU`）；
+编码使用对应的api版本（如sqlite3_open16）；
+
+sqlite db的字符串存储类型TEXT.
+
+> TEXT. The value is a text string, stored using the database encoding (UTF-8, UTF-16BE or UTF-16LE).
+> sqlite3_open() 默认是utf8
+> sqlite3_open16() 默认是UTF-16 in the native byte order. 
+

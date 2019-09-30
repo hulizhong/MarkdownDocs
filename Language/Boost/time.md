@@ -29,6 +29,7 @@ T. ptime时间点
 #include <boost/date_time/posix_time/posix_time.hpp>
 using boost::posix_time;
 
+// ptime
 ptime pt(second_clock::local_time());     //机器的当前时间；
 	//boost::date_time::second_clock<ptime>
 ptime pt(second_clock::universal_time()); //机器的GMT时间；
@@ -66,6 +67,7 @@ td.total_milliseconds();
 td.total_microseconds(); // == td.ticks()
 td.totao_nanoseconds();
 
+// time unit.
 boost::posix_time::hours h(1);
 boost::posix_time::minutes m(10);    
 boost::posix_time::seconds s(30);    //s

@@ -87,7 +87,7 @@ boost::shared_ptr<Person> p1 = boost::make_shared<Person>(1);
 
 //------------------------------------------2、用裸指针构造
 boost::shared_ptr<Person> p2(new Person(2));  
-boost::shared_ptr<Person> p2 = boost::shared_ptr<Person>(new Person(2));
+boost::shared_ptr<Person> p2 != boost::shared_ptr<Person>(new Person(2));
 	//这样行吗？用=号了。。。 rwhy
 	//这句话不可以分成两部的，看如下解释：
 		// Person *ptr = New Person(2); p2 = ptr; 因为一个是类，一个是指针！
@@ -233,25 +233,44 @@ private:
 
 
 ## SmartPointer Cast
+
+static_pointer_cast
+
+const_pointer_cast
+
+
+
+
+
+
+
+### dynamic_pointer_cast
+
 如同我们用dynamic\_cast对“裸”指针进行类层次上的上下行转换时一样；
 当我们对智能指针进行类层次上的上下行转换时，则需要如下:
-dynamic cast
 
 ```cpp
 boost::dynamic_pointer_cast<T>();
 boost::shared_ptr<DeriveClass> ptrDerive = boost::dynamic_pointer_cast<DeriveClass>(ptrBase); 
 	//只是dynamic_cast在进行下行转换的时候（即基类到派生类）具有类型检查功能
+
+DstPtr = boost::dynamic_pointer_cast<Dst, Src>(srcPtr);
+	//这种调用方式：不需要推导srcPtr到Src类型。
 ```
 
-static cast
-const cast
+
+
+### static_pointer_cast, const_pointer_cast
+
 ```cpp
 boost::static_pointer_cast<>();
 boost::const_pointer_cast<>();
 ```
 
-reinterpret cast重解释转换
-这个转换是最“不安全”的，两个没有任何关系的类指针之间转换都可以用这个转换实现，如下：
+### reinterpret_pointer_cast
+
+重解释转换：这个转换是最“不安全”的，两个没有任何关系的类指针之间转换都可以用这个转换实现，如下：
+
 ```cpp
 // reinterpret_cast<new_type>(expression)
 
@@ -260,13 +279,5 @@ static void* threadMain(void* arg) {
 	shared_ptr<PthreadThread> thread = *(shared_ptr<PthreadThread>*)arg;
 	delete reinterpret_cast<shared_ptr<PthreadThread>*>(arg);
 }
-```
-
-lexical cast为数值之间的转换提供了一揽子方案
-```cpp
-#include <boost/lexical_cast.hpp>
-string s = "123";  
-int a = boost::lexical_cast<int>(s);  //如果转换发生了意外，lexical_cast会抛出一个bad_lexical_cast异常；
-	//可以顶替std::的诸多函数；
 ```
 

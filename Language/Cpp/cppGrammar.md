@@ -32,6 +32,32 @@ c++会多类；
 
 
 
+## Base
+
+### data type
+
+浮点数（没有无符号分类、可存储正、负数）：这些数据类型的确切大小取决于当前使用的计算机。唯一可以保证的是可以确认的是`double`至少与`float`一样大，`long double`至少与`double`一样大。
+
+```cpp
+float f;  //单精度，4字节、7位有效数字；
+double d; //双精度，8字节、16位有效数字；
+long double ld;  //高双精度，8字节、16位有效数字；
+```
+
+
+
+wstring
+
+```cpp
+#include <string>
+std::wstring ws;
+std::wcout << ws << std::endl;  //只有wcout,没有wendl.
+```
+
+
+
+
+
 ## From C to C++
 
 不同点概要如下：

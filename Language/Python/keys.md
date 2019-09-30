@@ -52,28 +52,26 @@ python2.x字符串格式有
 	默认格式（字符编码为ASCII）
 
 	print str 如果str中包含中文那么这个操作的错误的；
-
-
-```python
-import sys
-reload(sys)
-sys.setdefaultencoding('utf8')
-```
+	
+	```python
+	import sys
+	reload(sys)
+	sys.setdefaultencoding('utf8')
+	```
 
 - unicode
 
   字节串.decode('原来的字符编码')  ==>   <font color=red>Unicode字符串</font>.encode('新的字符编码')   ==>  新的字节串
 
   python2.7中任何 type(字节串) 为str
-
-
-```python
-#!/usr/bin/env python
-# -*- coding:utf-8 -*-
-utf_8_a = '我爱中国'
-gbk_a = utf_8_a.decode('utf-8').encode('gbk')
-print(gbk_a.decode('gbk'))
-```
+  
+  ```python
+  #!/usr/bin/env python
+  # -*- coding:utf-8 -*-
+  utf_8_a = '我爱中国'
+  gbk_a = utf_8_a.decode('utf-8').encode('gbk')
+  print(gbk_a.decode('gbk'))
+  ```
 
 - <font color=red>问题</font>：如何通过python2.7的thrift客户端接口调用另外一个C++编写的thrift服务端的接口，且服务端内部只能处理utf8格式的数据？？
 	
@@ -98,6 +96,7 @@ print(gbk_a.decode('gbk'))
 #### python3
 Python3中定义的字符串默认就是unicode，因此不需要先解码，可以直接编码成新的字符编码：  
 字符串-->encode('新的字符编码')-->字节串
+
 ```python
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-

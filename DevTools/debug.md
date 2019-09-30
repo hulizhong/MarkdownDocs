@@ -232,7 +232,7 @@ thread apply all bt
 
 - crash问题；（查看堆栈 + 变量的值（可attach到进程亦可生成dump文件））
 - 死锁问题；（打开所有堆栈即可，知道卡在哪里！（可attach到进程亦可生成dump文件））
-- dll库加载的路径；（attach到进程，用`lmf`指令查看模块）
+- dll库加载的路径；（attach到进程，用`lmf`指令查看模块；而`lm`则可看pdb文件）
 - 。。。
 
 
