@@ -116,35 +116,104 @@ gcc/g++内置了如下宏，用以判断OS的类型，如下：
 库相关。
 
 ### 生成库
-生成动态库
+
+#### on Linux
+
+生成动态库（<font color=red>默认所有函数都对外开放</font>）
 ```bash
 g++ demo.cpp -fPIC -c 
 g++ demo.o -shared -o libdemo.so  //g++ demo.cpp -fPIC -shared -o libdemo.so
-	shared生成动态连接库；
-	fPIC生成位置独立的代码；
-nm -s libdemo.so 查看库
+	#shared生成动态连接库；
+	#fPIC生成位置独立的代码；
+g++ -fvisibility=default|internal|hidden|protected
+	# __attribute ((visibility("public"))) int test2 (int i) linux所有函数下默认声明为此
+	#default，默认选项，等效于public.
+	#hidden, 隐藏，只有声明了__attribute ((visibility("default")))的函数才会被导出。
+	#internal|protected，很少使用
 
 g++ use.cpp -ldemo -L.
-ldd a.out  查看目标加载了从哪里加载了哪些库
 ```
 
 生成静态库
 ```bash
 g++ -c dynamic_a.cpp dynamic_b.cpp dynamic_c.cpp  
-ar cr libdemo.a dynamic_a.o dynamic_b.o dynamic_c.o  //cr标志告诉ar将object文件封装(archive)
-nm -s libdemo.a
+ar cr libdemo.a dynamic_a.o dynamic_b.o dynamic_c.o  #cr标志告诉ar将object文件封装(archive)
 
-g++ use.cpp -ldemo -L. -static 其中static代表libdemo.a为静态库；
+g++ use.cpp -ldemo -L. -static #其中static代表libdemo.a为静态库；
 g++ use.cpp libdemo.a
 ```
 
-动态库有导出符号这一说、静态库则没有。----------`nm libxx.a`导出符号是`T`表示。
+#### on Mac
+
+#### on Win
+
+静态链接库会生成`xx.lib`，动态库链接会生成`xx.dll, xx.lib`，两者都有lib文件，但实质上是不一样的。
+
+> 前者是静态库（包含了实际执行的代码、符号表等）。
+> 后者是<font color=red>导入/引入库</font>（只包含了地址符号表等，用于确保程序能在dll中找到对应的函数，执行代码都在dll文件中）。
+
+<font color=red>动态链接库内的函数分两种：（静态链接库则没有这种说法）</font>
+
+> 一、内部函数，只供库内部使用。（<font color=red>默认为此开关</font>）
+> 二、导出函数，可以给外部使用，但需要按如下方式进行。
+>
+> - \_\_declspec(dllexport)方式进行声明
+> - DEF文件方式进行声明
+
+导出函数的声明代码，如下：
+
+```cpp
+// ----------------------dllexport方式
+// xx.h
+__declspec(dllexport) int add(int a, int b);
+// xx.cpp
+#include <xx.h>
+__declspec(dllexport) int add(int a, int b) {...}
+
+// ----------------------def方式
+// dll.def
+LIBRARY BlogUse
+EXPORTS add @ 1
+// xx.h
+int add(int a, int b);
+// xx.cpp
+#include <xx.h>
+int add(int a, int b) {...}
+
+// ------------------------cmake.generate_export_header
+```
 
 
 
-### 运行库
+静态链接库的使用方式，如下：
+
+```cpp
+#pragma comment(lib, "xx.lib")
+```
+
+动态链接库使用方法，如下：
+
+```cpp
+#pragma comment(lib, "xx.lib")
+	//静态链接方式
+LoadLibrary(..);
+GetProcAddress(..); //需要用'函数指针'来接收动态库中的函数运行地址。
+FreddLibrary(..);
+	//动态链接方式
+
+//__declspec(dllexport)导出时，调用前需要声明 __declspec(dllimport) add(int a,int b)???
+//不需要，只需要#include ”dll.h"即可，.h中int add(int a,int b);
+```
+
+
+
+
+
+### 使用库
 
 使用库，应该是包含编译、链接（静态、动态：生成文件大小、运行时依赖）二个方面；
+
+#### on Linux
 
 - 编译
   - -lxx 编译器查找动态连接库时有隐含的命名规则；
@@ -166,7 +235,15 @@ g++ use.cpp libdemo.a
      2. ld.so.cache是递增式增长，每次ldconfig；除非是重启机器了；
   4. 默认/lib/, /usr/lib/
 
-**dlpopen使用**
+
+
+#### on Mac
+
+#### on Win
+
+
+
+#### dlpopen
 
 ```cpp
 void * dlopen( const char * pathname, int mode ); //打开动态库。
@@ -184,23 +261,65 @@ const char *dlerror(void); //对动态库操作失败的原因。
 静态库、动态库的查看
 
 ```bash
+# 动态库有导出符号这一说、静态库则没有。----------nm libxx.a导出符号是T表示。
+
+# ---------------------linux
 nm -s libxx.so
 nm -s libxx.a
+readelf -a libxx.so
+//readelf -s ? nm -s 如何看隐藏的符号表。？？？？
+# nm -s libxx.so 内部函数
+0000000000000980 t _ZN1A4funaEv
+0000000000000a14 t _ZN1B4funbEv
+# nm -s libxx.so 外部函数
+00000000000009e0 T _ZN1A4funaEv
+0000000000000a74 T _ZN1B4funbEv
+# readelf -s libxx.so 内部函数
+50: 0000000000000a14    54 FUNC    LOCAL  DEFAULT   12 _ZN1B4funbEv
+51: 0000000000000980    54 FUNC    LOCAL  DEFAULT   12 _ZN1A4funaEv
+# readelf -s libxx.so 外部函数
+62: 0000000000000a74    54 FUNC    GLOBAL DEFAULT   12 _ZN1B4funbEv
+64: 00000000000009e0    54 FUNC    GLOBAL DEFAULT   12 _ZN1A4funaEv
+
+# ---------------------win
+dumpbin /exports xx.dll
+dumpbin /linkermember xx.lib  #静态库
+dumpbin /headers xx.lib
+	#... machine (x86)  代表32位
+	#... machine (x64)  代表64位
+
+# ---------------------mac
 ```
 
 静态库的查看ar 
 
 ```bash
+# ---------------------linux
 ar cr libxx.a xx.o  #c 创建静态库; 
 ar r libxx.a yy.o   #r 往静态库中增文件；
 ar d libxx.a yy.o   #d 从静态库中删文件；
 ar t libxx.a        #t 查看静态库中的文件；
+
+# ---------------------win
+
+# ---------------------mac
 ```
+
+
+
+### 查看二进制执行文件的依赖库
 
 目标文件使用了哪些库
 
 ```bash
+# ---------------------linux
 ldd a.out
+ldd a.out  #查看目标加载了从哪里加载了哪些库
+
+
+# ---------------------win
+
+# ---------------------mac
 ```
 
 

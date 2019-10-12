@@ -337,6 +337,31 @@ library_output_path()
 
 
 
+### generate_export_header
+
+生成dllexport头文件，如下：
+
+```cmake
+GENERATE_EXPORT_HEADER( myDLL  # dll文件名
+	EXPORT_MACRO_NAME MYDLLExports  # export 宏
+	EXPORT_FILE_NAME ${CMAKE_BINARY_DIR}/include/myDLLExports.h  #宏的保存文件
+）
+list( APPEND src  # 编译文件名的列表 
+	${CMAKE_BINARY_DIR}/include/myDLLExports.h  #刚使用cmake生成的export宏文件
+)
+```
+
+在c++代码中使用，如下：
+
+```cpp
+#include "myDLLExports.h"
+class MYDLLExports A {
+    // definition
+}
+```
+
+
+
 
 
 ## 宏

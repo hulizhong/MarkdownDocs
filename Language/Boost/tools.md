@@ -112,7 +112,7 @@ namespace po = boost::program_options;
 po::options_description desc;
 po::variables_map vm;
 
-// Step, 添加选项
+// Step, 添加选项(required, default_value, implicit_value, multitoken..)
 desc.add_options()
     ("from", po::value<std::string>(&from)->required(), "from data")
     ("count", po::value<unsigned int>(&count)->default_value(count), "count data");

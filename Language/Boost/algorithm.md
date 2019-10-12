@@ -219,6 +219,7 @@ ifind_all();
 string str1("hello abc-*-ABC-*-aBc goodbye");
 vector<string> vec; 
 boost::split(vec, str1, boost::is_any_of("-*"), boost::token_compress_on);
+	//is_any_of，字符串中的任意一个字符。
 	//token_compress_on，把连续多个分隔符当一个，默认没有打开。
 	//注意：str1为空的情况，会使vec.size()==1，但vec[0]为空。
 
