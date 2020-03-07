@@ -104,7 +104,7 @@ Focus set to SRC window.
 **T.信号**
 
 ```bash
-handle SIGPIPE nostop noprint ignore
+handle SIGPIPE nostop stop noprint print nopass pass ignore
 ```
 
 
@@ -237,7 +237,64 @@ thread apply all bt
 
 
 
-### usage
+### command
+
+#### load symbol
+
+!sym noisy|quit, <font color=blue>加载Symbol文件的时候，是否显示Symbol的路径，默认不显示。</font>
+0:000> .reload /f sgbase.dll
+
+> DBGHELP: sgbase - private symbols & lines 
+>          c:\users\hulizhong\desktop\wep-1511\sgbase.pdb
+
+.reload <font color=blue>只加载dump的主可执行文件。</font>
+.reload /f xx <font color=blue>强制立即（不能延迟）加载xx可执行文件（.dll要写后缀）。</font>
+
+0:000> !itoldyouso EndpointTrafficServer.exe C:\Users\hulizhong\Desktop\WEP-1511\EndpointTrafficServer.pdb <font color=blue>比较模块及pdb文件是否匹配（签名一致）</font>
+
+> EndpointTrafficServer.exe
+>     Timestamp: 5E1C5367
+>   SizeOfImage: 30C000
+>           pdb: D:\opt\builddir\EndpointTrafficServer\build\win32\src\skyguard\ets\Release\EndpointTrafficServer.pdb
+>       pdb sig: 2F0AEF1C-E63F-49AE-A22B-1EFA23DB52A1
+>           age: 1
+>
+> EndpointTrafficServer.pdb
+>       pdb sig: 2F0AEF1C-E63F-49AE-A22B-1EFA23DB52A1
+>           age: 1
+>
+> <font color=red>MATCH: EndpointTrafficServer.pdb and EndpointTrafficServer.exe</font>
+
+0:000> lm （<font color=blue>注意lmf只能看模块、及模块的全路径，不能看到pdb文件</font>）
+
+> start    end        module name
+> 003f0000 003f3000   api_ms_win_core_timezone_l1_1_0   (deferred)             
+> <font color=red>00400000 0070c000   EndpointTrafficServer   (private pdb symbols)  c:\users\hulizhong\desktop\wep-1511\EndpointTrafficServer.pdb</font>
+
+
+
+未解决问题，如下：
+
+> 00fc0000 0104c000   archive    (deferred)             
+> 01060000 01163000   wfclient   (private pdb symbols)  c:\users\hulizhong\desktop\wep-1511\wfclient.pdb
+>
+> 7c920000 7c9b6000   ntdll      (export symbols)       ntdll.dll
+
+https://blog.csdn.net/wxh0000mm/article/details/86511450
+
+(private pdb symbols) are the full symbols with all the details.
+
+(pdb symbols) are public symbols, i.e. the symbols you would export to third parties to assist debugging.
+
+https://www.cnblogs.com/yilang/p/11466595.html
+
+http://yiiyee.cn/blog/2013/08/23/windbg/
+
+
+
+
+
+#### thread, call stack.
 
 **T.显示堆栈**。
 
@@ -320,6 +377,10 @@ Last event: 5d30.5e78: Exit process 0:5d30, code 80  这个应该是没问题的
 
 生成dmp文件：任务管理器》右键生成dump文件；（或者crash会生成dump文件）
 windbg加载dmp文件：file > open crash dump.
+
+
+
+
 
 
 

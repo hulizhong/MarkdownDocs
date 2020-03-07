@@ -28,6 +28,8 @@ http（超文本传输协议）
 
 ### Request Header
 
+refer. https://cloud.tencent.com/developer/section/1189947 
+
 常用的请求头如下表：
 
 |字段名|说明|
@@ -40,6 +42,37 @@ http（超文本传输协议）
 |Host |主要用于指定被请求资源的Internet主机和端口号；（必须字段）|
 |User-Agent |允许客户端将它的操作系统、浏览器和其它 属性告诉服务器；|
 |if-modified-since |只有在指定日期之后修改过才会返回资源，否则返回304.|
+|via |用于代理服务器信息的添加，可由多个value组成用','分隔。|
+|Forwarded |用于替代以下三个现实标准（`X-Forwarded-xx`）。|
+|X-Forwarded-Host ||
+|X-Forwarded-Proto ||
+|X-Forwarded-For |用来表示请求端的真实ip，value为多个字段如`clientip, proxy1ip, proxy2ip, ...`|
+|X-Real-IP |一般用于代理服务器，标识与它产生tcp连接的设备ip.（不能被造假，因为要建立连接）|
+| ||
+
+via
+
+> Via 是一个通用首部，是由代理服务器添加的（数据包途经的每个代理服务器都会添加自己的信息），适用于正向和反向代理，在请求和响应首部中均可出现。这个消息首部可以用来追踪消息转发情况，防止循环请求，以及识别在请求或响应传递链中消息发送者对于协议的支持能力。
+>
+> 添加格式如下
+> 法一：Via: [ <protocol-name> "/" ] <protocol-version> <host> [ ":" <port> ]
+> 法二：Via: [ <protocol-name> "/" ] <protocol-version> <pseudonym>
+> 	pseudonym是代理服务器的名称、别名
+
+X-Forwarded-For
+
+> 代表客户端真实IP，由squid引入，不是rfc的标准，但已为现实标准（被各大http代理、负载均衡所用）。
+> client->porxy1->proxy2->realserver.
+> 请求到proxy1，可能就会添加`X-Forwarded-IP: clientip`，请求到proxy2，就会变成`X-Forwared-IP: clientip, proxy1ip` ...如此反复，即下一节点添加与它连接的上一节点的ip.
+
+Forwarded
+
+> Forwarded: by=<identifier>; for=<identifier>; host=<host>; proto=<http|https>
+>   by, 被代理的ip。
+>   for, 代理的ip。
+>   host,应该是Http-header中的host字段值？
+
+
 
 
 
@@ -48,15 +81,74 @@ http（超文本传输协议）
 一个http请求可以上传多个文件（不相关），规范：
 
 - 必须为POST方法；
+
 - 必须含Content-Type头，且值为multipart/form-data； 
+
 - 每个part如下
 
-```bash
------------------分隔字符串
-Content-Disposition: form-data; name="request"
-Content-Type: application/octet-stream
-…数据…
-```
+    ```bash
+    header: value<0d0a>
+    header: value<0d0a>
+    <0d0a>
+    -----------------splitStr<0d0a>
+    Content-Disposition: form-data; name="request"<0d0a>
+    Content-Type: application/octet-stream<0d0a>
+    <0d0a>
+    data...<0d0a>
+    -----------------splitStr<0d0a>
+    ...
+    -----------------splitStr<0d0a>
+    ...
+    -----------------splitStr--<0d0a>
+    <0d0a>
+    ```
+
+- size有如下几种指定方法
+
+    ```bash
+    #第一种如下，在header中指定整个长度
+    ....
+    Content-Length: 1204
+    
+    ------------------------------aaa
+    Content-Disposition: form-data; name="m"
+    
+    ------------------------------aaa
+    Content-Disposition: form-data; name="h"
+    
+    ...GM.Y...
+    ------------------------------aaa--
+    
+    #第二种如下，指定整个part的size. （最开始是16进制总长度，结尾<0d0a0d0a>后面跟个0<0d0a0d0a>）
+    ....
+    Content-Length: 1204
+    
+    4B4<0d0a>
+    ------------------------------aaa
+    Content-Disposition: form-data; name="m"
+    
+    ------------------------------aaa
+    Content-Disposition: form-data; name="h"
+    
+    ...GM.Y...
+    ------------------------------aaa--<0d0a>
+    <0d0a>
+    0<0d0a>
+    <0d0a>
+    
+    #第三种如下，只指定单个part的size.
+    ----bbb
+    
+    Content-Disposition: form-data; name="file"; filename="testfile-downloaded.zip"; size=<file size could be here>
+    Content-Length: <file size could also be here>
+    <some other content headers>
+    
+    <file data>
+    
+    ----bbb
+    ```
+
+    
 
 
 
@@ -148,6 +240,7 @@ scheme:[//[user[:password]@]host[:port]][/path][?query][#fragment]
 	#host域名，字母a-z不区分大小写、数字0-9、连接符-构成。
 		#限制：首位只能是字母、数字。
 		#长度限制，国际通用顶级如.com不超过26个字符；国家顶级域名如.cn不超过20；
+		#如果是ipv6，那么host需要用'[]'括起来。
 	#query 以?号为起点，以&符为分隔，每对key,value用=连接；并且通常以UTF8的URL编码，避开字符冲突的问题。
 	#fragment 锚点，标识文章特定分段（相当于标签的特点，点击就进入对应章节了）；
 ```

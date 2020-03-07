@@ -327,7 +327,7 @@ ldd a.out  #查看目标加载了从哪里加载了哪些库
 
 ## 头文件
 
-## elf文件
+## ELF文件
 
 linux下可执行文件的格式，运行起来的进程空间参考：（Language\GLibC\process.md）
 
@@ -344,3 +344,26 @@ make: *** [ev] Error 1
 
 
 
+## PE文件
+
+### 查看x86_64, x86
+
+如果使用16进制编辑器（ <font color=red>%!xxd</font>）打开你的exe文件的话，可以看到如图的效果，里面的hex code:  <font color=red>5045 0000 4C</font>就表示是32位的，而hex code: <font color=red>5045 0000 64</font>86就表示是64_86，也就是64位的。
+
+```bash
+000000d0: 5045 0000 4c01 0600 3f3f 474f 0000 0000  PE..L...??GO....
+
+00000120: 0000 0000 0000 0000 5045 0000 643f 0800  ........PE..d?..
+```
+
+### Windows-on-Windows x-bit
+
+WOW64 (Windows-on-Windows 64-bit)是一个Windows操作系统的子系统, 它为现有的 32 位应用程序提供了 32 位的模拟，可以使大多数 32 位应用程序在无需修改的情况下运行在 Windows 64 位版本上。
+
+WOW64类似于旧的 WOW32 子系统，负责在 Windows 32 位版本下运行 16 位的代码。
+
+
+
+
+
+​	

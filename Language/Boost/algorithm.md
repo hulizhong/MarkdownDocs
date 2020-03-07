@@ -53,7 +53,7 @@ to_upper_copy();
 判断/谓词函数如下：
 
 ```cpp
-boost::algorithm::starts_with();
+boost::algorithm::starts_with("abcdef", "abc");
 istarts_with();
 ends_with();  //stringA是否以stringB结尾。
 iends_with(); //同上，但不区分大小。

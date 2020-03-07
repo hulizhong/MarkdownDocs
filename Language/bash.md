@@ -63,6 +63,8 @@ str='i am string.'
 	#原样输出；
 str="i am string, eq ${var}.\n"
 	#可包含变量、转义字符、单引号；
+${str:3:5}
+	#从str的第3个字符开始，总共截取5个字符。
 ```
 
 
@@ -476,10 +478,11 @@ dirlist ./
 按行读取文件，<font color=red size=4>只能读unix格式的文件，dos格式不能这样弄！！</font>
 
 ```bash
+num=1
 cat bk.list | while read line
-do   
-    echo "$line"
+do
     echo -e "downloadd -------$line, $num.html-----1\n"
+    let "num++"
 done
 ```
 

@@ -40,6 +40,8 @@ Ctypes提供了与c语言兼容的数据类型，使得python可以调用c库；
 - 利用dll对象来调用dll中的api；
 
 
+
+
 ## markdoc   
 是一个markdown的wiki系统（类似confluence）   
 > 什么是wiki系统？  ---一种多人协作的写作工具。  
