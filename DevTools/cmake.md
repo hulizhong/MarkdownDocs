@@ -1,7 +1,7 @@
 [TOC]
 
 ## ReadMe
-cmake输入文件：<-------   CMakeLists.txt （注意是Lists）
+cmake输入文件：<-------   <font color=red>CMakeLists.txt</font> （注意是Lists）
 mkdir build; cd build; cmake ..;   生成Makefile；
 make -j 4;
 
@@ -14,6 +14,9 @@ make -j 4;
 ```bash
 # comment use '#'.
 # end the statement no ';'.
+project(demo CXX)
+cmake_minimum_required(VERSION 2.8.1)
+set(CMAKE_VERBOSE_MAKEFILE ON)  #make时会显示gcc/g++的编译参数；或者make VERBOSE=1
 
 #define variable.
 set(VarName VarValue)
@@ -22,7 +25,10 @@ set(VarName VarValue)
 include_directories(${PROJECT_SOURCE_DIR}) 
 
 # log.
-message("Will pring val = ${val}")
+message("Will pring val = ${val}")  #""中能进行变量替换，所以不需要把字符串与变量用,号拼接起；
+message([<mode>] "message to display" ...)  #其中mode为高级的错误，可以暂停cmake的继续运行
+	#FATAL_ERROR：cmake出错，停止编译和生成(信息红色)
+	#SEND_ERROR：cmake出错，继续编译，但是停止生成(信息红色)
 ```
 
 
@@ -38,11 +44,14 @@ message("Will pring val = ${val}")
 ```cmake
 add_executable(obj f1.cpp f2.cpp)
 	#最简单的方法，就是这样后缀。
-aux_source_directory([Path] [Variable])
-	#获取一个目录下的的所有源文件 然后储存在变量Variable中
 add_dependencies(<target> [<target-dependency>]...)
 	#target要依赖target-dependency；即dependency先执行；
 
+# ---------------------------------默认搜索规则
+aux_source_directory([Path] [Variable])
+	#获取一个目录下的的所有源文件（不是递归） 然后储存在变量Variable中
+
+# ------------------------------自定义搜索规则；
 FILE(GLOB var ./include/*.h)
 	#GLOB 获取./include/目录下的*.h 储存在变量var中
 FILE(GLOB_RECURSE var ./source/*.cpp)
@@ -207,54 +216,110 @@ mark_as_advanced(LIBXML2_INCLUDE_DIR LIBXML2_LIBRARY )
 
 Todo. https://blog.csdn.net/z_h_s/article/details/50699905
 
+### commands
+
 指令如下：
 
-| key                              | subkey       | value                                                        |
-| -------------------------------- | ------------ | ------------------------------------------------------------ |
-| project(XX)                      |              | 项目名称，${XX_SOURCE_DIR}则为项目根目录。                   |
-| cmake_mini**m**um_required(..)   |              | cmake最低版本设置。(VERSION 2.8 FATAL_ERROR)                 |
-| include(xx)                      |              | 引入cmake模块xx.                                             |
-|                                  |              |                                                              |
-| add_subdirectory(dir)            |              | 包含子目录dir中的CmakeLists.txt.                             |
-| aux_source_directory(dir var)    |              | 发现dir下面所有源码文件、并将文件列表赋值给var.              |
-| add_executable(obj codefilelist) |              | 生成二进制目标。                                             |
-| add_library(obj codefilelist)    |              | 生成库目标。                                                 |
-|                                  |              |                                                              |
-| include_directories(xx)          |              | -I参数                                                       |
-| target_include_directories()     |              |                                                              |
-| link_directories(xx)             |              | -L参数                                                       |
-| target_link_libraries(obj a b)   |              | 为obj指定-l库名，可以放在任何地址。<br /><font color=red>win. a.lib Not liba.lib</font><br />Linux. liba.so or liba.a |
-| link_libraries(a b c)            |              | 为后续add_executable/add_library目标指定-l库，只能放在前面。 |
-|                                  |              |                                                              |
-| add_definitions(-DXX)            |              | 向c/c++编译器添加-DXX定义。                                  |
-| cmake_c_flags                    |              | 预置变量：c编译器选项设置；                                  |
-| cmake_cxx_flags                  |              | 预置变量：c++编译器选项设置；                                |
-|                                  |              |                                                              |
-| file(subkey ..)                  |              | 文件操作指令                                                 |
-| install(subkey ..)               |              |                                                              |
-| find_xx(..)                      |              | find_系列指令                                                |
-|                                  | find_file    |                                                              |
-|                                  | find_library |                                                              |
-|                                  | find_path    |                                                              |
-|                                  | find_program |                                                              |
-|                                  | find_package |                                                              |
-|                                  |              |                                                              |
-| list(op list item ...)           | append       | 向list中追加item.                                            |
-|                                  | remove_item  | 从list中删除item.                                            |
-|                                  |              |                                                              |
-|                                  |              |                                                              |
-|                                  |              |                                                              |
-|                                  |              |                                                              |
-|                                  |              |                                                              |
-|                                  |              |                                                              |
-|                                  |              |                                                              |
-|                                  |              |                                                              |
-|                                  |              |                                                              |
-|                                  |              |                                                              |
-|                                  |              |                                                              |
-|                                  |              |                                                              |
-|                                  |              |                                                              |
-|                                  |              |                                                              |
+| key                                                          | subkey       | value                                                        |
+| ------------------------------------------------------------ | ------------ | ------------------------------------------------------------ |
+| project(XX [CXX\|C\|JAVA])                                   |              | 项目名称，${XX_SOURCE_DIR}则为项目根目录。                   |
+| cmake_mini**m**um_required(..)                               |              | cmake最低版本设置。(VERSION 2.8 FATAL_ERROR)                 |
+| include(xx)                                                  |              | 引入cmake模块xx.                                             |
+|                                                              |              |                                                              |
+| add_subdirectory(dir)                                        |              | 包含子目录dir中的CmakeLists.txt.                             |
+| aux_source_directory(dir var)                                |              | 发现dir下面所有源码文件、并将文件列表赋值给var.              |
+| add_executable(obj codefilelist)                             |              | 生成二进制目标。                                             |
+| add_library(obj [STATIC/SHARED/MODULE] [EXCLUDE_FROM_ALL] sourceList) |              | 生成库目标。如果第二项不指定可由`BUILD_SHARED_LIBS`. module是指由dlpopen打开的方式。 |
+|                                                              |              |                                                              |
+| include_directories(xx)                                      |              | -I参数                                                       |
+| target_include_directories(obj PUBLIC a b)                   |              |                                                              |
+| link_directories(xx)                                         |              | -L参数, <font color=red>只能放在前面？</font>                |
+| target_link_libraries(obj a b)                               |              | 为obj指定-l库名，可以放在任何地址。<br /><font color=red>win. a.lib Not liba.lib</font><br />Linux. liba.so or liba.a |
+| link_libraries(a b c)                                        |              | 为后续add_executable/add_library目标指定-l库，<font color=red>只能放在前面</font>。 |
+|                                                              |              |                                                              |
+| add_definitions(-DXX)                                        |              | 向c/c++编译器添加-DXX定义。<font color=red>生效时机为该语句后的add_subdirectory、当前目录、子目录</font>； |
+|                                                              |              |                                                              |
+|                                                              |              |                                                              |
+|                                                              |              |                                                              |
+| file(subkey ..)                                              |              | 文件操作指令                                                 |
+| install(subkey ..)                                           |              |                                                              |
+| find_xx(..)                                                  |              | find_系列指令                                                |
+|                                                              | find_file    |                                                              |
+|                                                              | find_library |                                                              |
+|                                                              | find_path    |                                                              |
+|                                                              | find_program |                                                              |
+|                                                              | find_package |                                                              |
+|                                                              |              |                                                              |
+| list(op list item ...)                                       | append       | 向list中追加item.                                            |
+|                                                              | remove_item  | 从list中删除item.                                            |
+|                                                              |              |                                                              |
+|                                                              |              |                                                              |
+|                                                              |              |                                                              |
+|                                                              |              |                                                              |
+|                                                              |              |                                                              |
+|                                                              |              |                                                              |
+|                                                              |              |                                                              |
+|                                                              |              |                                                              |
+|                                                              |              |                                                              |
+|                                                              |              |                                                              |
+|                                                              |              |                                                              |
+|                                                              |              |                                                              |
+|                                                              |              |                                                              |
+|                                                              |              |                                                              |
+
+### predefine variables
+
+| 预置变量               | 值     | 意义                                       |
+| ---------------------- | ------ | ------------------------------------------ |
+| cmake_c_flags          |        | c编译器选项设置；                          |
+| cmake_cxx_flags        |        | c++编译器选项设置；                        |
+|                        |        |                                            |
+| PROJECT_SOURCE_DIR     |        | 工程的根目录                               |
+| PROJECT_BINARY_DIR     |        | 编译的根目录，即xx/build                   |
+|                        |        |                                            |
+| CMAKE_VERBOSE_MAKEFILE | ON/OFF | 编译时显示编译器编译细节 == make VERBOSE=1 |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
+|                        |        |                                            |
 
 
 

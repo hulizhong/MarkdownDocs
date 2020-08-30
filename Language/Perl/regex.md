@@ -7,6 +7,12 @@ perl的regex；
 
 > POSIX风格正则表达式：Regular Expression
 > Perl风格正则表达式：Perl-Compatible Regular Expression，即pcre.
+>
+> c, c++正则库有哪些呢？
+> gnu regex,  regcomp(), regexec(), regerror(), regfree(), ...
+> boost regex, basic_regex, match_results, sub_match, reg_match, reg_search, reg_replace, ...
+> pcre, pcre_compile, pcre_exec, ..
+> pcre++, PE_Options, PE.pattern/error/FullMatch/PartialMatch(), ...
 
 
 
@@ -27,8 +33,12 @@ perl的regex；
 
 
 
+## perl正则概要
 
-## 匹配、替换、转化
+包含三种用法，分别是：匹配、替换、转化。
+
+### 匹配、替换、转化
+
 **匹配、替换、转换**：Perl的正则表达式的三种形式，分别是匹配，替换和转化:
 
 ```perl
@@ -54,6 +64,8 @@ while ($txt =~ tr/$rgx/xx/g) { #转化
 	#s 把多个相同的输出字符压缩成一个；
 }
 ```
+
+### 结果处理
 
 **结果处理**：匹配结果处理
 
@@ -86,6 +98,10 @@ while($line =~ /(\S)/g){
 反向引用： $a =~ s/(key1)(key2)/$2$1/ 表示调换key1,key2两个单词；
 ```
 
+
+
+### 修饰符
+
 **匹配修饰选项**：修饰符
 
 ```perl
@@ -104,7 +120,9 @@ a  #告诉Perl用ascii方式；
 u  #告诉Perl用unicode方式；
 ```
 
-## 正则表达式
+## 正则相关知识
+
+正则表达式相关知识。
 
 ###元字符
 特殊字符
@@ -143,40 +161,8 @@ $
 	#n与m之间除逗号之外，不能有空格；
 ```
 
-选择（分组）
-```perl
-(pattern)
-	#捕获匹配，匹配 pattern 并获取这一匹配。
-	#所捕获的匹配从左到右存储于一个顺序缓存区，编号从1-99，可用\n来访问各缓冲区；
-	#法一：\b(\w+)\b\s+\1\b可以用来匹配重复的单词，像go go, 或者kitty kitty。
-		#这个也叫反向引用；
-	#法二：\b(?<CaptureName>\w+)\b\s+\k<CaptureName>\b
-		#在正则中可以用?<name>进行命名、用\k<name>来引用，其中的的<>是必须的！
-		#在代码中用$+{name}来获取结果！
-	#法三：\b(?'CaptureName'\w+)\b\s+\k'CaptureName'\b
-		#在正则中可以用?'name'进行命名、用\k'name'或\g{name}来引用，其中的''{}亦是必须的！
-		#在代码中用$+{name}来获取结果！
-(?:pattern)
-	#非捕获匹配，匹配 pattern 但不获取匹配结果，不进行存储供以后使用。
-(?=pattern)
-	#正向肯定预查（look ahead positive assert），在任何匹配pattern的字符串开始处匹配查找字符串。
-	#例如，"Windows(?=xp|7)"能匹配"Windows7"中的"Windows"，但不能匹配"Windows10"中的"Windows"。
-	#这是一个非获取匹配。
-	#预查不消耗字符，即在一个匹配发生后，在最后一次匹配之后立即开始下一次匹配的搜索，而不是从包含预查的字符之后开始。
-(?!pattern)	
-	#正向否定预查(negative assert)，在任何不匹配pattern的字符串开始处匹配查找字符串。
-(?<=pattern)
-	#反向(look behind)肯定预查，与正向肯定预查类似，只是方向相反。
-	#例如，"(?<=xp|7)Windows"能匹配"7"中的"Windows"，但不能匹配"10Windows"中的"Windows"。
-	#perl 5.30之前，只适用于固定宽度的向后查找；
-(?<!pattern)   #---------其中的反斜杠为转义用，不在表达式范围内；
-	#反向否定预查，与正向否定预查类似，只是方向相反。
-	#perl 5.30之前，只适用于固定宽度的向后查找；
-(?#comment)
-	#注释
-```
-
 非打印字符
+
 ```perl
 \cx #ASCII控制字符。比如\cC代表Ctrl+C，即ctrl系列的。
 	#x 的值必须为 A-Z 或 a-z 之一。否则，将 c 视为一个原义的 'c' 字符。
@@ -239,15 +225,69 @@ x|y	#匹配 x 或 y。
 ```
 
 ### 多行、单行模式
-Multiline
-$，匹配\n之前的位置以及字符串结束前的位置
-更改^和$的含义，使它们分别在任意一行的行首和行尾匹配，而不仅仅在整个字符串的开头和结尾匹配。
 
-Singleline
-更改.的含义，使它与每一个字符匹配（包括换行符\n）。
+默认是单行模式，此时
 
-是不是只能同时使用多行模式和单行模式中的一种？
+```bash
+$str =~ /pattern/s;
+# \. 能匹配所有字符。（默认除回车\r，换行\n之外的所有字符）
+```
+
+开启多行模式时，如下：
+
+```bash
+$str =~ /pattern/m;
+# ^$ 在行头、行尾的基础上，可匹配字符串的开头、结尾。
+```
+
+<font color=red>是不是只能同时使用多行模式和单行模式中的一种</font>？
 答案是：不是。这两个选项之间没有任何关系，除了它们的名字比较相似（以至于让人感到疑惑）以外。
+
+### 预查
+
+正向（<font color=red>修补匹配项的结尾</font>）、反向（<font color=red>修补匹配项的开始</font>）肯定、否定预查：----editpolus的正则不支持反向预查？
+
+- <font color=red>反向预查，在有些语言、或库中只支持固定长度的</font>，如在libpcre中，`(?<![0-9]+)[0-9]{15}(?![0-9]+)`，需要变更成`(?<![0-9]{1})[0-9]{15}(?![0-9]+)`才能work；
+
+```bash
+(?=pattern)
+	#正向肯定预查（look ahead positive assert）。首先，要匹配的文本必须满足此子模式前面的表达式；其次，此子模式不参与匹配。例如，"Windows(?=xp|7)"能匹配"Windows7"中的"Windows"，但不能匹配"Windows10"中的"Windows"。
+	#这是一个非获取匹配。
+	#预查不消耗字符，即在一个匹配发生后，在最后一次匹配之后立即开始下一次匹配的搜索，而不是从包含预查的字符之后开始。
+(?!pattern)	
+	#正向否定预查(negative assert)。
+(?<=pattern)
+	#反向(look behind)肯定预查，与正向肯定预查类似，只是方向相反。
+	#例如，"(?<=xp|7)Windows"能匹配"7"中的"Windows"，但不能匹配"10Windows"中的"Windows"。
+	#perl 5.30之前，只适用于固定宽度的向后查找；
+(?<!pattern)   #---------其中的反斜杠为转义用，不在表达式范围内；
+	#反向否定预查，与正向否定预查类似，只是方向相反。
+	#perl 5.30之前，只适用于固定宽度的向后查找；
+```
+
+### 分组
+
+选择（分组）
+
+```perl
+(pattern)
+	#捕获匹配，匹配 pattern 并获取这一匹配。
+	#所捕获的匹配从左到右存储于一个顺序缓存区，编号从1-99，可用\n来访问各缓冲区；
+	#法一：\b(\w+)\b\s+\1\b可以用来匹配重复的单词，像go go, 或者kitty kitty。
+		#这个也叫反向引用；
+	#法二：\b(?<CaptureName>\w+)\b\s+\k<CaptureName>\b
+		#在正则中可以用?<name>进行命名、用\k<name>来引用，其中的的<>是必须的！
+		#在代码中用$+{name}来获取结果！
+	#法三：\b(?'CaptureName'\w+)\b\s+\k'CaptureName'\b
+		#在正则中可以用?'name'进行命名、用\k'name'或\g{name}来引用，其中的''{}亦是必须的！
+		#在代码中用$+{name}来获取结果！
+(?:pattern)
+	#非捕获匹配，匹配 pattern 但不获取匹配结果，不进行存储供以后使用。
+(?#comment)
+	#注释
+```
+
+
 
 
 ## 匹配效率

@@ -8,6 +8,48 @@
 
 
 
+
+
+## eml Format
+
+一封邮件的内容格式如下，
+
+```bash
+#header key-value lines, such as 'From: xx@yy.com'.
+#空行
+#body, body为可选内容。
+```
+
+### header
+
+有些header是强制带的，如from , to, subject之类，有些则是可选项。<font color=red>各头部域之间没有规定顺序</font>。
+
+| key         | value | des              |
+| ----------- | ----- | ---------------- |
+| from        |       | 发件人           |
+| to          |       | 收件人           |
+| cc          |       | 抄送人           |
+| bcc         |       | 密送、暗送人。   |
+| Return-Path |       | 退信地址         |
+| Received    |       | 路由信息         |
+| X-xxyyzz    |       | 各厂商自己的扩展 |
+
+
+
+### body
+
+body为可选项，并不是强制的。
+
+MIME，支持邮件的多媒体应用。
+
+#### MIME's Content-Transfer-Encoding
+
+mime支持base64, quoted-printable(QP)两种编码。
+
+
+
+
+
 ## An Email Flow
 
 
@@ -101,15 +143,13 @@ Mime定义的一些邮件消息头
 
 |头字段 |意义|
 |------|---|
-|To |收件人地址|
-|Cc |抄送地址|
-|Bcc |暗送地址|
-|Date |日期和时间|
-|Subject |主题|
-|Content-Type |内容的类型|
-|From |发件人地址|
-|||
+|Content-Description ||
 |Content-Disposition |需要指定以什么方式下载（附件居多）、文件名|
+|Content-Id ||
+|Content-Transfer-Encoding ||
+|Content-Type ||
+|MIME-Version||
+| ||
 
 ### content-type
 

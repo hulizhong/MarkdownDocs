@@ -103,6 +103,19 @@ p += "dir2";  // dir1dir2
 
 
 
+友元函数
+
+```cpp
+space_info space(const path& p);
+struct space_info {
+	uintmax_t capacity; //容量
+	uintmax_t free;   //剩余空间
+	uintmax_t available; //可用空间
+};
+```
+
+
+
 ### native vs generic path
 
 `Native pathname format` VS `Generic pathname format`.

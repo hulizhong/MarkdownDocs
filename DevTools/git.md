@@ -48,6 +48,21 @@ git的配置文件（在安装目录下）
 > gitInstallPath\mingw64\etc\gitconfig，注意linux下是个隐藏文件.gitconfig.
 > gitInstallPath\etc\
 
+<font color=red>但是配置文件一般有好向个级别的，权重：仓库>全局>系统</font>，如下
+
+```bash
+git config -l|--list
+
+git config --local -l|-e #-l查看，-e编辑。
+	# projectDir/.git/config.
+git config --global -l
+	# ~/.gitconfig == c:/user/username/.gitconfig.
+git config --system -l
+	# /mingw64/etc/gitconfig = gitInstallPath/Git/mingw64/etc/gitconfig.
+```
+
+
+
 #### 问题-乱码
 
 git bash乱码
@@ -55,8 +70,16 @@ git bash乱码
 > 右键 options
 > 菜单 text
 > Local, Charcter set设置
->> https://blog.csdn.net/u013068377/article/details/52168434
-> 
+>
+> > https://blog.csdn.net/u013068377/article/details/52168434
+>
+
+#### 问题，自动替换unix文件格式为windows格式
+
+```bash
+[core]
+	autocrlf = false
+```
 
 
 
@@ -125,10 +148,9 @@ git branch -M oldName newName
 
 ```bash
 git log 
-git log -p
-	#详细信息
-git log --oneline
-	#一个提供只有一行的显示
+git log -p #详细信息
+git log --oneline  #一个commit提供只有一行的显示
+git show #只查看某一commit，默认为最近的一个commit.
 ```
 
 ### 分支对比
@@ -207,6 +229,14 @@ git rebase -i 789
 git log
 	456  #123已经被合并到这里来了
 	789
+```
+
+**T.挑选合并**
+
+```bash
+git cherry-pick hash  #合并某一分支的hash commit到当前分支；
+#....解决冲突
+git commit #手动提交，亦可git add .后直接使用git cherry-pick --continue来进行自动提交。
 ```
 
 

@@ -93,6 +93,15 @@ vim -d a b 等效于vimdiff a b
 
 
 
+### plugins.NERDTree
+
+```bash
+:NERDTree dir
+r #递归刷新选中目录
+R #递归刷新根结点
+:NERDTreeclose
+```
+
 
 
 ### 奇异文件

@@ -1,4 +1,7 @@
+[TOC]
+
 ## ReadMe
+
 perl的语法讲解
 
 .pm  模块文件；可以用 use xx来加载。（use语句会自动搜索后缀为.pm的文件）
@@ -9,7 +12,7 @@ perl的语法讲解
 demo
 ```perl
 #!/usr/bin/perl -w
-	#-w表示使用严格的语法控制。
+	#-w表示使用严格的语法控制，会报一些告警、错误出来。
 use warnings;  #同于-w，但不是全局性的，可在{}中进行引用；
 use strict;
 	#是Perl中编译指令，告诉编译器，如果perl代码中有不好的编码风格，那么提示编译失败。
@@ -433,6 +436,7 @@ print "ok"x3; #okokok   #重复连接符号x；
 @arr = split(/pattern/, $str);   #字符串分隔；
 @arr = split(//, $str);    #强制按每个字符进行分隔；
 	#可用于遍历字符串；（先分隔成数组，再遍历数组内容）
+$str =~ s/[\s]//g; #替换字符串内所有空白字符。
 ```
 
 字符处理
@@ -725,6 +729,7 @@ swig -c++ -python xx.i
 
 编译
 python自带一个distutils工具，可以用它来创建python的扩展模块。
+
 ```python
 """
 setup.py

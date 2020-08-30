@@ -28,6 +28,7 @@ table_demo
 
 #查看表结构
 sqlite> .schema tableName
+sqlite> .mode line
 
 sqlite> select * from sqlite_master where type="table";
 sqlite> select * from sqlite_master where type="table" and name="tableName";
@@ -73,6 +74,33 @@ KeyName integer PRIMARY KEY autoincrement;
 
 ## SQLite C API
 
+### exec & callback
+
+sqlite3_exe在执行select时要求传入一个callback，
+
+- callback的意思是，会先执行sql语句，然后将结果传递给callback，callback根据结果再进一步执行。
+- callback<font color=red>查询集是n条记录时，调用n次</font>。
+- callback返回0，则sqlite3_exec() 将继续执行查询；返回非0，则sqlite3_exec()将立即中断查询, 且返回 SQLITE_ABORT。
+- 查询有个老版本的api，`sqlite3_get_table`;
+
+原型如下：
+
+```cpp
+int sqlite3_exec(
+  sqlite3*,                                  /* An open database */
+  const char *sql,                           /* SQL to be evaluated */
+  int (*callback)(void*,int,char**,char**),  /* Callback function */
+  void *,                                    /* 1st argument to callback */
+  char **errmsg                              /* Error msg written here */
+);
+
+typedef int(*sqlite_callback)(void* para, int columenCount, char** columnValue, char** columnName);
+	//para，由sqlite3_exec传入的参数指针，或者说是指针参数
+	//columnCount，查询到的这一条记录由多少个字段（多少列）
+	//columnValue，该参数是双指针，查询出来的数据都保存在这里，它是一个1维数组，每一个元素都是一个char*,是一个字段内容，所以这个参数就可以不是单字节，而是可以为字符串等不定长度的数值，用字符串表示，以'\0'结尾。
+	//columnName，该参数是双指针，语columnValue是对应的，表示这个字段的字段名称，
+```
+
 
 
 ### memleak
@@ -110,6 +138,15 @@ int sqlite3_prepare_v2(
 );
 //当成功时*ppStmt被设置成!nullptr应该由以下函数释放，释放后不一定被保证=nullptr;
 	int sqlite3_finalize(sqlite3_stmt *pStmt);
+
+int sqlite3_reset(sqlite3_stmt *pStmt); //重置一个准备语句对象到它的初始状态，然后准备被重新执行。
+int sqlite3_clear_bindings(sqlite3_stmt*); //重置绑定的参数。
+int sqlite3_step(sqlite3_stmt*); //执行有前面sqlite3_prepare创建的准备语句，返回如下：
+	//SQLITE_BUSY 获取不到锁来执行准备语句。
+	//SQLITE_DONE 执行成功。
+	//SQLITE_ROW 准备语句执行结果有数据返回（如select），每当准备好一条记录则返回此。
+	//SQLITE_ERROR 执行准备语句出错。
+	//SQLITE_MISUSE 函数被不恰当的使用。
 ```
 
 

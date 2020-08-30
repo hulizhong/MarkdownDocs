@@ -20,23 +20,40 @@ oid： 行的对象标识符（对象 ID）。这个字段只有在创建表的�
 PostgreSQL安装会创建一个默认的linux用户postgres、以及一个数据库用户postgres（管理员）。  
 其中数据库管理员的密码随机，需要修改：
 > 步骤一：登录PostgreSQL
->>	sudo -u postgres psql
+>
+> >	sudo -u postgres psql
 
 > 步骤二：修改登录PostgreSQL密码
->>	ALTER USER postgres WITH PASSWORD 'postgres';
+>
+> >	ALTER USER postgres WITH PASSWORD 'postgres';
 
 > 步骤三：退出PostgreSQL客户端
->>	\q
+>
+> >	\q
 
 
 修改linux用户postgres密码
 > 步骤一：删除用户postgres的密码
->>	sudo  passwd -d postgres
+>
+> >	sudo  passwd -d postgres
 
 > 步骤二：设置用户postgres的密码
->>	sudo -u postgres passwd
+>
+> >	sudo -u postgres passwd
 
 
+
+### utf8
+
+pg的utf8存储，包含如下几个方面：
+
+- 数据库服务器字符集编码。
+    - show server_encoding;
+    - \l
+- 数据库客户端字符编码。
+    - show client_encoding;  ==  \encoding
+    - set client_encoding to 'utf8';`
+- 本地环境编码，如文本编辑器、ssh连接工具、cmd窗口。
 
 
 ## 指令
@@ -48,32 +65,38 @@ pg的指令有点奇怪，都是以\打头的，如下：
 
 
 \l 看数据库
+	#有两个模板，即template0, template1，如果create database不指定参数，就以这些为模板进行创建，默认用template1这个模板。如create database dbname template=template0 encoding='UTF8';则以template0为模板来创建dbname,编码为utf-8.
 \dt 看表（默认只列出public模式下的）
 \d|d+ tablename 看表结构
 \c testdb;  连接testdb
 \quit
 \password 改密
 \conninfo 看连接信息
+
+drop role username;   #删除用户
+drop database dbname; #删除db
 ```
 
 ## 默认的系统表、视图、函数
 ### 系统表
-| name | des |
-|---|-----|
-|pg_class |tables, indexes, sequences, views ("relations")  
-|pg_database |databases within this database cluster  
-|pg_db_role_setting |per-role and per-database settings  
+| name               | des                                             |
+| ------------------ | ----------------------------------------------- |
+| pg_class           | tables, indexes, sequences, views ("relations") |
+| pg_database        | databases within this database cluster          |
+| pg_db_role_setting | per-role and per-database settings              |
 
 ### 视图
-| name | des |
-|---|-----|
-|pg_locks |currently held locks
-|pg_roles |database roles
-|pg_user |database users
-|pg_settings |parameter settings
-|pg_tables |tables
-|pg_views |views
-|pg_stat_activity |One row per server process, showing information related to the current activity of that process, such as state and current query. See pg_stat_activity for details.
+| name             | des                                                          |
+| ---------------- | ------------------------------------------------------------ |
+| pg_locks         | currently held locks                                         |
+| pg_roles         | database roles                                               |
+| pg_user          | database users                                               |
+| pg_settings      | parameter settings                                           |
+| pg_tables        | tables                                                       |
+| pg_views         | views                                                        |
+| pg_stat_activity | One row per server process, showing information related to the current activity of that process, such as state and current query. See pg_stat_activity for details. |
+|                  |                                                              |
+
 
 
 #### pg_settings  
@@ -81,14 +104,15 @@ pg的指令有点奇怪，都是以\打头的，如下：
 
 | name | des |
 |---|-----|
-|timezone|
-|search_path |schema的搜索路径
+|timezone||
+|search_path|schema的搜索路径|
+
 
 
 ### 函数
-| name | des |
-|---|-----|
-|pg_lock_status() |view system lock information
+| name             | des                          |
+| ---------------- | ---------------------------- |
+| pg_lock_status() | view system lock information |
 
 ## 特性
 ### 模式schema

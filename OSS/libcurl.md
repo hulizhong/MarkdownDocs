@@ -95,3 +95,36 @@ Handshake Failure (40)
 > 要注意，server是否支持100-continue，或者由100-continue引起的server端错误。
 
 
+
+### libcurl & multi-thread
+
+不能多个线程共享一个curl对象，如下：
+
+```cpp
+CURL *curl = curl_easy_init();
+// use curl in one thread.
+curl_easy_cleanup( curl );
+```
+
+如下初始化函数线程不安全（不支持多线程重入）：
+
+```cpp
+curl_global_init();
+curl_global_cleanup();
+```
+
+多线程下域名的超时解析，如下：---rwhy....
+
+```cpp
+curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 30L); //依赖alarm + siglongjmp，多线程会不安全。
+curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L); //禁用alarm超时，但这样就没有超时机制了。可使用替换技术c-ares。
+```
+
+多线程下可以共享dns解析缓存（老接口是curlopt_dns_use_global_cache，已被如下接口替换），如下：
+
+```cpp
+curl_share_setopt(curl, CURLSHOPT_SHARE, CURL_LOCK_DATA_DNS);
+curl_easy_setopt(curl, CURLOPT_SHARE, share_handle);
+curl_easy_setopt(curl, CURLOPT_DNS_CACHE_TIMEOUT, 60 * 5);
+```
+

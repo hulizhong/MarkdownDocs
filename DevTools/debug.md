@@ -235,6 +235,15 @@ thread apply all bt
 - dll库加载的路径；（attach到进程，用`lmf`指令查看模块；而`lm`则可看pdb文件）
 - 。。。
 
+```bash
+!itoldyouso C:\xx\test.dll C:\xx\test.pdb
+lm
+~*kpn  #看所有线程，适合死锁、死等、。。。
+kpn    #看当前出问题的线程、适合crash、。。。
+```
+
+
+
 
 
 ### command

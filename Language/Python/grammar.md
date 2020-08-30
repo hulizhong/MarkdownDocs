@@ -318,7 +318,7 @@ str.isdigit()    #检测字符串是否只由数字组成。
 
 ### 列表list []
 
-列表是有序的。
+列表是<font color=red>有序的</font>。
 
 ```python
 lst = [1, 3, 2, 4]

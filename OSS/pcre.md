@@ -85,5 +85,24 @@ int pcre_exec(const pcre *code, const pcre_extra *extra, const char *subject, in
 
 
 
+# Errors
+
+lookbehind assertion is not fixed length
+
+```cpp
+(?<![0-9A-Z]+)[0-9A-Z]{12}(?![0-9A-Z]+)
+(?<![0-9]+)[0-9]{15}(?![0-9]+)
+
+//PCRE2: lookbehind assertion is not fixed length. ----反向预查（断言）在有些语言、或库里只支持固定长度的；
+(?<![0-9A-Z]{1})[0-9A-Z]{12}(?![0-9A-Z]+)
+(?<![0-9]{1})[0-9]{15}(?![0-9]+)
+```
+
+
+
+
+
+
+
 
 

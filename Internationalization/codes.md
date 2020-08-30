@@ -17,6 +17,9 @@
 
 UTF-8是一种变长编码，对于一个Unicode的字符被编码成1至4个字节，其中绝大部分的中文用3个字节编码；少数中文用到了4个字节编码。
 
+> \xnn   character with given hex code (1 or 2 hex digits)  
+> \unnnn Unicode character with given code (1--4 hex digits) 
+
 ### 问题
 - utf8 BOM VS utf8
 
@@ -100,14 +103,29 @@ char* getenv(const char* name);
 
 ## Windows
 
+在历史上，IBM的个人计算机和微软公司的操作系统曾经是PC的标准配置。微软公司将IBM公司定义的代码页称作OEM代码页，在IBM公司的代码页基础上作了些增补后，称为ANSI代码页。
+
 简体中文默认使用`GBK`，它是`gb2312`的扩展；
 台湾的繁体中文使用`big5`；（这些繁体跟`gbk`中繁体不是一个编码系统）
 
 ```bash
 chcp 65001 #更改cmd窗口为utf-8编码（如果窗口不能正常显示汉字，那么需要将字体修改为True Type字体"Lucida Console"）
-chcp 936  #gbk
 chcp 437  #美国英语
+
+936 #(ANSI/OEM -简体中文GBK)
+950 #(ANSI/OEM -繁体中文Big5)
+65001   #UTF-8代码页
 ```
+
+windows在支持国际化的道路上是推荐使用unicode的，
+
+>毕竟一个编码标准就能支持这个世界上所有语言的所有文字，也就不存在乱码之类的问题了。
+
+但是windows也是半路才支持unicode的，在这之前一直是使用<font color=red>locale+ANSI</font>编码标准的。
+
+> 这个是个什么玩意儿呢？大体就是可以通过控制面板里的一个选项来设置系统的locale，而系统会根据你的locale来选择在ANSI编码（严格说这个不能叫编码！！）模式下（相对于unicode而言，也就是文本编辑器如notepad++、VS的编辑器等检测到当前的文本文件的编码不是unicode）所使用的编码。比如如果locale是Chinese PRC，则此时ANSI编码为gb2312（或者gbk，反正是gb系的），而如果locale是English US的话，则ANSI编码对应扩展的ascii（貌似，没有求证）。说实话ANSI这个叫法着实蛋疼，很让人费解，因为ANSI本身是个标准委员会，不明就里的人根本不知道是说啥么。
+
+回到刚刚的编译问题，由于这些代码通常实在locale为English US的情况下编译的，而代码文件本身不是unicode编码，所以就应该是使用扩展ascii来进行编码/解码。但由于我的locale是Chinese PRC，所以对于非unicode编码的文件系统是使用gb2312来解析的。嗯嗯，问题来了，文件的编码和解码所使用的标准不兼容，导致各种诡异问题。
 
 
 
@@ -117,7 +135,9 @@ chcp 437  #美国英语
 
 
 
-## boost.locale.conv
+## API
+
+### boost.locale.conv
 
 used for `Character Set Conversions`, support `char, wchar_t`, experimental support c++0x `char16_t, char32_t`.
 
@@ -136,5 +156,62 @@ https://www.boost.org/doc/libs/1_53_0/libs/locale/doc/html/group__codepage.html
 
 
 
+### windows
 
+MultiByteToWideChar和WideCharToMultiByte用法详解
+这两个函数是由Windows提供的转换函数，不具有通用性
+
+```cpp
+int MultiByteToWideChar(
+	UINT CodePage,
+
+　　DWORD dwFlags,
+
+　　LPCSTR lpMultiByteStr,
+
+　　int cchMultiByte,
+
+　　LPWSTR lpWideCharStr,
+
+　　int cchWideChar
+
+);
+Value	Description
+CP_ACP	ANSI code page
+CP_MACCP	Not supported
+CP_OEMCP	OEM code page
+CP_SYMBOL	Not supported
+CP_THREAD_ACP	Not supported
+CP_UTF7	UTF-7 code page
+CP_UTF8	UTF-8 code page
+```
+
+### 
+
+### c
+
+C语言提供的转换函数为
+
+```cpp
+mbstowcs();
+wcstombs();
+```
+
+
+
+http://boost.2283326.n4.nabble.com/to-utf8-from-utf8-td2657050.html
+
+
+
+https://www.xuebuyuan.com/537930.html
+
+utf_to_utf是unicode之间的转换
+
+from_utf, to_utf才是编码转换；
+
+
+
+https://blog.csdn.net/weixin_43754733/article/details/84585154
+
+server & network io & asyn worker Codind frame.
 
